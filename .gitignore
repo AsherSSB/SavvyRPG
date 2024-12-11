@@ -1,0 +1,4 @@
+.env
+cogs/__pycache__/*
+custom/__pycache__/*
+output.log
