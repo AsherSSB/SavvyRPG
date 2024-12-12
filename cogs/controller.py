@@ -57,6 +57,7 @@ class SingleTextSubmission(discord.ui.Modal):
 
 
 # TODO: return selection interaction to continue character creation
+# TODO: add "Other" option leading to SingleTextSubmission
 class GenderView(discord.ui.View):
     def __init__(self):
         super().__init__()
