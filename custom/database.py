@@ -13,3 +13,8 @@ class Database:
                                     password=f"{password}",
                                     port="5432")
         self.cur = self.conn.cursor()
+
+
+    def add_name(self, name):
+        self.cur.execute("INSERT INTO names (name) VALUES (%s);", (name,))
+        self.conn.commit()
