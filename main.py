@@ -37,7 +37,7 @@ async def clear(ctx:commands.Context):
 
 @bot.command()
 @commands.is_owner()
-async def reload(ctx, extension):
+async def reload(ctx:commands.context, extension):
     await bot.reload_extension(f"cogs.{extension}")
     embed = discord.Embed(title='Reload', description=f'{extension} successfully reloaded', color=0xff00c8)
     await ctx.send(embed=embed)
@@ -58,3 +58,4 @@ async def main():
 
 
 asyncio.run(main())
+

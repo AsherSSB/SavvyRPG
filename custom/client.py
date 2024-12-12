@@ -2,7 +2,6 @@ import os
 import discord
 from discord.ext import commands
 
-
 class Client(commands.Bot):
     
     def __init__(self):
@@ -16,3 +15,15 @@ class Client(commands.Bot):
                 await self.load_extension(f"cogs.{filename[:-3]}")
 
         await self.tree.sync() # This is global
+
+
+    async def close(self):
+        # do your cleanup here
+        for extension in list(self.extensions.keys()):
+            self.unload_extension(extension)
+
+        for cog in self.cogs.values():
+            if hasattr(cog, 'cog_unload'):
+                await cog.cog_unload()
+        
+        await super().close()
