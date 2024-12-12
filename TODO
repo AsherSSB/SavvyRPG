@@ -1,0 +1,6 @@
+#GenderView
+- return selection interaction to continue character creation
+- add "Other" option leading to SingleTextSubmission
+
+#SingleTextSubmission
+- return submission interaction to continue character creation
