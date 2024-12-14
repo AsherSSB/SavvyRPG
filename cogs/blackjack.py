@@ -28,21 +28,21 @@ class Hand:
 class Player:
     def __init__(self):
         self.hand = Hand()
-        self.ace_count:bool = 0
+        self.ace_count:int = 0
         self.can_split:bool = False
 
     def add_card(self, card:Card) -> None:
         self.hand.cards.append(card)
         self.hand.value += card.value
-        if card.rank == "Ace": self.ace_count += 1
+        if card.rank == "Ace": 
+            self.ace_count += 1
         
     def can_burn_ace(self) -> bool:
-        if self.ace_count > 0: return True
-        else: return False
+        return self.ace_count > 0
 
     def burn_ace(self) -> None:
         self.ace_count -= 1
-        self.hand.value-= 10
+        self.hand.value -= 10
 
     def check_split(self) -> None:
         if len(self.hand.cards) == 2 and self.hand.cards[0].rank == self.hand.cards[1].rank:
@@ -60,15 +60,38 @@ class Blackjack(commands.Cog):
         self.ranks = ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"]
         random.seed()
 
+    # TODO: delete after integration with RPG
     @discord.app_commands.command(name="play_blackjack")
     async def play_blackjack(self, interaction:discord.Interaction):
+        await self.start_blackjack_game(interaction=interaction)
+
+    async def start_blackjack_game(self, interaction:discord.Interaction):
         player = self.deal_in_player()
         if player.hand.value != 21:
-            await self.play_hand(interaction, player)
+            player_won = await self.play_hand(interaction, player)
         else:
-            await interaction.response.send_message(f"{player.hand}\n\n Blackjack!")
+            player_won = True
+            await interaction.response.send_message(f"{player.hand}\n\n Blackjack! You Win!")
+        # TODO: payout player based on win
+        await asyncio.sleep(2.0)
+        view = ContinueView()
+        await interaction.edit_original_response(content="Play Again?", view=view)
+        await view.wait()
+        if view.choice: 
+            await interaction.delete_original_response()
+            await self.start_blackjack_game(interaction=view.interaction)
+        # TODO: placeholder for navigation back to main menu
+        else: 
+            await view.interaction.response.defer()
+            await interaction.delete_original_response()
 
-    async def play_hand(self, interaction:discord.Interaction, player:Player):
+    async def try_burn_ace(self, interaction:discord.Interaction, player:Player):
+        if player.can_burn_ace():
+            player.burn_ace()
+            return True
+        return False
+
+    async def play_hand(self, interaction:discord.Interaction, player:Player) -> bool:
         dealer = self.deal_in_player()
         player.check_split()
         view = GameView(player.can_split)
@@ -76,18 +99,109 @@ class Blackjack(commands.Cog):
         await interaction.response.send_message(content=content, view=view)
         await view.wait()
         choice = view.choice
+        await view.interaction.response.defer()
 
-        while choice == 0:
+        if choice == 2:
+            player:Player = await self.play_split(interaction, player, dealer)
+        if player.hand.value == 21:
+            return True
+
+        while choice == 0 and player.hand.value < 21:
             player.add_card(self.draw_card())
+            if player.hand.value > 21:
+                if not await self.try_burn_ace(interaction, player):
+                    await interaction.edit_original_response(content=f"{player.hand}\n\nYou Drew Over 21. You Lose.", view=None)
+                    return False
+                else:
+                    await interaction.edit_original_response(content=f"{player.hand}\n\nAce Set to 1 to Avoid Bust")
+            if player.hand.value == 21:
+                await interaction.edit_original_response(content=f"{player.hand}\n\n Blackjack! You Win!", view=None)
+                return True
             content = str(player.hand) + f"\n\nThe Dealer's Card is {self.stringify_draw(dealer.hand.cards[0])}"
-            await interaction.delete_original_response()
-            interaction = view.interaction
             view = GameView(can_split=False)
-            await interaction.response.send_message(content=content, view=view)
+            await interaction.edit_original_response(content=content, view=view)
             await view.wait()
+            choice = view.choice
+            await view.interaction.response.defer()
 
+        await self.play_dealers_turn(interaction, dealer)
+        await asyncio.sleep(2.0)
+
+        if dealer.hand.value > player.hand.value and dealer.hand.value <= 21:
+            content = f"The Dealer's {dealer.hand.value} is Greater Than Your {player.hand.value}\nYou Lose"
+            result = False
+        elif dealer.hand.value > 21:
+            content = "The Dealer Busted Out.\nYou Win!"
+            result = True
+        elif dealer.hand.value == player.hand.value:
+            content = f"Your {player.hand.value} is Equal to The Dealer's {dealer.hand.value}\nDraw."
+            result = False
+        else:
+            content = f"Your {player.hand.value} is Greater Than The Dealer's {dealer.hand.value}\nYou Win!"
+            result = True
+
+        await interaction.edit_original_response(content=content)
+        return result
+
+    async def play_split(self, interaction:discord.Interaction, player:Player, dealer:Player) -> Player:
+        player.can_split = False
+        hand1 = player
+        hand2 = Player()
+        hand2.add_card(hand1.hand.cards.pop(1))
+        hand1.hand.value -= hand1.hand.cards[0].value
+        if hand2.hand.cards[0].value == 11:
+            hand1.ace_count -= 1
+        firstvalue = await self.play_split_hand(interaction, hand1, dealer, "First")
+        if firstvalue == 21: 
+            return hand1
+        secondvalue = await self.play_split_hand(interaction, hand2, dealer, "Second") 
+        if secondvalue == 21: 
+            return hand2
+        if firstvalue >= secondvalue: 
+            return hand1
+        else: 
+            return hand2
+        
+    async def play_split_hand(self, interaction:discord.Interaction, hand:Player, dealer:Player, handcnt):
+        content = f"Playing {handcnt} Hand \n{hand.hand}\nDealer Card: {dealer.hand.cards[0]}"
+        view = GameView(False)
+        await interaction.edit_original_response(content=content, view=view)
+        await view.wait()
+        choice = view.choice
+        while choice == 0 and hand.hand.value < 21:
+            hand.add_card(self.draw_card())
+            if hand.hand.value > 21 and not await self.try_burn_ace(interaction, hand):
+                await interaction.edit_original_response(content=f"{hand.hand}\n\nYou Drew Over 21. Moving to Next Hand", view=None)
+                await view.interaction.response.defer()
+                await asyncio.sleep(1.0)
+                return 0
+            if hand.hand.value == 21:
+                await interaction.edit_original_response(content=f"{hand.hand}\n\n Blackjack! You Win!", view=None)
+                await view.interaction.response.defer()
+                await asyncio.sleep(1.0)
+                return 21
+            content = str(hand.hand) + f"\n\nThe Dealer's Card is {self.stringify_draw(dealer.hand.cards[0])}"
+            await view.interaction.response.defer()
+            view = GameView(can_split=False)
+            await interaction.edit_original_response(content=content, view=view)
+            await view.wait()
+            choice = view.choice
+        await view.interaction.response.defer()
+        return hand.hand.value
+
+    async def play_dealers_turn(self, interaction:discord.Interaction, dealer:Player):
+        content = f"The Dealer's {dealer.hand}"
+        # TODO: delete or revert
+        # await interaction.response.send_message(content)
+        await interaction.edit_original_response(content=content, view=None)
+        while dealer.hand.value < 17:
+            await asyncio.sleep(2.0)
+            dealer.add_card(self.draw_card())
+            content = f"The Dealer's {dealer.hand}"
+            await interaction.edit_original_response(content=content)
+            if dealer.hand.value > 21:
+                await self.try_burn_ace(interaction, dealer)
             
-
     def stringify_draw(self, card:Card) -> str:
         article = "a"
         if card.rank in ["Ace", "Eight"]:
@@ -156,6 +270,29 @@ class SplitButton(discord.ui.Button):
         self.view.choice = 2
         self.view.interaction = interaction
         self.view.event.set()
+
+
+class ContinueView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.event = asyncio.Event()
+        self.choice:bool
+        self.interaction:discord.Interaction
+    
+    @discord.ui.button(label="Continue")
+    async def continue_button(self, interaction, button):
+        self.choice = True
+        self.interaction = interaction
+        self.event.set()
+
+    @discord.ui.button(label="Back")
+    async def back_button(self, interaction, button):
+        self.choice = False
+        self.interaction = interaction
+        self.event.set()
+
+    async def wait(self):
+        await self.event.wait()
 
 
 async def setup(bot):
