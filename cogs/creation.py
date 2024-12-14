@@ -85,10 +85,19 @@ class GenderView(discord.ui.View):
         self.event.set()
         self.stop()
         
+    @discord.ui.button(label="Other")
+    async def other_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+        modal = SingleTextSubmission("Gender Select", "Enter Gender")
+        await interaction.response.send_modal(modal)
+        await modal.wait()
+        self.value = modal.textinput.value
+        self.event.set()
+        self.stop()    
 
     async def wait(self):
         await self.event.wait()
 
+        
 
 async def setup(bot):
     await bot.add_cog(Creator(bot))
