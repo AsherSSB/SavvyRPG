@@ -191,8 +191,6 @@ class Blackjack(commands.Cog):
 
     async def play_dealers_turn(self, interaction:discord.Interaction, dealer:Player):
         content = f"The Dealer's {dealer.hand}"
-        # TODO: delete or revert
-        # await interaction.response.send_message(content)
         await interaction.edit_original_response(content=content, view=None)
         while dealer.hand.value < 17:
             await asyncio.sleep(2.0)
