@@ -3,7 +3,7 @@ from discord.ext import commands
 from custom.database import Database
 import asyncio
 
-class Controller(commands.Cog):
+class Creator(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = Database()
@@ -91,5 +91,5 @@ class GenderView(discord.ui.View):
 
 
 async def setup(bot):
-    await bot.add_cog(Controller(bot))
+    await bot.add_cog(Creator(bot))
 
