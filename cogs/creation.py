@@ -8,20 +8,42 @@ class Creator(commands.Cog):
         self.bot = bot
         self.db = Database()
 
+    @discord.app_commands.command(name="creation")
+    async def create_character(self, interaction:discord.Interaction):
+        confirmed = False
+        while not confirmed:
+            name = await self.name_character(interaction=interaction)
+            view = ConfirmationView()
+            followup = await interaction.followup.send(content=f"Name Character: \"{name}\"?", view=view)
+            await view.wait()
+            await followup.delete()
+            interaction = view.interaction
+            confirmed = view.confirmed
+        
+        confirmed = False
+        while not confirmed:
+            gender = await self.set_gender(interaction)
+            view = ConfirmationView()
+            await interaction.delete_original_response()
+            followup = await interaction.followup.send(content=f"Set Gender: \"{gender}\"?", view=view)
+            await view.wait()
+            await followup.delete()
+            interaction = view.interaction
+            confirmed = view.confirmed
 
-    @discord.app_commands.command(name="entername")
+        # TODO: placeholder, continue creation
+        await interaction.response.send_message(f"{name} {gender}")
+
+        
     async def name_character(self, interaction:discord.Interaction):
-        asshole = await self.send_text_modal(interaction, "Enter Character Name", "Character Name")
-        await interaction.followup.send(f"{asshole}")
+        name = await self.send_text_modal(interaction, "Enter Character Name", "Character Name")
+        return name
 
-
-    @discord.app_commands.command(name="gender")
     async def set_gender(self, interaction:discord.Interaction):
         view = GenderView()
-        await interaction.response.send_message("hi", view=view)
+        await interaction.response.send_message("Select Gender", view=view)
         await view.wait()
-        await interaction.followup.send(f"{view.value}")
-
+        return view.value
 
     async def send_text_modal(self, interaction:discord.Interaction, title, label):
         modal = SingleTextSubmission(title, label)
@@ -29,15 +51,12 @@ class Creator(commands.Cog):
         await modal.wait()
         return modal.textinput.value
 
-
     async def cleanup(self):
         self.db.conn.close
         self.db.cur.close
 
-
     async def cog_unload(self):
         await self.cleanup()
-
 
 
 # TODO: return submission interaction to continue character creation
@@ -49,7 +68,7 @@ class SingleTextSubmission(discord.ui.Modal):
         self.event = asyncio.Event()
 
     async def on_submit(self, interaction:discord.Interaction):
-        await interaction.response.send_message("recieved")
+        await interaction.response.defer()
         self.event.set()
 
     async def wait(self):
@@ -57,7 +76,6 @@ class SingleTextSubmission(discord.ui.Modal):
 
 
 # TODO: return selection interaction to continue character creation
-# TODO: add "Other" option leading to SingleTextSubmission
 class GenderView(discord.ui.View):
     def __init__(self):
         super().__init__()
@@ -97,7 +115,30 @@ class GenderView(discord.ui.View):
     async def wait(self):
         await self.event.wait()
 
+
+class ConfirmationView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.confirmed:bool
+        self.event = asyncio.Event()
+        self.interaction:discord.Interaction
         
+    @discord.ui.button(label="Confirm")
+    async def confirm_button(self, interaction:discord.Interaction, button):
+        self.confirmed = True
+        self.event.set()
+        self.interaction = interaction 
+        self.stop()
+
+    @discord.ui.button(label="Cancel")
+    async def cancel_button(self, interaction:discord.Interaction, button):
+        self.confirmed = False
+        self.event.set()
+        self.interaction = interaction
+        self.stop
+
+    async def wait(self):
+        await self.event.wait()
 
 async def setup(bot):
     await bot.add_cog(Creator(bot))
