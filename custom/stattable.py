@@ -14,6 +14,7 @@ Dexterity: {self.dex}
 Intelligence: {self.int}
 Attunement: {self.att}"""
     
+
 class Nomad():
     def __init__(self):
         self.stats = StatTable(11, 14, 11, 8, 8)
@@ -33,6 +34,7 @@ the next trial that will push them to their limits.
 
 Base {self.stats}"""
 
+
 class Barbarian():
     def __init__(self):
         self.stats = StatTable(16, 13, 7, 6, 10)
@@ -50,23 +52,70 @@ their fury unstoppable. These fearless warriors know no mercy, maiming and \
 slaughtering all who dare to stand in their path.
 
 Base {self.stats}"""
+ 
 
 class Bard():
     def __init__(self):
         self.stats = StatTable(8, 8, 13, 13, 11)
 
+    def __str__(self):
+        return f"""
+# Bard
+
+Base {self.stats}"""
 
 class Rogue():
     def __init__(self):
         self.stats = StatTable(7, 6, 16, 9, 14)
 
+    def __str__(self):
+        return f"""
+# Rogue
+
+Base {self.stats}"""
 
 class Ranger():
     def __init__(self):
         self.stats = StatTable(8, 8, 14, 10, 12)
 
+    def __str__(self):
+        return f"""
+# Ranger
+
+Base {self.stats}"""
 
 class Wizard():
     def __init__(self):
         self.stats = StatTable(7, 9, 8, 16, 12)
 
+    def __str__(self):
+        return f"""
+# Wizard
+
+Base {self.stats}"""
+
+class Human():
+    def __init__(self):
+        self.statmods = StatTable(0, 2, -1, 1, -1)
+    
+    def __str__(self):
+        return f"""
+# Human
+
+Willful and curious, Humans are known for their tribal nature and unbreakable \
+spirit. One of the races local to Aether, they have created kingdoms and \
+monuments in their image, shining beacons of their ability to collaborate \
+and shape the world around them. A versitile bunch, humans are reguarded as a \
+good addition to any group, boasting strong physical capacity, loyalty, and an \
+unsatiable thirst for knowledge, though they are prone to awkward and clumsy \
+errors.
+
+Bonus {self.statmods}"""
+
+
+class NotHuman():
+    def __init__(self):
+        self.statmods = StatTable(-5, -5, -5, -5, -5)
+
+    def __str__(self):
+        return f"# Not Human \n\nWhy would you ever pick a non-human? Humans are superior in every way!\n(This is a placeholder)\n\n\"Bonus\" {self.statmods}"

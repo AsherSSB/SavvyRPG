@@ -47,7 +47,24 @@ class Creator(commands.Cog):
         if conview.confirmed:
             await interaction.delete_original_response()
             interaction = conview.interaction
-            await interaction.response.send_message("confirmed")
+            await interaction.response.send_message("confirmed class")
+        else:
+            await conview.interaction.response.defer()
+            await interaction.edit_original_response(content="cancelled")
+    
+    @discord.app_commands.command(name="racetest")
+    async def race_test(self, interaction:discord.Interaction):
+        view = RaceView()
+        await interaction.response.send_message(content="Select Race:", view=view)
+        await view.wait()
+        await view.interaction.response.defer()
+        conview = ConfirmationView()
+        await interaction.edit_original_response(content=view.origin, view=conview)
+        await conview.wait()
+        if conview.confirmed:
+            await interaction.delete_original_response()
+            interaction = conview.interaction
+            await interaction.response.send_message("confirmed race")
         else:
             await conview.interaction.response.defer()
             await interaction.edit_original_response(content="cancelled")
@@ -200,6 +217,29 @@ class OriginView(discord.ui.View):
         self.origin = origins.Wizard()
         self.event.set()
         self.interaction = interaction
+
+    async def wait(self):
+        await self.event.wait()
+
+
+class RaceView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.origin = None
+        self.event = asyncio.Event()
+        self.interaction:discord.Interaction
+
+    @discord.ui.button(label="Human")
+    async def pick_human(self, interaction:discord.Interaction, button):
+        self.origin = origins.Human()
+        self.interaction = interaction
+        self.event.set()
+
+    @discord.ui.button(label="Any Other Race")
+    async def pick_subhuman(self, interaction:discord.Interaction, button):
+        self.origin = origins.NotHuman()
+        self.interaction = interaction
+        self.event.set()
 
     async def wait(self):
         await self.event.wait()
