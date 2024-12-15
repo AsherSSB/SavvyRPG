@@ -6,8 +6,6 @@ class MainMenus(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
-    @discord.app_commands.command(name="mainmenu")
     async def send_main_menu(self, interaction:discord.Interaction):
         choices = ["Adventure", "Character", "Shop", "Social", "Tavern"]
         embed = MainMenuEmbed()

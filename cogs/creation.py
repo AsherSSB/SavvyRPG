@@ -4,6 +4,7 @@ from custom.database import Database
 import asyncio
 import custom.stattable as origins
 import custom.playable_character as pc
+from cogs.mainmenus import MainMenus
 
 class Creator(commands.Cog):
     def __init__(self, bot):
@@ -12,6 +13,7 @@ class Creator(commands.Cog):
 
     @discord.app_commands.command(name="creation")
     async def create_character(self, interaction:discord.Interaction):
+        # TODO: move these all to seperate functions for easy user adjustments
         confirmed = False
         while not confirmed:
             name = await self.name_character(interaction=interaction)
@@ -61,9 +63,21 @@ class Creator(commands.Cog):
             confirmed = conview.confirmed
             interaction = conview.interaction
 
-        # TODO: placeholder, continue creation
         new_character = pc.PlayableCharacter(name, gender, selected_race, selected_origin)
-        await interaction.response.send_message(new_character)
+        confirmed = False
+        # TODO: allow user to change aspects of their character
+        while not confirmed:
+            view = ConfirmationView()
+            await interaction.response.send_message(new_character, view=view)
+            await view.wait()
+            await interaction.delete_original_response()
+            confirmed = view.confirmed
+            interaction = view.interaction
+
+        mm = MainMenus(bot=self.bot)
+        await mm.send_main_menu(interaction)
+        
+
 
     @discord.app_commands.command(name="originstest")
     async def origins_test(self, interaction:discord.Interaction):

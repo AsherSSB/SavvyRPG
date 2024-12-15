@@ -9,5 +9,5 @@ class PlayableCharacter():
         self.stats = self.origin.stats + self.race.statmods
 
     def __str__(self):
-        return f"Name: {self.name}\nGender: {self.gender}\nRace: {self.race}\nClass: {self.origin}\n{self.stats}"
+        return f"Name: {self.name}\nGender: {self.gender}\nRace: {self.race}\nClass: {self.origin}\n\n{self.stats}"
 
