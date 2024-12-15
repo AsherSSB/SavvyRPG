@@ -41,7 +41,7 @@ class Creator(commands.Cog):
             selected_race = view.race
             await view.interaction.response.defer()
             conview = ConfirmationView()
-            await interaction.edit_original_response(content=selected_race, view=conview)
+            await interaction.edit_original_response(content=selected_race.description, view=conview)
             await conview.wait()
             await interaction.delete_original_response()
             confirmed = conview.confirmed
@@ -55,7 +55,7 @@ class Creator(commands.Cog):
             selected_origin = view.origin
             await view.interaction.response.defer()
             conview = ConfirmationView()
-            await interaction.edit_original_response(content=selected_origin, view=conview)
+            await interaction.edit_original_response(content=selected_origin.description, view=conview)
             await conview.wait()
             await interaction.delete_original_response()
             confirmed = conview.confirmed

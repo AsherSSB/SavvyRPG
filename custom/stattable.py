@@ -27,14 +27,13 @@ Attunement: {self.att}"""
 class Origin():
     def __init__(self):
         self.stats:StatTable
+        self.description:str
 
 
 class Nomad(Origin):
     def __init__(self):
         self.stats = StatTable(11, 14, 11, 8, 8)
-
-    def __str__(self):
-        return f"""
+        self.description = f"""
 # Nomad
 
 Nomads are lone wanderers, forged by their hardships. These eduring \
@@ -48,13 +47,15 @@ the next trial that will push them to their limits.
 
 Base {self.stats}"""
 
+    def __str__(self):
+        return "Nomad"
+
+
 
 class Barbarian(Origin):
     def __init__(self):
         self.stats = StatTable(16, 13, 7, 6, 10)
-
-    def __str__(self):
-        return f"""
+        self.description = f"""
 # Barbarian
 
 Barbarians are the embodiment of unrelenting rage and raw power, their very \
@@ -66,14 +67,15 @@ their fury unstoppable. These fearless warriors know no mercy, maiming and \
 slaughtering all who dare to stand in their path.
 
 Base {self.stats}"""
+
+    def __str__(self):
+        return "Barbarian"
  
 
 class Bard(Origin):
     def __init__(self):
         self.stats = StatTable(8, 8, 13, 13, 11)
-
-    def __str__(self):
-        return f"""
+        self.description = f"""
 # Bard
 
 Bards are whimsical and versitile, treating every encounter as another chance \
@@ -86,48 +88,53 @@ own. Versitile and positive, a Bard is a welcome addition to any party.
 
 Base {self.stats}"""
 
+    def __str__(self):
+        return "Bard"
+
 class Rogue(Origin):
     def __init__(self):
         self.stats = StatTable(7, 6, 16, 9, 14)
-
-    def __str__(self):
-        return f"""
+        self.description = f"""
 # Rogue
 
 Base {self.stats}"""
 
+    def __str__(self):
+        return "Rogue"
+
 class Ranger(Origin):
     def __init__(self):
         self.stats = StatTable(8, 8, 14, 10, 12)
-
-    def __str__(self):
-        return f"""
+        self.description = f"""
 # Ranger
 
 Base {self.stats}"""
 
+    def __str__(self):
+        return "Ranger"
+
 class Wizard(Origin):
     def __init__(self):
         self.stats = StatTable(7, 9, 8, 16, 12)
-
-    def __str__(self):
-        return f"""
+        self.description = f"""
 # Wizard
 
 Base {self.stats}"""
+
+    def __str__(self):
+        return "Wizard"
 
 
 class Race():
     def __init__(self):
         self.statmods:StatTable
+        self.description:str
 
 
 class Human(Race):
     def __init__(self):
         self.statmods = StatTable(0, 2, -1, 1, -1)
-    
-    def __str__(self):
-        return f"""
+        self.description = f"""
 # Human
 
 Willful and curious, Humans are known for their tribal nature and unbreakable \
@@ -139,11 +146,15 @@ unsatiable thirst for knowledge, though they are prone to awkward and clumsy \
 errors.
 
 Bonus {self.statmods}"""
+    
+    def __str__(self):
+        return "Human"
 
 
 class NotHuman(Race):
     def __init__(self):
         self.statmods = StatTable(-5, -5, -5, -5, -5)
+        self.description = f"# Not Human \n\nWhy would you ever pick a non-human? Humans are superior in every way!\n(This is a placeholder)\n\n\"Bonus\" {self.statmods}"
 
     def __str__(self):
-        return f"# Not Human \n\nWhy would you ever pick a non-human? Humans are superior in every way!\n(This is a placeholder)\n\n\"Bonus\" {self.statmods}"
+        return "~~Filth~~Not Human"
