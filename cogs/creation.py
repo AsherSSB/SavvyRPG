@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from custom.database import Database
 import asyncio
+import custom.stattable as origins
 
 class Creator(commands.Cog):
     def __init__(self, bot):
@@ -34,7 +35,23 @@ class Creator(commands.Cog):
         # TODO: placeholder, continue creation
         await interaction.response.send_message(f"{name} {gender}")
 
-        
+    @discord.app_commands.command(name="originstest")
+    async def origins_test(self, interaction:discord.Interaction):
+        view = OriginView()
+        await interaction.response.send_message(content="Select Class:", view=view)
+        await view.wait()
+        await view.interaction.response.defer()
+        conview = ConfirmationView()
+        await interaction.edit_original_response(content=view.origin, view=conview)
+        await conview.wait()
+        if conview.confirmed:
+            await interaction.delete_original_response()
+            interaction = conview.interaction
+            await interaction.response.send_message("confirmed")
+        else:
+            await conview.interaction.response.defer()
+            await interaction.edit_original_response(content="cancelled")
+
     async def name_character(self, interaction:discord.Interaction):
         name = await self.send_text_modal(interaction, "Enter Character Name", "Character Name")
         return name
@@ -139,6 +156,54 @@ class ConfirmationView(discord.ui.View):
 
     async def wait(self):
         await self.event.wait()
+
+
+class OriginView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.origin = None
+        self.event = asyncio.Event()
+        self.interaction:discord.Interaction
+
+    @discord.ui.button(label="Nomad")
+    async def nomad_button(self, interaction:discord.Interaction, button):
+        self.origin = origins.Nomad()
+        self.event.set()
+        self.interaction = interaction
+
+    @discord.ui.button(label="Barbarian")
+    async def barb_button(self, interaction:discord.Interaction, button):
+        self.origin = origins.Barbarian()
+        self.event.set()
+        self.interaction = interaction
+
+    @discord.ui.button(label="Bard")
+    async def bard_button(self, interaction:discord.Interaction, button):
+        self.origin = origins.Bard()
+        self.event.set()
+        self.interaction = interaction
+
+    @discord.ui.button(label="Rogue")
+    async def rogue_button(self, interaction:discord.Interaction, button):
+        self.origin = origins.Rogue()
+        self.event.set()
+        self.interaction = interaction
+    
+    @discord.ui.button(label="Ranger")
+    async def ranger_button(self, interaction:discord.Interaction, button):
+        self.origin = origins.Ranger()
+        self.event.set()
+        self.interaction = interaction
+
+    @discord.ui.button(label="Wizard")
+    async def wizard_button(self, interaction:discord.Interaction, button):
+        self.origin = origins.Wizard()
+        self.event.set()
+        self.interaction = interaction
+
+    async def wait(self):
+        await self.event.wait()
+
 
 async def setup(bot):
     await bot.add_cog(Creator(bot))
