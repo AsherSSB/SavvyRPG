@@ -62,6 +62,14 @@ class Bard():
         return f"""
 # Bard
 
+Bards are whimsical and versitile, treating every encounter as another chance \
+to perform and show off. Through the power of music, they buff their allies \
+with war songs and encouragement while weakening their foes with mockery and \
+curses. Bards also carry a mental encyclopedia of bardic knowledge, able to \
+recount tales and adventures of the past. Do not be fooled however, as they \
+are just as capable at handling themselves and fighting off enemies on their \
+own. Versitile and positive, a Bard is a welcome addition to any party.
+
 Base {self.stats}"""
 
 class Rogue():

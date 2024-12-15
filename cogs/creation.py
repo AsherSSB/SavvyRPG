@@ -32,8 +32,36 @@ class Creator(commands.Cog):
             interaction = view.interaction
             confirmed = view.confirmed
 
+        confirmed = False
+        while not confirmed:
+            view = RaceView()
+            await interaction.response.send_message(content="Select Race:", view=view)
+            await view.wait()
+            selected_race = view.race
+            await view.interaction.response.defer()
+            conview = ConfirmationView()
+            await interaction.edit_original_response(content=selected_race, view=conview)
+            await conview.wait()
+            await interaction.delete_original_response()
+            confirmed = conview.confirmed
+            interaction = conview.interaction
+
+        confirmed = False
+        while not confirmed:
+            view = OriginView()
+            await interaction.response.send_message(content="Select Class:", view=view)
+            await view.wait()
+            selected_origin = view.origin
+            await view.interaction.response.defer()
+            conview = ConfirmationView()
+            await interaction.edit_original_response(content=selected_origin, view=conview)
+            await conview.wait()
+            await interaction.delete_original_response()
+            confirmed = conview.confirmed
+            interaction = conview.interaction
+
         # TODO: placeholder, continue creation
-        await interaction.response.send_message(f"{name} {gender}")
+        await interaction.response.send_message(f"{name} \n{gender} \n{selected_race} \n{selected_origin}")
 
     @discord.app_commands.command(name="originstest")
     async def origins_test(self, interaction:discord.Interaction):
@@ -59,7 +87,7 @@ class Creator(commands.Cog):
         await view.wait()
         await view.interaction.response.defer()
         conview = ConfirmationView()
-        await interaction.edit_original_response(content=view.origin, view=conview)
+        await interaction.edit_original_response(content=view.race, view=conview)
         await conview.wait()
         if conview.confirmed:
             await interaction.delete_original_response()
@@ -225,19 +253,19 @@ class OriginView(discord.ui.View):
 class RaceView(discord.ui.View):
     def __init__(self):
         super().__init__()
-        self.origin = None
+        self.race = None
         self.event = asyncio.Event()
         self.interaction:discord.Interaction
 
     @discord.ui.button(label="Human")
     async def pick_human(self, interaction:discord.Interaction, button):
-        self.origin = origins.Human()
+        self.race = origins.Human()
         self.interaction = interaction
         self.event.set()
 
     @discord.ui.button(label="Any Other Race")
     async def pick_subhuman(self, interaction:discord.Interaction, button):
-        self.origin = origins.NotHuman()
+        self.race = origins.NotHuman()
         self.interaction = interaction
         self.event.set()
 
