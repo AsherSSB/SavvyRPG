@@ -3,6 +3,7 @@ from discord.ext import commands
 from custom.database import Database
 import asyncio
 import custom.stattable as origins
+import custom.playable_character as pc
 
 class Creator(commands.Cog):
     def __init__(self, bot):
@@ -61,7 +62,8 @@ class Creator(commands.Cog):
             interaction = conview.interaction
 
         # TODO: placeholder, continue creation
-        await interaction.response.send_message(f"{name} \n{gender} \n{selected_race} \n{selected_origin}")
+        new_character = pc.PlayableCharacter(name, gender, selected_race, selected_origin)
+        await interaction.response.send_message(new_character)
 
     @discord.app_commands.command(name="originstest")
     async def origins_test(self, interaction:discord.Interaction):

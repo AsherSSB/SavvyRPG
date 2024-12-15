@@ -14,8 +14,22 @@ Dexterity: {self.dex}
 Intelligence: {self.int}
 Attunement: {self.att}"""
     
+    def __add__(self, other):
+        return StatTable(
+            self.str + other.str,
+            self.wil + other.wil,
+            self.dex + other.dex,
+            self.int + other.int,
+            self.att + other.att
+        )
+    
 
-class Nomad():
+class Origin():
+    def __init__(self):
+        self.stats:StatTable
+
+
+class Nomad(Origin):
     def __init__(self):
         self.stats = StatTable(11, 14, 11, 8, 8)
 
@@ -35,7 +49,7 @@ the next trial that will push them to their limits.
 Base {self.stats}"""
 
 
-class Barbarian():
+class Barbarian(Origin):
     def __init__(self):
         self.stats = StatTable(16, 13, 7, 6, 10)
 
@@ -54,7 +68,7 @@ slaughtering all who dare to stand in their path.
 Base {self.stats}"""
  
 
-class Bard():
+class Bard(Origin):
     def __init__(self):
         self.stats = StatTable(8, 8, 13, 13, 11)
 
@@ -72,7 +86,7 @@ own. Versitile and positive, a Bard is a welcome addition to any party.
 
 Base {self.stats}"""
 
-class Rogue():
+class Rogue(Origin):
     def __init__(self):
         self.stats = StatTable(7, 6, 16, 9, 14)
 
@@ -82,7 +96,7 @@ class Rogue():
 
 Base {self.stats}"""
 
-class Ranger():
+class Ranger(Origin):
     def __init__(self):
         self.stats = StatTable(8, 8, 14, 10, 12)
 
@@ -92,7 +106,7 @@ class Ranger():
 
 Base {self.stats}"""
 
-class Wizard():
+class Wizard(Origin):
     def __init__(self):
         self.stats = StatTable(7, 9, 8, 16, 12)
 
@@ -102,7 +116,13 @@ class Wizard():
 
 Base {self.stats}"""
 
-class Human():
+
+class Race():
+    def __init__(self):
+        self.statmods:StatTable
+
+
+class Human(Race):
     def __init__(self):
         self.statmods = StatTable(0, 2, -1, 1, -1)
     
@@ -121,7 +141,7 @@ errors.
 Bonus {self.statmods}"""
 
 
-class NotHuman():
+class NotHuman(Race):
     def __init__(self):
         self.statmods = StatTable(-5, -5, -5, -5, -5)
 
