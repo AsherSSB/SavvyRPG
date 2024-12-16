@@ -114,26 +114,35 @@ class NavigationMenuView(discord.ui.View):
         self.event = asyncio.Event()
         self.choice:int
         self.interaction:discord.Interaction
-        self.add_item(BackButton())
 
     async def wait(self):
             await self.event.wait()
 
-class CharacterView(NavigationMenuView):
+
+class AdventureView(NavigationMenuView):
     def __init__(self):
         super().__init__()
 
-    @discord.ui.button(label="Gear", style=discord.ButtonStyle.success)
-    async def navigate_gear(self, interaction:discord.Interaction, button):
-        self.choice = 0
-        self.interaction = interaction
-        self.event.set()
+    
 
-    @discord.ui.button(label="Inventory", style=discord.ButtonStyle.primary)
-    async def navigate_inventory(self, interaction:discord.Interaction, button):
-        self.choice = 1
-        self.interaction = interaction
-        self.event.set()
+
+class CharacterView(NavigationMenuView):
+    def __init__(self):
+        super().__init__()
+        self.add_item(NavigationMenuButton("Gear", discord.ButtonStyle.success, 0))
+        self.add_item(NavigationMenuButton("Inventory", discord.ButtonStyle.primary, 1))
+        self.add_item(BackButton())
+    # @discord.ui.button(label="Gear", style=discord.ButtonStyle.success)
+    # async def navigate_gear(self, interaction:discord.Interaction, button):
+    #     self.choice = 0
+    #     self.interaction = interaction
+    #     self.event.set()
+
+    # @discord.ui.button(label="Inventory", style=discord.ButtonStyle.primary)
+    # async def navigate_inventory(self, interaction:discord.Interaction, button):
+    #     self.choice = 1
+    #     self.interaction = interaction
+    #     self.event.set()
 
 
 class BackButton(discord.ui.Button):
@@ -142,6 +151,17 @@ class BackButton(discord.ui.Button):
 
     def callback(self, interaction):
         self.view.choice = -1
+        self.view.interaction = interaction
+        self.view.event.set()
+
+
+class NavigationMenuButton(discord.ui.Button):
+    def __init__(self, label, style, choice):
+        super().__init__(style=style, label=label)
+        self.choice = choice
+
+    def callback(self, interaction):
+        self.view.choice = self.choice
         self.view.interaction = interaction
         self.view.event.set()
 
