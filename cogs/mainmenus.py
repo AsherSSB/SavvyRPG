@@ -2,11 +2,20 @@ import discord
 from discord.ext import commands
 import asyncio
 from custom.playable_character import PlayableCharacter
+from cogs.creation import Creator
 
 class MainMenus(commands.Cog):
-    def __init__(self, bot, user_character=None): 
+    def __init__(self, bot): 
         self.bot = bot
-        self.user_character:PlayableCharacter = user_character
+        self.user_character:PlayableCharacter
+
+
+    @discord.app_commands.command(name="playsavvy")
+    async def login(self, interaction:discord.Interaction):
+        login = Creator(self.bot)
+        self.user_character = await login.login(interaction)
+        interaction = login.interaction
+        await self.send_main_menu(interaction)
 
     async def send_main_menu(self, interaction:discord.Interaction):
         embed = MainMenuEmbed()
@@ -26,7 +35,12 @@ class MainMenus(commands.Cog):
         await menus[view.choice](interaction)
 
     async def send_adventure_menu(self, interaction:discord.Interaction):
-        pass
+        embed = AdventureEmbed()
+        view = AdventureView()
+        await interaction.edit_original_response(content="Adventure", embed=embed, view=view)
+        await view.wait()
+        await view.interaction.response.defer()
+        await interaction.edit_original_response(content=view.choice, embed=None, view=None)
 
     async def send_character_menu(self, interaction:discord.Interaction):
         embed = CharacterEmbed(self.user_character)
@@ -99,13 +113,6 @@ class MainMenuButtons(discord.ui.View):
         await self.event.wait()
 
 
-class CharacterEmbed(discord.Embed):
-    def __init__(self, pc:PlayableCharacter):
-        super().__init__(color=discord.Color(0x00ffff), 
-                         title=pc.name, 
-                         description=f"{pc.gender} {pc.race} {pc.origin}")
-        self.add_field(name=f"Level {pc.xp}", value=pc.xp)
-        self.add_field(name="Stats:", value=pc.stats)
 
 
 class NavigationMenuView(discord.ui.View):
@@ -119,11 +126,35 @@ class NavigationMenuView(discord.ui.View):
             await self.event.wait()
 
 
+class AdventureEmbed(discord.Embed):
+    def __init__(self):
+        super().__init__(color=discord.Color(0x00ffff),
+                         title="Adventure",
+                         description="Go on a journey for fame and riches!")
+        self.add_field(name="Campaign", value="Play through the story of Aether", inline=True)
+        self.add_field(name="Dungeons", value="Fight through dungeons solo or with a party", inline=True)
+        self.add_field(name="\u200b", value="\u200b", inline=False)
+        self.add_field(name="Infinity Tower", value="Scale the tower, increased loot the higher you get", inline=True)
+        self.add_field(name="World Boss", value="Help the other champions of Aether slay the world boss", inline=True)
+
+
 class AdventureView(NavigationMenuView):
     def __init__(self):
         super().__init__()
+        self.add_item(NavigationMenuButton("Campaign", discord.ButtonStyle.success, 0))
+        self.add_item(NavigationMenuButton("Dungeons", discord.ButtonStyle.danger, 1))
+        self.add_item(NavigationMenuButton("Infinity Tower", discord.ButtonStyle.primary, 2))
+        self.add_item(NavigationMenuButton("World Boss", discord.ButtonStyle.secondary, 3))
+        self.add_item(BackButton())
 
-    
+
+class CharacterEmbed(discord.Embed):
+    def __init__(self, pc:PlayableCharacter):
+        super().__init__(color=discord.Color(0x00ffff), 
+                         title=pc.name, 
+                         description=f"{pc.gender} {pc.race} {pc.origin}")
+        self.add_field(name=f"Level {pc.xp}", value=pc.xp)
+        self.add_field(name="Stats:", value=pc.stats)
 
 
 class CharacterView(NavigationMenuView):
@@ -132,17 +163,6 @@ class CharacterView(NavigationMenuView):
         self.add_item(NavigationMenuButton("Gear", discord.ButtonStyle.success, 0))
         self.add_item(NavigationMenuButton("Inventory", discord.ButtonStyle.primary, 1))
         self.add_item(BackButton())
-    # @discord.ui.button(label="Gear", style=discord.ButtonStyle.success)
-    # async def navigate_gear(self, interaction:discord.Interaction, button):
-    #     self.choice = 0
-    #     self.interaction = interaction
-    #     self.event.set()
-
-    # @discord.ui.button(label="Inventory", style=discord.ButtonStyle.primary)
-    # async def navigate_inventory(self, interaction:discord.Interaction, button):
-    #     self.choice = 1
-    #     self.interaction = interaction
-    #     self.event.set()
 
 
 class BackButton(discord.ui.Button):
@@ -164,7 +184,6 @@ class NavigationMenuButton(discord.ui.Button):
         self.view.choice = self.choice
         self.view.interaction = interaction
         self.view.event.set()
-
 
 
 async def setup(bot):

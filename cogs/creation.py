@@ -4,21 +4,20 @@ from cogs.database import Database
 import asyncio
 import custom.stattable as origins
 import custom.playable_character as pc
-from cogs.mainmenus import MainMenus
 
 class Creator(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = Database(bot=self.bot)
+        self.interaction:discord.Interaction
 
-    @discord.app_commands.command(name="creation")
-    async def start_character_creation(self, interaction:discord.Interaction):
+    async def login(self, interaction:discord.Interaction):
         if self.db.user_exists(interaction.user.id):
             user_character = self.db.get_character(interaction.user.id)
-            mm = MainMenus(bot=self.bot, user_character=user_character)
-            await mm.send_main_menu(interaction)
+            self.interaction = interaction
+            return user_character
         else:
-            await self.create_character(interaction)
+            return await self.create_character(interaction)
 
     async def create_character(self, interaction:discord.Interaction):
         confirmed = False
@@ -82,8 +81,8 @@ class Creator(commands.Cog):
             interaction = view.interaction
 
         self.db.add_character(interaction.user.id, new_character)
-        mm = MainMenus(bot=self.bot, user_character=new_character)
-        await mm.send_main_menu(interaction)
+        self.interaction = interaction
+        return new_character
 
     async def name_character(self, interaction:discord.Interaction):
         name = await self.send_text_modal(interaction, "Enter Character Name", "Character Name")
