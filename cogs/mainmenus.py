@@ -51,13 +51,29 @@ class MainMenus(commands.Cog):
         await interaction.edit_original_response(content=view.choice, embed=None, view=None)
 
     async def send_market_menu(self, interaction:discord.Interaction):
-        pass
+        embed = MarketEmbed()
+        view = MarketView()
+        await interaction.edit_original_response(content="Market", embed=embed, view=view)
+        await view.wait()
+        await view.interaction.response.defer()
+        await interaction.edit_original_response(content=view.choice, embed=None, view=None)
 
     async def send_social_menu(self, interaction:discord.Interaction):
-        pass
+        embed = SocialEmbed()
+        view = SocialView()
+        await interaction.edit_original_response(content="Social", embed=embed, view=view)
+        await view.wait()
+        await view.interaction.response.defer()
+        await interaction.edit_original_response(content=view.choice, embed=None, view=None)
 
     async def send_tavern_menu(self, interaction:discord.Interaction):
-        pass
+        embed = TavernEmbed()
+        view = TavernView()
+        await interaction.edit_original_response(content="Tavern", embed=embed, view=view)
+        await view.wait()
+        await view.interaction.response.defer()
+        await interaction.edit_original_response(content=view.choice, embed=None, view=None)
+        
 
 
 class MainMenuEmbed(discord.Embed):
@@ -66,7 +82,7 @@ class MainMenuEmbed(discord.Embed):
         self.add_field(name="Adventure", value="Quest to Complete, Chests to Loot, and Monsters to Slay", inline=True)
         self.add_field(name="Character", value="View Character Stats and Inventory", inline=True)
         self.add_field(name="\u200b", value="\u200b", inline=False)
-        self.add_field(name="Shop", value="Buy Items and Equipment", inline=True)
+        self.add_field(name="Market", value="Craft, Buy, Sell, and Unbox Equipment", inline=True)
         self.add_field(name="Social", value="Add Friends, Manage Clan, and Join Groups", inline=True)
         self.add_field(name="\u200b", value="\u200b", inline=False)
         self.add_field(name="Tavern", value="View Quests and Engage in Degeneracy", inline=True)
@@ -91,8 +107,8 @@ class MainMenuButtons(discord.ui.View):
         self.interaction = interaction
         self.event.set()
 
-    @discord.ui.button(label="Shop", style=discord.ButtonStyle.success)
-    async def shop_button(self, interaction:discord.Interaction, button):
+    @discord.ui.button(label="Market", style=discord.ButtonStyle.success)
+    async def market_button(self, interaction:discord.Interaction, button):
         self.choice = 2
         self.interaction = interaction
         self.event.set()
@@ -130,12 +146,12 @@ class AdventureEmbed(discord.Embed):
     def __init__(self):
         super().__init__(color=discord.Color(0x00ffff),
                          title="Adventure",
-                         description="Go on a journey for fame and riches!")
-        self.add_field(name="Campaign", value="Play through the story of Aether", inline=True)
-        self.add_field(name="Dungeons", value="Fight through dungeons solo or with a party", inline=True)
+                         description="Go on a Journey for The and Riches!")
+        self.add_field(name="Campaign", value="Play Through the Story of Aether", inline=True)
+        self.add_field(name="Dungeons", value="Fight Through Dungeons Solo or With a Party", inline=True)
         self.add_field(name="\u200b", value="\u200b", inline=False)
-        self.add_field(name="Infinity Tower", value="Scale the tower, increased loot the higher you get", inline=True)
-        self.add_field(name="World Boss", value="Help the other champions of Aether slay the world boss", inline=True)
+        self.add_field(name="Infinity Tower", value="Scale The Tower, Increased Loot The Higher You Get", inline=True)
+        self.add_field(name="World Boss", value="Help The Other Champions of Aether Slay The World Boss", inline=True)
 
 
 class AdventureView(NavigationMenuView):
@@ -173,6 +189,65 @@ class BackButton(discord.ui.Button):
         self.view.choice = -1
         self.view.interaction = interaction
         self.view.event.set()
+
+
+class MarketEmbed(discord.Embed):
+    def __init__(self):
+        super().__init__(color=discord.Color(0x00ffff), 
+                         title="Market",
+                         description="Visit Merchants to Acquire and Upgrade Gear")
+        self.add_field(name="Blacksmith", value="Buy, Sell, Craft, and Upgrade Armor and Weapons of War", inline=True)
+        self.add_field(name="Enchantress", value="Buy and Sell Magical Items, Enchant Gear, and Socket Gems", inline=True)
+
+
+class MarketView(NavigationMenuView):
+    def __init__(self):
+        super().__init__()
+        self.add_item(NavigationMenuButton("Blacksmith", discord.ButtonStyle.green, 0))
+        self.add_item(NavigationMenuButton("Enchantress", discord.ButtonStyle.blurple, 1))
+        self.add_item(BackButton())
+
+
+class SocialEmbed(discord.Embed):
+    def __init__(self):
+        super().__init__(color=discord.Color(0x00ffff),
+                         title="Social",
+                         description="Manage Friends, Party, and Clan")
+        self.add_field(name="Party", value="View and Manage Current Party", inline=True)
+        self.add_field(name="Friends", value="Manage Friends and View Profiles", inline=True)
+        self.add_field(name="\u200b", value="\u200b", inline=False)
+        self.add_field(name="Clan", value="Join or View Your Clan", inline=True)
+
+
+class SocialView(NavigationMenuView):
+    def __init__(self):
+        super().__init__()
+        self.add_item(NavigationMenuButton("Party", discord.ButtonStyle.blurple, 0))
+        self.add_item(NavigationMenuButton("Friends", discord.ButtonStyle.green, 1))
+        self.add_item(NavigationMenuButton("Clan", discord.ButtonStyle.gray, 2))
+        self.add_item(BackButton())
+
+
+class TavernEmbed(discord.Embed):
+    def __init__(self):
+        super().__init__(color=discord.Color(0x00ffff), 
+                         title="Tavern",
+                         description="View Your Quests or Stay Awhile if You're Feeling Lucky")
+        self.add_field(name="Weeklies", value="View Your Weekly Quests", inline=True)
+        self.add_field(name="Dailies", value="View Your Daily Quests", inline=True)
+        self.add_field(name="\u200b", value="\u200b", inline=False)
+        self.add_field(name="Blackjack", value="A Sum of 21 is All You Need to Win Some Coin", inline=True)
+        self.add_field(name="Slots", value="Spin Some Reels for a Chance to Win Big", inline=True)
+
+
+class TavernView(NavigationMenuView):
+    def __init__(self):
+        super().__init__()
+        self.add_item(NavigationMenuButton("Weeklies", discord.ButtonStyle.blurple, 0))
+        self.add_item(NavigationMenuButton("Dailies", discord.ButtonStyle.blurple, 1))
+        self.add_item(NavigationMenuButton("Blackjack", discord.ButtonStyle.gray, 2))
+        self.add_item(NavigationMenuButton("Slots", discord.ButtonStyle.green, 3))
+        self.add_item(BackButton())
 
 
 class NavigationMenuButton(discord.ui.Button):
