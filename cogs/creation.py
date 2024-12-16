@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from custom.database import Database
+from cogs.database import Database
 import asyncio
 import custom.stattable as origins
 import custom.playable_character as pc
@@ -9,11 +9,18 @@ from cogs.mainmenus import MainMenus
 class Creator(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = Database()
+        self.db = Database(bot=self.bot)
 
     @discord.app_commands.command(name="creation")
+    async def start_character_creation(self, interaction:discord.Interaction):
+        if self.db.user_exists(interaction.user.id):
+            user_character = self.db.get_character(interaction.user.id)
+            mm = MainMenus(bot=self.bot, user_character=user_character)
+            await mm.send_main_menu(interaction)
+        else:
+            await self.create_character(interaction)
+
     async def create_character(self, interaction:discord.Interaction):
-        # TODO: move these all to seperate functions for easy user adjustments
         confirmed = False
         while not confirmed:
             name = await self.name_character(interaction=interaction)
@@ -74,7 +81,8 @@ class Creator(commands.Cog):
             confirmed = view.confirmed
             interaction = view.interaction
 
-        mm = MainMenus(bot=self.bot)
+        self.db.add_character(interaction.user.id, new_character)
+        mm = MainMenus(bot=self.bot, user_character=new_character)
         await mm.send_main_menu(interaction)
 
     async def name_character(self, interaction:discord.Interaction):

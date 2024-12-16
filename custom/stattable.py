@@ -7,7 +7,7 @@ class StatTable():
         self.att = att
 
     def __str__(self):
-        return f"""Stats:
+        return f"""\
 Strength: {self.str}
 Will: {self.wil}
 Dexterity: {self.dex}
@@ -45,7 +45,7 @@ life of freedom, their resourcefulness and resilience their greatest assets. \
 Adaptable and tough, the Nomad is a true testament to endurance, ever seeking \
 the next trial that will push them to their limits.
 
-Base {self.stats}"""
+Base Stats:\n{self.stats}"""
 
     def __str__(self):
         return "Nomad"
@@ -66,7 +66,7 @@ their weapons, they carve through their enemies, \
 their fury unstoppable. These fearless warriors know no mercy, maiming and \
 slaughtering all who dare to stand in their path.
 
-Base {self.stats}"""
+Base Stats:\n{self.stats}"""
 
     def __str__(self):
         return "Barbarian"
@@ -86,7 +86,7 @@ recount tales and adventures of the past. Do not be fooled however, as they \
 are just as capable at handling themselves and fighting off enemies on their \
 own. Versitile and positive, a Bard is a welcome addition to any party.
 
-Base {self.stats}"""
+Base Stats:\n{self.stats}"""
 
     def __str__(self):
         return "Bard"
@@ -97,7 +97,7 @@ class Rogue(Origin):
         self.description = f"""
 # Rogue
 
-Base {self.stats}"""
+Base Stats:\n{self.stats}"""
 
     def __str__(self):
         return "Rogue"
@@ -108,7 +108,7 @@ class Ranger(Origin):
         self.description = f"""
 # Ranger
 
-Base {self.stats}"""
+Base Stats:\n{self.stats}"""
 
     def __str__(self):
         return "Ranger"
@@ -119,7 +119,7 @@ class Wizard(Origin):
         self.description = f"""
 # Wizard
 
-Base {self.stats}"""
+Base Stats:\n{self.stats}"""
 
     def __str__(self):
         return "Wizard"
@@ -145,7 +145,7 @@ good addition to any group, boasting strong physical capacity, loyalty, and an \
 unsatiable thirst for knowledge, though they are prone to awkward and clumsy \
 errors.
 
-Bonus {self.statmods}"""
+Bonus Stats:\n{self.statmods}"""
     
     def __str__(self):
         return "Human"
@@ -154,7 +154,13 @@ Bonus {self.statmods}"""
 class NotHuman(Race):
     def __init__(self):
         self.statmods = StatTable(-5, -5, -5, -5, -5)
-        self.description = f"# Not Human \n\nWhy would you ever pick a non-human? Humans are superior in every way!\n(This is a placeholder)\n\n\"Bonus\" {self.statmods}"
+        self.description = f"# Not Human \n\nWhy would you ever pick a non-human? Humans are superior in every way!\n(This is a placeholder)\n\n\"Bonus\" Stats:\n{self.statmods}"
 
     def __str__(self):
         return "~~Filth~~Not Human"
+    
+
+class OriginsInfo():
+    def __init__(self):
+        self.origins:set = {Nomad(), Bard(), Barbarian(), Rogue(), Ranger(), Wizard()}
+        self.races:set = {Human(), NotHuman()}

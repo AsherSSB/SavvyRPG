@@ -1,21 +1,24 @@
 import discord
 from discord.ext import commands
 import asyncio
+from custom.playable_character import PlayableCharacter
 
 class MainMenus(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, user_character=None): 
         self.bot = bot
+        self.user_character:PlayableCharacter = user_character
 
     async def send_main_menu(self, interaction:discord.Interaction):
         choices = ["Adventure", "Character", "Shop", "Social", "Tavern"]
+        embeds = [None, CharacterEmbed(self.user_character), None, None, None]
+        views = [None, None, None, None, None]
         embed = MainMenuEmbed()
         view = MainMenuButtons()
         await interaction.response.send_message("main menu", embed=embed, view=view)
         await view.wait()
-        await interaction.edit_original_response(content=choices[view.choice], embed=None, view=None)
+        await interaction.edit_original_response(content=choices[view.choice], embed=embeds[view.choice], view=views[view.choice])
         await view.interaction.response.defer()
 
-    
 
 class MainMenuEmbed(discord.Embed):
     def __init__(self, *, title = "Savvy RPG", description = None):
@@ -32,7 +35,7 @@ class MainMenuEmbed(discord.Embed):
 class MainMenuButtons(discord.ui.View):
     def __init__(self):
         super().__init__()
-        self.choice:int
+        self.choice:int = None
         self.interaction:discord.Interaction
         self.event = asyncio.Event()
 
@@ -68,6 +71,14 @@ class MainMenuButtons(discord.ui.View):
 
     async def wait(self):
         await self.event.wait()
+
+
+class CharacterEmbed(discord.Embed):
+    def __init__(self, pc:PlayableCharacter):
+        super().__init__(color=discord.Color(0x00ffff), 
+                         title=pc.name, 
+                         description=f"{pc.gender} {pc.race} {pc.origin}")
+        self.add_field(name="Stats:", value=pc.stats)
 
 
 async def setup(bot):
