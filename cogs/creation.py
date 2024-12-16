@@ -76,42 +76,6 @@ class Creator(commands.Cog):
 
         mm = MainMenus(bot=self.bot)
         await mm.send_main_menu(interaction)
-        
-
-
-    @discord.app_commands.command(name="originstest")
-    async def origins_test(self, interaction:discord.Interaction):
-        view = OriginView()
-        await interaction.response.send_message(content="Select Class:", view=view)
-        await view.wait()
-        await view.interaction.response.defer()
-        conview = ConfirmationView()
-        await interaction.edit_original_response(content=view.origin, view=conview)
-        await conview.wait()
-        if conview.confirmed:
-            await interaction.delete_original_response()
-            interaction = conview.interaction
-            await interaction.response.send_message("confirmed class")
-        else:
-            await conview.interaction.response.defer()
-            await interaction.edit_original_response(content="cancelled")
-    
-    @discord.app_commands.command(name="racetest")
-    async def race_test(self, interaction:discord.Interaction):
-        view = RaceView()
-        await interaction.response.send_message(content="Select Race:", view=view)
-        await view.wait()
-        await view.interaction.response.defer()
-        conview = ConfirmationView()
-        await interaction.edit_original_response(content=view.race, view=conview)
-        await conview.wait()
-        if conview.confirmed:
-            await interaction.delete_original_response()
-            interaction = conview.interaction
-            await interaction.response.send_message("confirmed race")
-        else:
-            await conview.interaction.response.defer()
-            await interaction.edit_original_response(content="cancelled")
 
     async def name_character(self, interaction:discord.Interaction):
         name = await self.send_text_modal(interaction, "Enter Character Name", "Character Name")
