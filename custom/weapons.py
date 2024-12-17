@@ -1,5 +1,13 @@
-class Weapon:
-    def __init__(self, dmg, rng, cc, cm, acc, slots):
+class Item():
+    def __init__(self, value:int, quantity:int, stack_size:int):
+        self.value = value
+        self.stack_size = stack_size
+        self.quantity = quantity
+
+
+class Weapon(Item):
+    def __init__(self, value, dmg, rng, cc, cm, acc, slots):
+        super().__init__(value, quantity=1, stack_size=1)
         self.dmg:int = dmg
         self.rng:int = rng
         self.cc:float = cc
