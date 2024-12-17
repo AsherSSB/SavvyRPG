@@ -62,13 +62,29 @@ class MainMenus(commands.Cog):
         view = CharacterView()
         await interaction.edit_original_response(content="Character", embed=embed, view=view)
         await view.wait()
-        await view.interaction.response.defer()
         if view.choice == -1:
+            await view.interaction.response.defer()
             await self.send_main_menu(interaction)
+        if view.choice == 2:
+            interaction = view.interaction
+            await self.confirm_character_deletion(interaction)
         else:
+            await view.interaction.response.defer()
             await self.send_under_construction(interaction)
             await self.send_character_menu(interaction)
 
+    async def confirm_character_deletion(self, interaction:discord.Interaction):
+        name = self.user_character.name.upper()
+        modal = SingleTextSubmission("ARE YOU SURE?", f"Type \"{name}\" and submit to delete character")
+        await interaction.response.send_modal(modal)
+        await modal.wait()
+        interaction = modal.interaction
+        if modal.textinput.value == name:
+            await self.db.delete_character(interaction)
+        else:
+            await interaction.response.send_message("Names do Not Match, Returning to Character Menu")
+            await asyncio.sleep(2.5)
+            await self.send_character_menu(interaction)
 
     async def send_market_menu(self, interaction:discord.Interaction):
         embed = MarketEmbed()
@@ -149,7 +165,7 @@ class MainMenus(commands.Cog):
 
 
 class MainMenuEmbed(discord.Embed):
-    def __init__(self, *, title = "Savvy RPG", description = "Pre-Alpha v0.0.1"):
+    def __init__(self, *, title = "Savvy RPG", description = "Pre-Alpha v0.0.2: Now With Gambling!"):
         super().__init__(title=title, description=description, color=discord.Color(0x00ffff))
         self.add_field(name="Adventure", value="Quest to Complete, Chests to Loot, and Monsters to Slay", inline=True)
         self.add_field(name="Character", value="View Character Stats and Inventory", inline=True)
@@ -248,6 +264,7 @@ class CharacterView(NavigationMenuView):
         super().__init__()
         self.add_item(NavigationMenuButton("Gear", discord.ButtonStyle.success, 0))
         self.add_item(NavigationMenuButton("Inventory", discord.ButtonStyle.primary, 1))
+        self.add_item(NavigationMenuButton("Delete Character", discord.ButtonStyle.danger, 2))
         self.add_item(BackButton())
 
 
@@ -335,6 +352,23 @@ class PlaceholderView(NavigationMenuView):
     def __init__(self):
         super().__init__()
         self.add_item(BackButton())
+
+
+class SingleTextSubmission(discord.ui.Modal):
+    def __init__(self, title, label):
+        super().__init__(title=title)
+        self.textinput = discord.ui.TextInput(label=label, required=True)
+        self.add_item(self.textinput)
+        self.event = asyncio.Event()
+        self.interaction:discord.Interaction
+
+    async def on_submit(self, interaction:discord.Interaction):
+        self.interaction = interaction
+        self.event.set()
+
+    async def wait(self):
+        await self.event.wait()
+
 
 async def setup(bot):
     await bot.add_cog(MainMenus(bot))

@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 import custom.playable_character as pc
 import custom.stattable as origins
+import asyncio
 
 
 class Database(commands.Cog):
@@ -19,11 +20,12 @@ class Database(commands.Cog):
                                     port="5432")
         self.cur = self.conn.cursor()
 
-    @discord.app_commands.command(name="deletechar")
     async def delete_character(self, interaction:discord.Interaction):
         self.cur.execute("DELETE FROM characters WHERE user_id = %s;", (interaction.user.id,))
         self.conn.commit()
         await interaction.response.send_message("Character deleted")
+        await asyncio.sleep(2.0)
+        await interaction.delete_original_response() 
 
     def add_character(self, uid, character):
         self.cur.execute("""

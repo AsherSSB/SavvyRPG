@@ -65,11 +65,6 @@ class Blackjack(commands.Cog):
         self.db = Database(self.bot)
         random.seed()
 
-    # TODO: delete after integration with RPG
-    @discord.app_commands.command(name="blackjacktest")
-    async def test_blackjack(self, interaction:discord.Interaction):
-        await self.play_blackjack(interaction)
-
     async def play_blackjack(self, interaction:discord.Interaction):
         view = BetView()
         await interaction.response.send_message(f"Your Gold:{self.gold}\nPlace Your Bet", view=view)
