@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import random
 import asyncio
+from cogs.database import Database
 
 class Card:
     def __init__(self, suit, rank, value):
@@ -24,6 +25,7 @@ class Hand:
             strhand += f"\n{cards}"
         strhand += f"\nTotal Value: {self.value}"
         return strhand
+
 
 class Player:
     def __init__(self):
@@ -48,7 +50,7 @@ class Player:
         if len(self.hand.cards) == 2 and self.hand.cards[0].rank == self.hand.cards[1].rank:
             self.can_split = True
 
-
+# TODO: detect when timout and subtract player gold from db
 class Blackjack(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -61,9 +63,26 @@ class Blackjack(commands.Cog):
         random.seed()
 
     # TODO: delete after integration with RPG
-    @discord.app_commands.command(name="play_blackjack")
+    @discord.app_commands.command(name="blackjacktest")
+    async def test_blackjack(self, interaction:discord.Interaction):
+        await self.play_blackjack(interaction)
+
     async def play_blackjack(self, interaction:discord.Interaction):
-        await self.start_blackjack_game(interaction=interaction)
+        # TODO: player gold connection
+        view = BetView()
+        await interaction.response.send_message("Place Your Bet", view=view)
+        await view.wait()
+        interaction = view.interaction
+        if view.choice == -1:
+            # TODO: go back to tavern menu
+            pass
+        elif view.choice == 0:
+            # TODO: send modal for bet placement and retrieve new interaction
+            await self.start_blackjack_game(interaction=interaction)
+        else:
+            self.db.add_gold(interaction.user.id, 100)
+            self.play_blackjack(interaction)
+            pass
 
     async def start_blackjack_game(self, interaction:discord.Interaction):
         player = self.deal_in_player()
@@ -291,6 +310,40 @@ class ContinueView(discord.ui.View):
 
     async def wait(self):
         await self.event.wait()
+
+
+class BetView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.interaction:discord.Interaction
+        self.event = asyncio.Event()
+        self.choice:int
+        self.add_item(BackButton())
+    
+    @discord.ui.button(label="Bet", style=discord.ButtonStyle.green)
+    async def bet_button(self, interaction:discord.Interaction, button):
+        self.choice = 0
+        self.interaction = interaction
+        self.event.set()
+    
+    @discord.ui.button(label="Give Money", style=discord.ButtonStyle.blurple)
+    async def money_button(self, interaction:discord.Interaction, button):
+        self.choice = 1
+        self.interaction = interaction
+        self.event.set()
+
+    async def wait(self):
+        await self.event.wait()
+
+
+class BackButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(style=discord.ButtonStyle.danger, label="Back")
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.choice = -1
+        self.view.interaction = interaction
+        self.view.event.set()
 
 
 async def setup(bot):

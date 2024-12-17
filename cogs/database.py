@@ -27,11 +27,11 @@ class Database(commands.Cog):
 
     def add_character(self, uid, character):
         self.cur.execute("""
-            INSERT INTO characters (user_id, name, gender, race, origin, strength, will, dexterity, intelligence, attunement, xp)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+            INSERT INTO characters (user_id, name, gender, race, origin, strength, will, dexterity, intelligence, attunement, xp, gold)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """, (uid, character.name, character.gender, str(character.race), str(character.origin),
               character.stats.str, character.stats.wil, character.stats.dex,
-              character.stats.int, character.stats.att, character.xp))
+              character.stats.int, character.stats.att, character.xp, character.gold))
         self.conn.commit()
 
     def user_exists(self, user_id):
@@ -40,16 +40,14 @@ class Database(commands.Cog):
         """, (user_id,))
         return self.cur.fetchone()[0]
 
-
     def get_character(self, uid):
         self.cur.execute("""
-            SELECT name, gender, race, origin, strength, will, dexterity, intelligence, attunement, xp
+            SELECT name, gender, race, origin, strength, will, dexterity, intelligence, attunement, xp, gold
             FROM characters
             WHERE user_id = %s;
         """, (uid,))
         row = self.cur.fetchone()
         if row:
-            
             return pc.PlayableCharacter(
                 name=row[0],
                 gender=row[1],
@@ -62,9 +60,18 @@ class Database(commands.Cog):
                     row[7],
                     row[8]
                 ),
-                xp=row[9]
+                xp=row[9],
+                gold=row[10]
             )
         return None
+
+    def add_gold(self, user_id, amount):
+        self.cur.execute("""
+            UPDATE characters
+            SET gold = gold + %s
+            WHERE user_id = %s;
+        """, (amount, user_id))
+        self.conn.commit()
 
 async def setup(bot):
     await bot.add_cog(Database(bot))

@@ -3,6 +3,8 @@ from discord.ext import commands
 import asyncio
 from custom.playable_character import PlayableCharacter
 from cogs.creation import Creator
+from cogs.blackjack import Blackjack
+# TODO: import bug on blackjack????
 
 UNDER_CONSTRUCTION:str = "This area is still under construction. Come back later when it is finished!"
 
@@ -12,6 +14,9 @@ class MainMenus(commands.Cog):
         self.user_character:PlayableCharacter
 
     @discord.app_commands.command(name="playsavvy")
+    async def initialize_game(self, interaction:discord.Interaction):
+        await self.login(interaction)
+
     async def login(self, interaction:discord.Interaction):
         login = Creator(self.bot)
         self.user_character = await login.login(interaction)
@@ -90,10 +95,8 @@ class MainMenus(commands.Cog):
     async def send_tavern_menu(self, interaction:discord.Interaction):
         activities = {
             -1: self.send_main_menu,
-            1: self.send_character_menu,
-            2: self.send_market_menu,
-            3: self.send_social_menu,
-            4: self.send_tavern_menu
+            2: self.sendto_blackjack,
+            3: self.sendto_slots
         }
         embed = TavernEmbed()
         view = TavernView()
@@ -107,6 +110,12 @@ class MainMenus(commands.Cog):
             await self.send_under_construction(interaction)
             await self.send_tavern_menu(interaction)
 
+    async def sendto_blackjack(self, interaction:discord.Interaction):
+        pass
+
+    async def sendto_slots(self, interaction:discord.Interaction):
+        pass
+
     async def send_under_construction(self, interaction:discord.Interaction):
         view = PlaceholderView()
         await interaction.edit_original_response(content=UNDER_CONSTRUCTION, view=view, embed=None)
@@ -115,7 +124,7 @@ class MainMenus(commands.Cog):
 
 
 class MainMenuEmbed(discord.Embed):
-    def __init__(self, *, title = "Savvy RPG", description = "Pre-Alpha v0.01"):
+    def __init__(self, *, title = "Savvy RPG", description = "Pre-Alpha v0.0.1"):
         super().__init__(title=title, description=description, color=discord.Color(0x00ffff))
         self.add_field(name="Adventure", value="Quest to Complete, Chests to Loot, and Monsters to Slay", inline=True)
         self.add_field(name="Character", value="View Character Stats and Inventory", inline=True)
@@ -205,7 +214,7 @@ class CharacterEmbed(discord.Embed):
         super().__init__(color=discord.Color(0x00ffff), 
                          title=pc.name, 
                          description=f"{pc.gender} {pc.race} {pc.origin}")
-        self.add_field(name=f"Level {pc.xp}", value=f"xp: pc.xp")
+        self.add_field(name=f"Level {pc.xp}", value=f"xp: {pc.xp}\n{pc.gold}: ")
         self.add_field(name="Stats:", value=pc.stats)
 
 

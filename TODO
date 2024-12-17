@@ -1,2 +1,12 @@
-- Link main menus together and to external menus
-- back button view refreshes interaction
+- Finish implementing sendto_blackjack and sendto_slots
+- Add blurbs to all starting classes
+- Add delete button to character screen
+- Add gold column to characters table
+
+
+
+
+- Add proper xp system
+- Add singleplayer combat
+- Add multiplayer combat
+- Add Opening dialogue with combat tutorial (once combat finished development)
