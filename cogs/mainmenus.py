@@ -4,6 +4,7 @@ import asyncio
 from custom.playable_character import PlayableCharacter
 from cogs.creation import Creator
 from cogs.blackjack import Blackjack
+from cogs.database import Database
 # TODO: import bug on blackjack????
 
 UNDER_CONSTRUCTION:str = "This area is still under construction. Come back later when it is finished!"
@@ -12,6 +13,7 @@ class MainMenus(commands.Cog):
     def __init__(self, bot): 
         self.bot = bot
         self.user_character:PlayableCharacter
+        self.db = Database(self.bot)
 
     @discord.app_commands.command(name="playsavvy")
     async def initialize_game(self, interaction:discord.Interaction):
@@ -94,24 +96,32 @@ class MainMenus(commands.Cog):
     # TODO: This works, spread
     async def send_tavern_menu(self, interaction:discord.Interaction):
         activities = {
-            -1: self.send_main_menu,
             2: self.sendto_blackjack,
-            3: self.sendto_slots
+            3: self.sendto_slots,
         }
         embed = TavernEmbed()
         view = TavernView()
         await interaction.edit_original_response(content="Tavern", embed=embed, view=view)
         await view.wait()
-        await view.interaction.response.defer()
         
-        if view.choice == -1:
+        if view.choice in activities:
+            await activities[view.choice](interaction=view.interaction)
+        elif view.choice == -1:
+            await view.interaction.response.defer()
             await self.send_main_menu(interaction)
         else:
+            await view.interaction.response.defer()
             await self.send_under_construction(interaction)
             await self.send_tavern_menu(interaction)
 
     async def sendto_blackjack(self, interaction:discord.Interaction):
-        pass
+        blackjack = Blackjack(self.bot, self.user_character.gold)
+        finishing_gold = await blackjack.play_blackjack(interaction)
+        self.user_character.gold = finishing_gold
+        self.db.set_gold(interaction.user.id, finishing_gold)
+        interaction = blackjack.interaction
+        await interaction.response.send_message("Loading...")
+        await self.send_tavern_menu(interaction)
 
     async def sendto_slots(self, interaction:discord.Interaction):
         pass
@@ -121,6 +131,13 @@ class MainMenus(commands.Cog):
         await interaction.edit_original_response(content=UNDER_CONSTRUCTION, view=view, embed=None)
         await view.wait()
         await view.interaction.response.defer()
+
+    async def cleanup(self):
+        self.db.conn.close
+        self.db.cur.close
+
+    async def cog_unload(self):
+        await self.cleanup()
 
 
 class MainMenuEmbed(discord.Embed):

@@ -52,7 +52,7 @@ class Player:
 
 # TODO: detect when timout and subtract player gold from db
 class Blackjack(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, gold=0):
         self.bot = bot
         self.values = {
             "Ace": 11, "Two": 2, "Three": 3, "Four": 4, "Five": 5, "Six": 6,
@@ -60,6 +60,9 @@ class Blackjack(commands.Cog):
         }
         self.suits = ["Hearts", "Spades", "Clubs", "Diamonds"]
         self.ranks = ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"]
+        self.gold:int = gold
+        self.interaction:discord
+        self.db = Database(self.bot)
         random.seed()
 
     # TODO: delete after integration with RPG
@@ -68,21 +71,46 @@ class Blackjack(commands.Cog):
         await self.play_blackjack(interaction)
 
     async def play_blackjack(self, interaction:discord.Interaction):
-        # TODO: player gold connection
         view = BetView()
-        await interaction.response.send_message("Place Your Bet", view=view)
+        await interaction.response.send_message(f"Your Gold:{self.gold}\nPlace Your Bet", view=view)
         await view.wait()
         interaction = view.interaction
         if view.choice == -1:
-            # TODO: go back to tavern menu
-            pass
+            self.interaction = interaction
+            return self.gold
         elif view.choice == 0:
             # TODO: send modal for bet placement and retrieve new interaction
-            await self.start_blackjack_game(interaction=interaction)
+            modal = SingleTextSubmission("Place Bet Amount", "Gold")
+            await interaction.response.send_modal(modal)
+            await modal.wait()
+            interaction = modal.interaction
+            try:
+                bet_amount = int(modal.textinput.value)
+                if bet_amount < 0 or bet_amount > self.gold:
+                    raise ValueError
+                player_won = await self.start_blackjack_game(interaction=interaction)
+                if player_won:
+                    self.gold = int(self.gold + bet_amount * (3/2))
+                else:
+                    self.gold -= bet_amount
+                view = BackView()
+                await interaction.edit_original_response(view=view)
+                await view.wait()
+                interaction = view.interaction
+                await self.play_blackjack(interaction)
+            except ValueError:
+                view = BackView()
+                await interaction.response.send_message("You must enter a positive whole number which you can afford", view=view)
+                await view.wait()
+                interaction = view.interaction
+                await self.play_blackjack(interaction)
+
         else:
             self.db.add_gold(interaction.user.id, 100)
-            self.play_blackjack(interaction)
-            pass
+            self.gold += 100
+            await self.play_blackjack(interaction)
+        
+        return self.gold
 
     async def start_blackjack_game(self, interaction:discord.Interaction):
         player = self.deal_in_player()
@@ -91,18 +119,8 @@ class Blackjack(commands.Cog):
         else:
             player_won = True
             await interaction.response.send_message(f"{player.hand}\n\n Blackjack! You Win!")
-        # TODO: payout player based on win
         await asyncio.sleep(2.0)
-        view = ContinueView()
-        await interaction.edit_original_response(content="Play Again?", view=view)
-        await view.wait()
-        if view.choice: 
-            await interaction.delete_original_response()
-            await self.start_blackjack_game(interaction=view.interaction)
-        # TODO: placeholder for navigation back to main menu
-        else: 
-            await view.interaction.response.defer()
-            await interaction.delete_original_response()
+        return player_won
 
     async def try_burn_ace(self, interaction:discord.Interaction, player:Player):
         if player.can_burn_ace():
@@ -251,6 +269,13 @@ class Blackjack(commands.Cog):
     def get_rank_value(self, rank) -> int:
         return self.values[rank]
 
+    async def cleanup(self):
+        self.db.conn.close
+        self.db.cur.close
+
+    async def cog_unload(self):
+        await self.cleanup()
+
 
 class GameView(discord.ui.View):
     def __init__(self, can_split:bool):
@@ -336,6 +361,18 @@ class BetView(discord.ui.View):
         await self.event.wait()
 
 
+class BackView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.interaction:discord.Interaction
+        self.event = asyncio.Event()
+        self.choice:int
+        self.add_item(BackButton())
+
+    async def wait(self):
+        await self.event.wait()
+
+
 class BackButton(discord.ui.Button):
     def __init__(self):
         super().__init__(style=discord.ButtonStyle.danger, label="Back")
@@ -344,6 +381,22 @@ class BackButton(discord.ui.Button):
         self.view.choice = -1
         self.view.interaction = interaction
         self.view.event.set()
+
+
+class SingleTextSubmission(discord.ui.Modal):
+    def __init__(self, title, label):
+        super().__init__(title=title)
+        self.textinput = discord.ui.TextInput(label=label, required=True)
+        self.add_item(self.textinput)
+        self.event = asyncio.Event()
+        self.interaction:discord.Interaction
+
+    async def on_submit(self, interaction:discord.Interaction):
+        self.interaction = interaction
+        self.event.set()
+
+    async def wait(self):
+        await self.event.wait()
 
 
 async def setup(bot):

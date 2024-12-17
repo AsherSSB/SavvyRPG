@@ -73,6 +73,16 @@ class Database(commands.Cog):
         """, (amount, user_id))
         self.conn.commit()
 
+    def set_gold(self, user_id, amount):
+        if amount is not None:
+            self.cur.execute("""
+                UPDATE characters
+                SET gold = %s
+                WHERE user_id = %s
+            """, (amount, user_id))
+            self.conn.commit()
+
+
 async def setup(bot):
     await bot.add_cog(Database(bot))
 
