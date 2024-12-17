@@ -7,6 +7,7 @@ import custom.playable_character as pc
 import custom.stattable as origins
 import asyncio
 
+# TODO: refactor db to store stats as jsonb
 class Database(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -79,6 +80,15 @@ class Database(commands.Cog):
             self.cur.execute("""
                 UPDATE characters
                 SET gold = %s
+                WHERE user_id = %s
+            """, (amount, user_id))
+            self.conn.commit()
+
+    def set_xp(self, user_id, amount):
+        if amount is not None:
+            self.cur.execute("""
+                UPDATE characters
+                SET xp = %s
                 WHERE user_id = %s
             """, (amount, user_id))
             self.conn.commit()

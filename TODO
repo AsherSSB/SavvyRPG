@@ -1,7 +1,12 @@
-- Add blurbs to all starting classes
-
-- Detect timeout for slots and blackjack
 - Add proper xp system
-- Add singleplayer combat
-- Add multiplayer combat
+- Add Combat
+- Add Inventory system (store as json in db)
+- Add blacksmith and enchantress menus
+    - Give Blacksmith and Enchantress inventory
+    - Buy, Sell Functionality
+
+- make menus ephemeral
+- first time user menu tutorial
+- refactor db to hold stats as jsonb
+- Detect timeout for slots and blackjack
 - Add Opening dialogue with combat tutorial (once combat finished development)

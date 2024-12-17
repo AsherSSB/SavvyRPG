@@ -161,7 +161,7 @@ class MainMenus(commands.Cog):
 
 
 class MainMenuEmbed(discord.Embed):
-    def __init__(self, *, title = "Savvy RPG", description = "Pre-Alpha v0.0.2: Now With Gambling!"):
+    def __init__(self, *, title = "Savvy RPG", description = "Pre-Alpha v0.0.3: Now With Gambling!"):
         super().__init__(title=title, description=description, color=discord.Color(0x00ffff))
         self.add_field(name="Adventure", value="Quest to Complete, Chests to Loot, and Monsters to Slay", inline=True)
         self.add_field(name="Character", value="View Character Stats and Inventory", inline=True)
@@ -251,7 +251,7 @@ class CharacterEmbed(discord.Embed):
         super().__init__(color=discord.Color(0x00ffff), 
                          title=pc.name, 
                          description=f"{pc.gender} {pc.race} {pc.origin}")
-        self.add_field(name=f"Level {pc.xp}", value=f"xp: {pc.xp}\n{pc.gold}: ")
+        self.add_field(name=f"Level {pc.level}", value=f"Xp: {pc.level_progress()} / {pc.xp_for_next_level()}\nGold: {pc.gold}g")
         self.add_field(name="Stats:", value=pc.stats)
 
 
