@@ -6,7 +6,6 @@ from cogs.creation import Creator
 from cogs.blackjack import Blackjack
 from cogs.database import Database
 from cogs.slots import Slots
-# TODO: import bug on blackjack????
 
 UNDER_CONSTRUCTION:str = "This area is still under construction. Come back later when it is finished!"
 
@@ -44,7 +43,6 @@ class MainMenus(commands.Cog):
         # interaction not refreshed, edit only
         await menus[view.choice](interaction)
 
-    # TODO: link menus together
     async def send_adventure_menu(self, interaction:discord.Interaction):
         embed = AdventureEmbed()
         view = AdventureView()
@@ -110,7 +108,6 @@ class MainMenus(commands.Cog):
             await self.send_under_construction(interaction)
             await self.send_social_menu(interaction)
 
-    # TODO: This works, spread
     async def send_tavern_menu(self, interaction:discord.Interaction):
         activities = {
             2: self.sendto_blackjack,
@@ -155,7 +152,6 @@ class MainMenus(commands.Cog):
         await view.wait()
         await view.interaction.response.defer()
         
-
     async def cleanup(self):
         self.db.conn.close
         self.db.cur.close

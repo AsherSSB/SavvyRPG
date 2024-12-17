@@ -7,7 +7,6 @@ import custom.playable_character as pc
 import custom.stattable as origins
 import asyncio
 
-
 class Database(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
