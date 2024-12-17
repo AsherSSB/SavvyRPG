@@ -4,23 +4,25 @@ import asyncio
 from custom.playable_character import PlayableCharacter
 from cogs.creation import Creator
 
+UNDER_CONSTRUCTION:str = "This area is still under construction. Come back later when it is finished!"
+
 class MainMenus(commands.Cog):
     def __init__(self, bot): 
         self.bot = bot
         self.user_character:PlayableCharacter
-
 
     @discord.app_commands.command(name="playsavvy")
     async def login(self, interaction:discord.Interaction):
         login = Creator(self.bot)
         self.user_character = await login.login(interaction)
         interaction = login.interaction
+        await interaction.response.send_message(content="Loading...")
         await self.send_main_menu(interaction)
 
     async def send_main_menu(self, interaction:discord.Interaction):
         embed = MainMenuEmbed()
         view = MainMenuButtons()
-        await interaction.response.send_message("main menu", embed=embed, view=view)
+        await interaction.edit_original_response(content="main menu", embed=embed, view=view)
         await view.wait()
         # TODO: may want to switch interaction here if timing out
         await view.interaction.response.defer()
@@ -34,13 +36,18 @@ class MainMenus(commands.Cog):
         # interaction not refreshed, edit only
         await menus[view.choice](interaction)
 
+    # TODO: link menus together
     async def send_adventure_menu(self, interaction:discord.Interaction):
         embed = AdventureEmbed()
         view = AdventureView()
         await interaction.edit_original_response(content="Adventure", embed=embed, view=view)
         await view.wait()
         await view.interaction.response.defer()
-        await interaction.edit_original_response(content=view.choice, embed=None, view=None)
+        if view.choice == -1:
+            await self.send_main_menu(interaction)
+        else:
+            await self.send_under_construction(interaction)
+            await self.send_adventure_menu(interaction)
 
     async def send_character_menu(self, interaction:discord.Interaction):
         embed = CharacterEmbed(self.user_character)
@@ -48,7 +55,12 @@ class MainMenus(commands.Cog):
         await interaction.edit_original_response(content="Character", embed=embed, view=view)
         await view.wait()
         await view.interaction.response.defer()
-        await interaction.edit_original_response(content=view.choice, embed=None, view=None)
+        if view.choice == -1:
+            await self.send_main_menu(interaction)
+        else:
+            await self.send_under_construction(interaction)
+            await self.send_character_menu(interaction)
+
 
     async def send_market_menu(self, interaction:discord.Interaction):
         embed = MarketEmbed()
@@ -56,7 +68,11 @@ class MainMenus(commands.Cog):
         await interaction.edit_original_response(content="Market", embed=embed, view=view)
         await view.wait()
         await view.interaction.response.defer()
-        await interaction.edit_original_response(content=view.choice, embed=None, view=None)
+        if view.choice == -1:
+            await self.send_main_menu(interaction)
+        else:
+            await self.send_under_construction(interaction)
+            await self.send_market_menu(interaction)
 
     async def send_social_menu(self, interaction:discord.Interaction):
         embed = SocialEmbed()
@@ -64,20 +80,42 @@ class MainMenus(commands.Cog):
         await interaction.edit_original_response(content="Social", embed=embed, view=view)
         await view.wait()
         await view.interaction.response.defer()
-        await interaction.edit_original_response(content=view.choice, embed=None, view=None)
+        if view.choice == -1:
+            await self.send_main_menu(interaction)
+        else:
+            await self.send_under_construction(interaction)
+            await self.send_social_menu(interaction)
 
+    # TODO: This works, spread
     async def send_tavern_menu(self, interaction:discord.Interaction):
+        activities = {
+            -1: self.send_main_menu,
+            1: self.send_character_menu,
+            2: self.send_market_menu,
+            3: self.send_social_menu,
+            4: self.send_tavern_menu
+        }
         embed = TavernEmbed()
         view = TavernView()
         await interaction.edit_original_response(content="Tavern", embed=embed, view=view)
         await view.wait()
         await view.interaction.response.defer()
-        await interaction.edit_original_response(content=view.choice, embed=None, view=None)
         
+        if view.choice == -1:
+            await self.send_main_menu(interaction)
+        else:
+            await self.send_under_construction(interaction)
+            await self.send_tavern_menu(interaction)
+
+    async def send_under_construction(self, interaction:discord.Interaction):
+        view = PlaceholderView()
+        await interaction.edit_original_response(content=UNDER_CONSTRUCTION, view=view, embed=None)
+        await view.wait()
+        await view.interaction.response.defer()
 
 
 class MainMenuEmbed(discord.Embed):
-    def __init__(self, *, title = "Savvy RPG", description = None):
+    def __init__(self, *, title = "Savvy RPG", description = "Pre-Alpha v0.01"):
         super().__init__(title=title, description=description, color=discord.Color(0x00ffff))
         self.add_field(name="Adventure", value="Quest to Complete, Chests to Loot, and Monsters to Slay", inline=True)
         self.add_field(name="Character", value="View Character Stats and Inventory", inline=True)
@@ -129,8 +167,6 @@ class MainMenuButtons(discord.ui.View):
         await self.event.wait()
 
 
-
-
 class NavigationMenuView(discord.ui.View):
     def __init__(self):
         super().__init__()
@@ -169,7 +205,7 @@ class CharacterEmbed(discord.Embed):
         super().__init__(color=discord.Color(0x00ffff), 
                          title=pc.name, 
                          description=f"{pc.gender} {pc.race} {pc.origin}")
-        self.add_field(name=f"Level {pc.xp}", value=pc.xp)
+        self.add_field(name=f"Level {pc.xp}", value=f"xp: pc.xp")
         self.add_field(name="Stats:", value=pc.stats)
 
 
@@ -185,7 +221,7 @@ class BackButton(discord.ui.Button):
     def __init__(self):
         super().__init__(style=discord.ButtonStyle.danger, label="Back")
 
-    def callback(self, interaction):
+    async def callback(self, interaction: discord.Interaction):
         self.view.choice = -1
         self.view.interaction = interaction
         self.view.event.set()
@@ -255,11 +291,16 @@ class NavigationMenuButton(discord.ui.Button):
         super().__init__(style=style, label=label)
         self.choice = choice
 
-    def callback(self, interaction):
+    async def callback(self, interaction):
         self.view.choice = self.choice
         self.view.interaction = interaction
         self.view.event.set()
 
+
+class PlaceholderView(NavigationMenuView):
+    def __init__(self):
+        super().__init__()
+        self.add_item(BackButton())
 
 async def setup(bot):
     await bot.add_cog(MainMenus(bot))
