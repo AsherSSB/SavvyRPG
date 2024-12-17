@@ -74,7 +74,6 @@ class Blackjack(commands.Cog):
             self.interaction = interaction
             return self.gold
         elif view.choice == 0:
-            # TODO: send modal for bet placement and retrieve new interaction
             modal = SingleTextSubmission("Place Bet Amount", "Gold")
             await interaction.response.send_modal(modal)
             await modal.wait()

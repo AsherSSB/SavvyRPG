@@ -97,6 +97,15 @@ class Rogue(Origin):
         self.description = f"""
 # Rogue
 
+Rogues are daring coldblooded killers who rely on precision, agility, and \
+cunning to eliminate their foes with ruthless efficiency. Masters of stealth \
+and deception, rogues use their keen instincts and \
+deadly skills to turn the tide of any encounter. Whether as skilled assassins, \
+or sly thieves, rogues navigate dangerous situations with a \
+mix of clever tricks and lethal force. Their quick reflexes and unparalleled \
+adaptability allow them to exploit the weaknesses of their enemies, making \
+them feared adversaries in combat and invaluable allies in any covert operation.
+
 Base Stats:\n{self.stats}"""
 
     def __str__(self):
@@ -108,6 +117,15 @@ class Ranger(Origin):
         self.description = f"""
 # Ranger
 
+Rangers are nimble and resourceful warriors who thrive in the wild, using \
+their keen senses, survival instincts, and unmatched adaptability to \
+overcome any challenge. Masters of both bow and blade, they excel at striking \
+from a distance or engaging in close combat when necessary. Rangers are expert \
+trackers and scouts, able to navigate treacherous terrain and hunt their prey \
+with precision. Whether lining up the perfect shot, setting traps, or stalking \
+their enemies, rangers rely on their sharp instincts, survival skills, and \
+unmatched knowledge of the land to outlast and outmaneuver their foes.
+
 Base Stats:\n{self.stats}"""
 
     def __str__(self):
@@ -118,6 +136,16 @@ class Wizard(Origin):
         self.stats = StatTable(7, 9, 8, 16, 12)
         self.description = f"""
 # Wizard
+
+Wizards are scholars who devote their lives to the pursuit of knowledge and \
+mastery of the arcane arts. Through rigorous study and discipline, wizards \
+unlock the secrets of magic, bending reality to their will with carefully \
+prepared spells. They wield their vast intellect to understand the \
+fundamental forces of the world and harness them in battle. Wizards rely on \
+spellbooks to store their hard-earned knowledge, and their power grows as they \
+uncover new spells and delve deeper into arcane mysteries. Whether deciphering \
+ancient tomes, unraveling curses, or unleashing devastating spells, wizards \
+are the embodiment of magical proficiency and unparalleled intellect.
 
 Base Stats:\n{self.stats}"""
 
