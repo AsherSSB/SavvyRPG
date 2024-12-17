@@ -5,6 +5,7 @@ from custom.playable_character import PlayableCharacter
 from cogs.creation import Creator
 from cogs.blackjack import Blackjack
 from cogs.database import Database
+from cogs.slots import Slots
 # TODO: import bug on blackjack????
 
 UNDER_CONSTRUCTION:str = "This area is still under construction. Come back later when it is finished!"
@@ -124,13 +125,20 @@ class MainMenus(commands.Cog):
         await self.send_tavern_menu(interaction)
 
     async def sendto_slots(self, interaction:discord.Interaction):
-        pass
+        slots = Slots(self.bot, self.user_character.gold)
+        end_gold = await slots.spin(interaction)
+        self.user_character.gold = end_gold
+        self.db.set_gold(interaction.user.id, end_gold)
+        interaction = slots.interaction
+        await interaction.response.send_message("Loading...")
+        await self.send_tavern_menu(interaction)
 
     async def send_under_construction(self, interaction:discord.Interaction):
         view = PlaceholderView()
         await interaction.edit_original_response(content=UNDER_CONSTRUCTION, view=view, embed=None)
         await view.wait()
         await view.interaction.response.defer()
+        
 
     async def cleanup(self):
         self.db.conn.close

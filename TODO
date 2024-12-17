@@ -1,11 +1,7 @@
-- Finish implementing sendto_blackjack and sendto_slots
 - Add blurbs to all starting classes
 - Add delete button to character screen
-- Add gold column to characters table
 
-
-
-
+- Detect timeout for slots and blackjack
 - Add proper xp system
 - Add singleplayer combat
 - Add multiplayer combat
