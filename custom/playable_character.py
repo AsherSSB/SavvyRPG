@@ -12,7 +12,7 @@ class PlayableCharacter():
         self.level:int = self.calculate_level()
 
     def calculate_level(self):
-        return int((self.xp // 100) ** (9/21))
+        return int((self.xp // 100) ** (3/7))
     
     def add_xp(self, amount):
         self.xp += amount
@@ -25,12 +25,12 @@ class PlayableCharacter():
 
     def xp_for_next_level(self):
         next_level = self.level + 1
-        current_level_xp = int((self.level ** (21/9)) * 100)
-        next_level_xp = int((next_level ** (21/9)) * 100)
+        current_level_xp = int((self.level ** (3/7)) * 100)
+        next_level_xp = int((next_level ** (3/7)) * 100)
         return next_level_xp - current_level_xp
     
     def level_progress(self):
-        current_level_xp = int((self.level ** (21/9)) * 100)
+        current_level_xp = int((self.level ** (3/7)) * 100)
         return int(self.xp - current_level_xp)
         
 

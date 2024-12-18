@@ -5,6 +5,10 @@
     - Give Blacksmith and Enchantress inventory
     - Buy, Sell Functionality
 
+- Add exit button to game menu
+- Add basic launcher 
+- improve beginning of character selection
+- refactor player stat table into dictionary and delete duped functions
 - make menus ephemeral
 - first time user menu tutorial
 - refactor db to hold stats as jsonb

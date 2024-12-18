@@ -4,6 +4,7 @@ import asyncio
 import custom.stattable as sts
 from custom.playable_character import PlayableCharacter
 import random
+from dataclasses import dataclass
 
 
 class Item():
@@ -14,14 +15,14 @@ class Item():
         self.quantity = quantity
 
 
-class WeaponStatTable():
-    def __init__(self, dmg:int, spd:float, rng:int, cc:float, cm:float, acc:float):
-        self.dmg = dmg
-        self.spd = spd
-        self.rng = rng
-        self.cc = cc
-        self.cm = cm
-        self.acc = acc
+@dataclass
+class WeaponStatTable:
+    dmg: int
+    spd: float
+    rng: int
+    cc: float
+    cm: float
+    acc: float
 
 
 class Weapon(Item):
@@ -68,6 +69,7 @@ class Testing(commands.Cog):
         self.pc:PlayableCharacter = self.init_pc()
         self.pcweapon:Weapon
         self.enemy:Enemy = TestDummy()
+        self.interaction:discord.Interaction
         self.init_pc()
         self.pcdmg = self.calculate_player_damage()
         self.pchp = self.calculate_player_hp()
@@ -104,7 +106,7 @@ class Testing(commands.Cog):
                 return
 
     # TODO: CLEAN THIS SHIT UP
-    # TODO: detect if player dies before their next input
+    # TODO: populate return statements with combat result
     async def combat(self, interaction: discord.Interaction):
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
         choice = 0
@@ -128,6 +130,7 @@ class Testing(commands.Cog):
             # if player hp < 1
             if self.pchp <= 0:
                 enemy_task.cancel()
+                self.interaction = view.refreshed_interaction
                 return
             
             try:
@@ -138,12 +141,14 @@ class Testing(commands.Cog):
             # check player hp again after waiting for input
             if self.pchp <= 0:
                 enemy_task.cancel()
-                return
+                self.interaction = view.refreshed_interaction
+                return 
                     
             choice = view.choice
             if choice == -1:
                 if self.try_run():
                     enemy_task.cancel()
+                    self.interaction = view.refreshed_interaction
                     return
                 
                 else:
@@ -152,13 +157,16 @@ class Testing(commands.Cog):
                     self.logcount += 1
                     self.trim_embed()
                     self.fix_embed_players()
+                    await interaction.edit_original_response(view=view)
             else:
                 cooldowns[choice]()
                 self.logcount += 1
 
             view.event = asyncio.Event()
-
+        view.stop()
+        self.interaction = view.refreshed_interaction
         enemy_task.cancel()
+        return
 
     def pummel(self):
         mult = self.calculate_crit()
@@ -193,9 +201,13 @@ class Testing(commands.Cog):
         return random.random() < self.pcweapon.stats.cc
 
     def try_run(self):
-        # prob = self.pc.stats.att
-        prob = 1
+        # prob = self.calculate_run_probability()
+        prob = 0.5
         return random.random() < prob
+    
+    def calculate_run_probability(self):
+        advantage = self.pc.stats.att - self.enemy.stats.speed
+        return 0.5 + 0.05 * advantage
 
     def attack(self):
         pass
@@ -266,7 +278,7 @@ class Cooldown(discord.ui.Button):
 
     async def callback(self, interaction):
         self.view.choice = self.choiceid
-        await interaction.response.defer()
+        self.view.refreshed_interaction = interaction
         self.disabled = True
         self.view.event.set()
         await self.view.interaction.edit_original_response(view=self.view)
@@ -280,12 +292,15 @@ class CombatView(discord.ui.View):
         super().__init__()
         self.event = asyncio.Event()
         self.choice:int
+        # original combat interaction passed at the beginning
         self.interaction = interaction
+        # new interaction to use when coming out of combat
+        self.refreshed_interaction:discord.Interaction
 
     @discord.ui.button(label="Run", style=discord.ButtonStyle.red)
     async def run_button(self, interaction:discord.Interaction, button):
         self.choice = -1
-        await interaction.response.defer()
+        self.refreshed_interaction = interaction
         self.event.set()
 
     async def wait(self):
