@@ -1,5 +1,9 @@
-# HIGH PRIORITY (CORE FEATURES)
+# Currently Working On
 - Add Combat
+    - Define and seperate Cooldown class
+    - 
+
+# HIGH PRIORITY (CORE FEATURES)
 - Add Inventory system (store as json in db)(each inventory "bag" should be of size 25)
 - Add Gear to PlayableCharacter
 - Add blacksmith and enchantress menus
@@ -9,7 +13,8 @@
 - Act 1 of Campaign
 
 
-
+# Low priority (QOL and fixes)
+- give emojis to menu buttons
 - make menus ephemeral
 - first time user menu tutorial
 - refactor db to hold stats as jsonb

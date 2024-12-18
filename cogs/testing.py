@@ -53,6 +53,11 @@ class Enemy():
         self.weapon = weapon
 
 
+class Cooldown():
+    def __init__(self):
+        pass
+
+
 class Testing(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -95,8 +100,8 @@ class Testing(commands.Cog):
     async def combat(self, interaction: discord.Interaction):
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
         choice = 0
-        punch = Cooldown("Punch", 0, 3.5)
-        pummel = Cooldown("Pummel", 1, 7.5)
+        punch = CooldownButton("Punch", 0, 3.5)
+        pummel = CooldownButton("Pummel", 1, 7.5)
         view = CombatView(interaction)
         view.add_item(punch)
         view.add_item(pummel)
@@ -105,7 +110,7 @@ class Testing(commands.Cog):
             1: self.pummel
         }
         
-        await interaction.response.send_message("Cooldowns:", view=view, embed=self.embed)
+        await interaction.response.send_message("Combat", view=view, embed=self.embed)
         
         enemy_task = asyncio.create_task(self.enemy_attack(interaction))
 
@@ -171,6 +176,17 @@ class Testing(commands.Cog):
             if self.pchp <= 0:
                 return
 
+    def use_cooldown(self):
+        pass
+
+    def punch(self):
+        mult = self.calculate_crit()
+        final_dmg = int(self.pcdmg * mult)
+        self.enemy.stats.hp -= final_dmg
+        self.embed = self.embed.insert_field_at(-2, name=f"{self.pc.name} struck {self.enemy.name}", value=f"for {final_dmg} damage", inline=False)
+        self.trim_embed()
+        self.fix_embed_players()
+
     def pummel(self):
         mult = self.calculate_crit()
         final_dmg = int(30 * mult)
@@ -187,13 +203,6 @@ class Testing(commands.Cog):
         if self.logcount > 10:
             self.embed = self.embed.remove_field(0)
 
-    def punch(self):
-        mult = self.calculate_crit()
-        final_dmg = int(self.pcdmg * mult)
-        self.enemy.stats.hp -= final_dmg
-        self.embed = self.embed.insert_field_at(-2, name=f"{self.pc.name} struck {self.enemy.name}", value=f"for {final_dmg} damage", inline=False)
-        self.trim_embed()
-        self.fix_embed_players()
 
     def calculate_crit(self):
         if self.try_crit():
@@ -249,22 +258,6 @@ class Testing(commands.Cog):
             return int(1 + 0.1 * (stat - 10))
 
 
-    @discord.app_commands.command(name="cmbemd")
-    async def combat_embed_test(self, interaction:discord.Interaction):
-        embed = CombatEmbed()
-        view = CombatView(interaction)
-        await interaction.response.send_message(content="Cooldowns", embed=embed, view=view)
-        i = 0
-        while i < 15:
-            await asyncio.sleep(1.0)
-            # update embed and re-send
-            embed = embed.insert_field_at(-2, name=f"Logmsg{i}", value=f"Logmsg{i}", inline=False)
-            if i > 9:
-                embed = embed.remove_field(0)
-            await interaction.edit_original_response(embed=embed)
-            i += 1
-
-
 class CombatEmbed(discord.Embed):
     def __init__(self, pc:PlayableCharacter, pchp, enemy:Enemy):
         super().__init__(color=None, title="Combat", description=None)
@@ -272,7 +265,7 @@ class CombatEmbed(discord.Embed):
         self.add_field(name=enemy.name, value=f"hp: {enemy.stats.hp}", inline=True)
 
 
-class Cooldown(discord.ui.Button):
+class CooldownButton(discord.ui.Button):
     def __init__(self, label, choiceid, cooldowntime):
         super().__init__(style=discord.ButtonStyle.blurple, label=label)
         self.disabled = False
