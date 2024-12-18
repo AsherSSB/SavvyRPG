@@ -87,22 +87,18 @@ class Testing(commands.Cog):
 
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
+        interaction = await self.send_testing_view(interaction)
         await self.combat(interaction)
         await interaction.edit_original_response(content="Combat Over", view=None, embed=None)
         await asyncio.sleep(8.0)
         await interaction.delete_original_response()
 
-    async def enemy_attack(self, interaction:discord.Interaction):
-        while self.enemy.stats.hp > 0 and self.pchp > 0:
-            await asyncio.sleep(self.enemy.weapon.stats.spd)
-            self.pchp -= self.enemy.weapon.stats.dmg
-            self.embed = self.embed.insert_field_at(-2, name=f"{self.enemy.name} struck {self.pc.name}", value=f"for {self.enemy.weapon.stats.dmg} damage", inline=False)
-            self.logcount += 1
-            self.trim_embed()
-            self.fix_embed_players()
-            await interaction.edit_original_response(embed=self.embed)
-            if self.pchp <= 0:
-                return
+    async def send_testing_view(self, interaction:discord.Interaction):
+        view = TestingView()
+        await interaction.response.send_message("## Combat Test\nThis test is for demonstration purposes only and is not representative of any finished product.", view=view)
+        await view.wait()
+        await interaction.delete_original_response()
+        return view.interaction
 
     # TODO: CLEAN THIS SHIT UP
     # TODO: detect if player dies before their next input
@@ -169,6 +165,18 @@ class Testing(commands.Cog):
         view.stop()
         view.clear_items()
         enemy_task.cancel()
+        
+    async def enemy_attack(self, interaction:discord.Interaction):
+        while self.enemy.stats.hp > 0 and self.pchp > 0:
+            await asyncio.sleep(self.enemy.weapon.stats.spd)
+            self.pchp -= self.enemy.weapon.stats.dmg
+            self.embed = self.embed.insert_field_at(-2, name=f"{self.enemy.name} struck {self.pc.name}", value=f"for {self.enemy.weapon.stats.dmg} damage", inline=False)
+            self.logcount += 1
+            self.trim_embed()
+            self.fix_embed_players()
+            await interaction.edit_original_response(embed=self.embed)
+            if self.pchp <= 0:
+                return
 
     def pummel(self):
         mult = self.calculate_crit()
@@ -305,6 +313,20 @@ class CombatView(discord.ui.View):
     async def wait(self):
         await self.event.wait()
 
+
+class TestingView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.event = asyncio.Event()
+        self.interaction:discord.Interaction
+
+    @discord.ui.button(label="Begin Combat Test", style=discord.ButtonStyle.green)
+    async def test_button(self, interaction:discord.Interaction, button):
+        self.interaction = interaction
+        self.event.set()
+
+    async def wait(self):
+        await self.event.wait()
 
 async def setup(bot):
     await bot.add_cog(Testing(bot))
