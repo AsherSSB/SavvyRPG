@@ -1,4 +1,5 @@
 - Add Combat
+- Add Gear to PlayableCharacter
 - Add Inventory system (store as json in db)
 - Add blacksmith and enchantress menus
     - Give Blacksmith and Enchantress inventory

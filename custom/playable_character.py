@@ -17,7 +17,7 @@ class PlayableCharacter():
     def add_xp(self, amount):
         self.xp += amount
         new_level = self.calculate_level()
-        if new_level > self.level:
+        if new_level > self.level and new_level <= 50:
             self.level_up(new_level)
 
     def level_up(self, new_level):
