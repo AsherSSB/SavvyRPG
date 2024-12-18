@@ -4,19 +4,18 @@ import asyncio
 import custom.stattable as sts
 from custom.playable_character import PlayableCharacter
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-
+@dataclass
 class Item():
-    def __init__(self, name, value:int, quantity:int, stack_size:int):
-        self.name = name
-        self.value = value
-        self.stack_size = stack_size
-        self.quantity = quantity
+    name: str
+    value: int = field(default=0, kw_only=True)
+    stack_size: int = field(default=1, kw_only=True)
+    quantity: int = field(default=1, kw_only=True)
 
 
 @dataclass
-class WeaponStatTable:
+class WeaponStatTable():
     dmg: int
     spd: float
     rng: int
@@ -25,26 +24,25 @@ class WeaponStatTable:
     acc: float
 
 
+@dataclass
 class Weapon(Item):
-    def __init__(self, name:str, value:int, slots:int, stats:WeaponStatTable, scale:str):
-        super().__init__(name, value, quantity=1, stack_size=1)
-        self.slots = slots
-        self.stats = stats
-        self.scale = scale
+    stats: WeaponStatTable
+    scale: str
+    slots: int = field(default=2, kw_only=True)
 
 
+@dataclass
 class Drops():
-    def __init__(self, xp:int, gold:int, item:Item|None):
-        self.xp = xp
-        self.gold = gold
-        self.item = item
-        
+    xp: int
+    gold: int
+    item: Item | None
 
+
+@dataclass
 class NPCStatTable():
-    def __init__(self, hp:int, resist:float, speed:int):
-        self.hp = hp
-        self.resist = resist
-        self.speed = speed
+    hp: int
+    resist: float
+    speed: int
 
 
 class Enemy():
@@ -55,35 +53,27 @@ class Enemy():
         self.weapon = weapon
 
 
-class TestDummy(Enemy):
-    def __init__(self):
-        super().__init__("Training Dummy", 
-                         NPCStatTable(120, 0, 0), 
-                         Drops(1, 1, None),
-                         Weapon("Stick Arms", 0, 1, WeaponStatTable(1, 5.0, 1, .1, 1.5, .25), "str"))
-
-
 class Testing(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.pc:PlayableCharacter = self.init_pc()
-        self.pcweapon:Weapon
-        self.enemy:Enemy = TestDummy()
-        self.init_pc()
+        self.pc:PlayableCharacter = PlayableCharacter(
+            "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
+        
+        self.pcweapon:Weapon = Weapon(name="Fists", value=0, scale="str",
+                               stats=WeaponStatTable(5, 1.0, 1, .2, 1.5, .95))
+        
+        self.enemy:Enemy = Enemy("Training Dummy", 
+                         NPCStatTable(120, 0, 0), 
+                         Drops(1, 1, None),
+                         Weapon(name="Stick Arms", value=0, 
+                                stats=WeaponStatTable(1, 5.0, 1, .1, 1.5, .25),
+                                scale="str"))
+        
         self.pcdmg = self.calculate_player_damage()
         self.pchp = self.calculate_player_hp()
         # init embed with player and enemy info
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
         self.logcount = 0
-
-    @discord.app_commands.command(name="checktesthealth")
-    async def test_check(self, interaction:discord.Interaction):
-        await interaction.response.send_message(content=f"{self.pcdmg}\n\n{self.pc.stats}", embed=self.embed)
-
-    def init_pc(self):
-        self.pc = PlayableCharacter("Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
-        self.pcweapon = Weapon("Fists", 0, 1, 
-                               WeaponStatTable(5, 1.0, 1, .2, 1.5, .95), "str")
 
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
