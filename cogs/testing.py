@@ -89,7 +89,9 @@ class Testing(commands.Cog):
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
         await self.combat(interaction)
-        await interaction.edit_original_response(content="Combat Over", view=None, embed=None)
+        await interaction.delete_original_response()
+        interaction = self.interaction
+        await interaction.response.send_message(content="Combat Over")
         await asyncio.sleep(2.0)
         await interaction.delete_original_response()
 
@@ -152,6 +154,7 @@ class Testing(commands.Cog):
                     return
                 
                 else:
+                    await view.refreshed_interaction.response.defer()
                     view.children[0].disabled = True
                     self.embed = self.embed.insert_field_at(-2, name="Failed to Run", value="Run option disabled", inline=False)
                     self.logcount += 1
@@ -161,9 +164,11 @@ class Testing(commands.Cog):
             else:
                 cooldowns[choice]()
                 self.logcount += 1
+                if self.enemy.stats.hp > 0:
+                    await view.refreshed_interaction.response.defer()
 
             view.event = asyncio.Event()
-        view.stop()
+
         self.interaction = view.refreshed_interaction
         enemy_task.cancel()
         return
