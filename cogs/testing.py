@@ -4,6 +4,7 @@ import asyncio
 import custom.stattable as sts
 from custom.playable_character import PlayableCharacter
 import random
+from dataclasses import dataclass
 
 
 class Item():
@@ -14,14 +15,14 @@ class Item():
         self.quantity = quantity
 
 
-class WeaponStatTable():
-    def __init__(self, dmg:int, spd:float, rng:int, cc:float, cm:float, acc:float):
-        self.dmg = dmg
-        self.spd = spd
-        self.rng = rng
-        self.cc = cc
-        self.cm = cm
-        self.acc = acc
+@dataclass
+class WeaponStatTable:
+    dmg: int
+    spd: float
+    rng: int
+    cc: float
+    cm: float
+    acc: float
 
 
 class Weapon(Item):
@@ -138,12 +139,14 @@ class Testing(commands.Cog):
             # check player hp again after waiting for input
             if self.pchp <= 0:
                 enemy_task.cancel()
+                view.stop()
                 return
                     
             choice = view.choice
             if choice == -1:
                 if self.try_run():
                     enemy_task.cancel()
+                    view.stop()
                     return
                 
                 else:
@@ -152,12 +155,14 @@ class Testing(commands.Cog):
                     self.logcount += 1
                     self.trim_embed()
                     self.fix_embed_players()
+                    await interaction.edit_original_response(view=view)
             else:
                 cooldowns[choice]()
                 self.logcount += 1
 
             view.event = asyncio.Event()
-
+            
+        view.stop()
         enemy_task.cancel()
 
     def pummel(self):
@@ -193,9 +198,13 @@ class Testing(commands.Cog):
         return random.random() < self.pcweapon.stats.cc
 
     def try_run(self):
-        # prob = self.pc.stats.att
-        prob = 1
+        # prob = self.calculate_run_probability()
+        prob = 0.5
         return random.random() < prob
+    
+    def calculate_run_probability(self):
+        advantage = self.pc.stats.att - self.enemy.stats.speed
+        return 0.5 + 0.05 * advantage
 
     def attack(self):
         pass
