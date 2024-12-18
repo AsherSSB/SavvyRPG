@@ -58,7 +58,7 @@ class Enemy():
 class TestDummy(Enemy):
     def __init__(self):
         super().__init__("Training Dummy", 
-                         NPCStatTable(200, 0, 0), 
+                         NPCStatTable(120, 0, 0), 
                          Drops(1, 1, None),
                          Weapon("Stick Arms", 0, 1, WeaponStatTable(1, 5.0, 1, .1, 1.5, .25), "str"))
 
@@ -89,7 +89,7 @@ class Testing(commands.Cog):
     async def test_combat(self, interaction:discord.Interaction):
         await self.combat(interaction)
         await interaction.edit_original_response(content="Combat Over", view=None, embed=None)
-        await asyncio.sleep(2.0)
+        await asyncio.sleep(8.0)
         await interaction.delete_original_response()
 
     async def enemy_attack(self, interaction:discord.Interaction):
@@ -128,6 +128,8 @@ class Testing(commands.Cog):
             await interaction.edit_original_response(embed=self.embed)
             # if player hp < 1
             if self.pchp <= 0:
+                view.stop()
+                view.clear_items()
                 enemy_task.cancel()
                 return
             
@@ -140,6 +142,7 @@ class Testing(commands.Cog):
             if self.pchp <= 0:
                 enemy_task.cancel()
                 view.stop()
+                view.clear_items()
                 return
                     
             choice = view.choice
@@ -147,6 +150,7 @@ class Testing(commands.Cog):
                 if self.try_run():
                     enemy_task.cancel()
                     view.stop()
+                    view.clear_items()
                     return
                 
                 else:
@@ -163,6 +167,7 @@ class Testing(commands.Cog):
             view.event = asyncio.Event()
             
         view.stop()
+        view.clear_items()
         enemy_task.cancel()
 
     def pummel(self):
