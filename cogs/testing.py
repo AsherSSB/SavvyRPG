@@ -166,6 +166,9 @@ class Testing(commands.Cog):
         view.clear_items()
         enemy_task.cancel()
         
+    def initialize_combat_view(self):
+        pass
+
     async def enemy_attack(self, interaction:discord.Interaction):
         while self.enemy.stats.hp > 0 and self.pchp > 0:
             await asyncio.sleep(self.enemy.weapon.stats.spd)

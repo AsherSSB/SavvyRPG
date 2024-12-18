@@ -1,12 +1,17 @@
+# HIGH PRIORITY (CORE FEATURES)
 - Add Combat
+- Add Inventory system (store as json in db)(each inventory "bag" should be of size 25)
 - Add Gear to PlayableCharacter
-- Add Inventory system (store as json in db)
 - Add blacksmith and enchantress menus
     - Give Blacksmith and Enchantress inventory
     - Buy, Sell Functionality
+- Create first dungeon
+- Act 1 of Campaign
+
+
 
 - make menus ephemeral
 - first time user menu tutorial
 - refactor db to hold stats as jsonb
 - Detect timeout for slots and blackjack
-- Add Opening dialogue with combat tutorial (once combat finished development)
+- Add Opening dialogue with combat tutorial
