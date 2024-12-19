@@ -11,7 +11,10 @@ class Cooldown:
 
 hp = 10
 
-mycd = Cooldown(name="Punch", emoji=":punch:", acted="punched", time=1.0, active=lambda target: target - 5)
+def myactive(targethp):
+    return targethp - 10
+
+mycd = Cooldown(name="Punch", emoji=":punch:", acted="punched", time=1.0, active=)
 
 newhp = mycd.active(hp)
 

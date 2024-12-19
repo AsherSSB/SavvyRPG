@@ -93,8 +93,6 @@ class Testing(commands.Cog):
         self.pchp = self.calculate_player_hp()
         self.enemy.stats.hp = 120
         self.logcount = 0
-        
-        
         interaction = await self.send_testing_view(interaction)
         await self.combat(interaction)
         await interaction.edit_original_response(content="Combat Over", view=None, embed=None)
@@ -113,8 +111,19 @@ class Testing(commands.Cog):
     async def combat(self, interaction: discord.Interaction):
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
         choice = 0
-        punch = CooldownButton("Punch", 0, 3.5)
-        pummel = CooldownButton("Pummel", 1, 7.5)
+
+        def punch_active(enemyhp):
+            return enemyhp - 10
+        punchcd = Cooldown("Punch", "👊", "Punched", 3.5, punch_active)
+
+        def pummel_active(enemyhp):
+            return enemyhp - 30
+        pummelcd = Cooldown("Pummel", "✊", "Pummeled", 7.5, pummel_active)
+
+        cds = (punchcd, pummelcd)
+
+        punch = CooldownButton("Punch", 0, 3.5, "👊")
+        pummel = CooldownButton("Pummel", 1, 7.5, "✊")
         view = CombatView(interaction)
         view.add_item(punch)
         view.add_item(pummel)
@@ -176,8 +185,10 @@ class Testing(commands.Cog):
         view.clear_items()
         enemy_task.cancel()
         
-    def initialize_combat_view(self):
-        pass
+    def initialize_combat_view(self, interaction, cds:tuple[Cooldown]):
+        view = CombatView(interaction)
+        for i, cd in enumerate(cds):
+            view.add_item(CooldownButton(cd.name, i, cd.time, cd.emoji))
 
     async def enemy_attack(self, interaction:discord.Interaction):
         while self.enemy.stats.hp > 0 and self.pchp > 0:
@@ -190,9 +201,6 @@ class Testing(commands.Cog):
             await interaction.edit_original_response(embed=self.embed)
             if self.pchp <= 0:
                 return
-
-    def use_cooldown(self):
-        pass
 
     def punch(self):
         mult = self.calculate_crit()
@@ -281,8 +289,8 @@ class CombatEmbed(discord.Embed):
 
 
 class CooldownButton(discord.ui.Button):
-    def __init__(self, label, choiceid, cooldowntime):
-        super().__init__(style=discord.ButtonStyle.blurple, label=label)
+    def __init__(self, label, choiceid, cooldowntime, emoji):
+        super().__init__(style=discord.ButtonStyle.blurple, label=label, emoji=discord.PartialEmoji(name=emoji))
         self.disabled = False
         self.choiceid = choiceid
         self.cd = cooldowntime
