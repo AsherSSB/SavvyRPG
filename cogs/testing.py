@@ -5,6 +5,7 @@ import custom.stattable as sts
 from custom.playable_character import PlayableCharacter
 import random
 from dataclasses import dataclass, field
+from typing import Callable
 
 @dataclass
 class Item():
@@ -53,9 +54,15 @@ class Enemy():
         self.weapon = weapon
 
 
-class Cooldown():
-    def __init__(self):
-        pass
+@dataclass
+class Cooldown:
+    name: str
+    emoji: str | None
+    acted: str
+    time: float
+    active: Callable
+
+
 
 
 class Testing(commands.Cog):
@@ -71,17 +78,23 @@ class Testing(commands.Cog):
                          NPCStatTable(120, 0, 0), 
                          Drops(1, 1, None),
                          Weapon(name="Stick Arms", value=0, 
-                                stats=WeaponStatTable(1, 5.0, 1, .1, 1.5, .25),
+                                stats=WeaponStatTable(1, 2.5, 1, .1, 1.5, .25),
                                 scale="str"))
         
         self.pcdmg = self.calculate_player_damage()
-        self.pchp = self.calculate_player_hp()
+        self.pchp: int = 0
         # init embed with player and enemy info
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
         self.logcount = 0
 
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
+
+        self.pchp = self.calculate_player_hp()
+        self.enemy.stats.hp = 120
+        self.logcount = 0
+        
+        
         interaction = await self.send_testing_view(interaction)
         await self.combat(interaction)
         await interaction.edit_original_response(content="Combat Over", view=None, embed=None)
@@ -124,8 +137,9 @@ class Testing(commands.Cog):
                 enemy_task.cancel()
                 return
             
+            # TODO: fix players able to attack twice on 1 cooldown
             try:
-                await asyncio.wait_for(view.wait(), timeout=1.0)  
+                await asyncio.wait_for(view.wait(), timeout=3.0)
             except asyncio.TimeoutError:
                 continue  # Continue the loop if timeout occurs
 
@@ -145,6 +159,7 @@ class Testing(commands.Cog):
                     return
                 
                 else:
+                    # TODO: can autoclick run, update to be normal cooldown
                     view.children[0].disabled = True
                     self.embed = self.embed.insert_field_at(-2, name="Failed to Run", value="Run option disabled", inline=False)
                     self.logcount += 1
@@ -273,11 +288,11 @@ class CooldownButton(discord.ui.Button):
         self.cd = cooldowntime
 
     async def callback(self, interaction):
+        self.disabled = True
+        await self.view.interaction.edit_original_response(view=self.view)
         self.view.choice = self.choiceid
         await interaction.response.defer()
-        self.disabled = True
         self.view.event.set()
-        await self.view.interaction.edit_original_response(view=self.view)
         await asyncio.sleep(self.cd)
         self.disabled = False
         await self.view.interaction.edit_original_response(view=self.view)

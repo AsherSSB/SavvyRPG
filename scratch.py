@@ -1,16 +1,18 @@
 from dataclasses import dataclass, field
+from typing import Callable
 
 @dataclass
-class Person:
+class Cooldown:
     name: str
-    age: int = field(default=20,kw_only=True)
+    emoji: str | None
+    acted: str
+    time: float
+    active: Callable
 
-@dataclass
-class Employee(Person):
-    salary: float
-    city: str = "New York"
+hp = 10
 
-# Create an Employee instance
-emp = Employee(name="John", salary=100000)
+mycd = Cooldown(name="Punch", emoji=":punch:", acted="punched", time=1.0, active=lambda target: target - 5)
 
-print(emp)
+newhp = mycd.active(hp)
+
+print(hp, newhp)
