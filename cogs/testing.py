@@ -118,7 +118,6 @@ enemy:Enemy = Enemy("Training Dummy",
                         scale="str"))
 
 
-# TODO: initialize healthpools
 # TODO: assign weapons cooldowns
 # TODO: initialize player/enemy positions (what range do players/enemies start??)
 # TODO: implement range logic for cooldowns
@@ -130,9 +129,9 @@ enemy:Enemy = Enemy("Training Dummy",
 # TODO: run probability should be the difference between player and enemy spd
 class CombatInstance():
     def __init__(self):
-        self.characters = [pc]
+        self.players = [pc]
         self.cooldowns = [[punchcd, pummelcd]]
-        self.playerhealthpools = []
+        self.playerhealthpools = self.initialize_player_healthpools()
         self.playerpositions = []
         self.enemies = [enemy]     
         self.enemypositions = []
@@ -200,6 +199,13 @@ class CombatInstance():
         view.stop()
         view.clear_items()
         enemy_task.cancel()
+
+    def initialize_player_healthpools(self):
+        player_healthpools = []
+        for player in self.players:
+            playerhp= self.calculate_player_hp(player)
+            player_healthpools.append(playerhp)
+        return player_healthpools
         
     def scale_cooldown_damages(self, all_players_cooldowns:list[list[Cooldown]], players:list[PlayableCharacter]):
         for i in range(len(players)):
@@ -256,8 +262,8 @@ class CombatInstance():
         advantage = self.pc.stats.att - self.enemy.stats.speed
         return 0.5 + 0.05 * advantage
     
-    def calculate_player_hp(self):
-        return int((10 + (self.pc.level * 2)) * (self.pc.stats.wil * .1))
+    def calculate_player_hp(self, player:PlayableCharacter):
+        return int((10 + (player.level * 2)) * (player.stats.wil * .1))
 
 
 class CombatEmbed(discord.Embed):
