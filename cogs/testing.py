@@ -119,13 +119,15 @@ enemy:Enemy = Enemy("Training Dummy",
 
 
 # TODO: initialize healthpools
-# TODO: asign weapons cooldowns
+# TODO: assign weapons cooldowns
 # TODO: initialize player/enemy positions (what range do players/enemies start??)
 # TODO: implement range logic for cooldowns
 # TODO: implement range logic for enemies
 # TODO: give weapons knockback 
 # TODO: implement knockback logic to use cooldown function
 # TODO: implement target selection for cooldowns
+# TODO: implement enemy dodge and resistance logic
+# TODO: run probability should be the difference between player and enemy spd
 class CombatInstance():
     def __init__(self):
         self.characters = [pc]
@@ -133,64 +135,46 @@ class CombatInstance():
         self.playerhealthpools = []
         self.playerpositions = []
         self.enemies = [enemy]     
-        self.enemyhealthpools = []
         self.enemypositions = []
         self.scale_cooldown_damages(self.cooldowns, self.characters)
+        # TODO: broken, pass correct values
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
         self.logcount = 0
 
-    async def test_combat(self, interaction:discord.Interaction):
-        self.pchp = self.calculate_player_hp()
-        self.enemy.stats.hp = 120
-        self.logcount = 0
-        interaction = await self.send_testing_view(interaction)
-        await self.combat(interaction)
-        await interaction.edit_original_response(content="Combat Over", view=None)
-        await asyncio.sleep(8.0)
-        await interaction.delete_original_response()
-
-    async def send_testing_view(self, interaction:discord.Interaction):
-        view = TestingView()
-        await interaction.response.send_message("## Combat Test\nThis test is for demonstration purposes only and is not representative of any finished product.", view=view)
-        await view.wait()
-        await interaction.delete_original_response()
-        return view.interaction
-
-    # TODO: CLEAN THIS SHIT UP
+    # TODO: REFACTOR THIS NIGHTMARE
     async def combat(self, interaction: discord.Interaction):
-        self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
         choice = 0
-
-        cds = self.cooldowns[0]
-
-        view = self.initialize_combat_view(interaction, cds)
-        
+        # TODO: replace temp indexing of cooldowns with specific player when implementing multiplayer
+        # TODO: move view to instance
+        view = self.initialize_combat_view(interaction, self.cooldowns[0])
         await interaction.response.send_message("Combat", view=view, embed=self.embed)
-        
+        # TODO: move enemy tasks to instance
+        # TODO: function to initialize all enemy tasks
         enemy_task = asyncio.create_task(self.enemy_attack(interaction))
-
        
         while self.enemy.stats.hp > 0:
             # if player hp < 1
             if self.pchp <= 0:
+                # TODO: refactor to function isdead
                 view.stop()
                 view.clear_items()
                 enemy_task.cancel()
                 return
             
-            # TODO: fix players able to attack twice on 1 cooldown
+            # check before and after input if player died
+            # TODO: refactor to literally anything else
             try:
-                await asyncio.wait_for(view.wait(), timeout=3.0)
+                await asyncio.wait_for(view.wait(), timeout=2.0)
             except asyncio.TimeoutError:
                 continue  # Continue the loop if timeout occurs
 
-            # check player hp again after waiting for input
             if self.pchp <= 0:
                 enemy_task.cancel()
                 view.stop()
                 view.clear_items()
                 return
                     
+            # TODO: refactor run to a cooldown
             choice = view.choice
             if choice == -1:
                 if self.try_run():
@@ -200,7 +184,6 @@ class CombatInstance():
                     return
                 
                 else:
-                    # TODO: can autoclick run, update to be normal cooldown
                     view.children[0].disabled = True
                     self.embed = self.embed.insert_field_at(-2, name="Failed to Run", value="Run option disabled", inline=False)
                     self.logcount += 1
@@ -213,6 +196,7 @@ class CombatInstance():
 
             view.event = asyncio.Event()
             
+        # TODO: move to its own function
         view.stop()
         view.clear_items()
         enemy_task.cancel()
@@ -339,7 +323,18 @@ class Testing(commands.Cog):
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
         instance = CombatInstance()
+        interaction = await self.send_testing_view(interaction)
         await instance.test_combat(interaction)
+        await interaction.edit_original_response(content="Combat Over", view=None)
+        await asyncio.sleep(8.0)
+        await interaction.delete_original_response()
+
+    async def send_testing_view(self, interaction:discord.Interaction):
+        view = TestingView()
+        await interaction.response.send_message("## Combat Test\nThis test is for demonstration purposes only and is not representative of any finished product.", view=view)
+        await view.wait()
+        await interaction.delete_original_response()
+        return view.interaction
 
 async def setup(bot):
     await bot.add_cog(Testing(bot))
