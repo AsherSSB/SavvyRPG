@@ -48,15 +48,7 @@ class NPCStatTable():
     speed: int
 
 
-class Enemy():
-    def __init__(self, name:str, stats:NPCStatTable, drops:Drops, weapon:Weapon):
-        self.name = name
-        self.stats = stats
-        self.drops = drops
-        self.weapon = weapon
-
-
-
+# currently used by both players and enemies, should maybe change that later
 class Cooldown():
     def __init__(self, name, emoji, stats: WeaponStatTable, active, acted):
         self.name: str = name
@@ -75,11 +67,20 @@ class Cooldown():
             return self.stats.cm
         return 1.0
     
+    # only applicable to PLAYERS do NOT call for enemy cooldowns
     def scale_damage(self, player:PlayableCharacter):
         playerstats = player.stats.to_dict()
         playerstats = playerstats[self.stats.stat]
         if playerstats > 10:
             self.stats.dmg = int(self.stats.dmg * self.stats.scalar * playerstats)
+
+
+class Enemy():
+    def __init__(self, name:str, stats:NPCStatTable, drops:Drops, attack:Cooldown):
+        self.name = name
+        self.stats = stats
+        self.drops = drops
+        self.attack = attack
 
 
 class SingleTargetAttack(Cooldown):
@@ -96,9 +97,8 @@ class SingleTargetAttack(Cooldown):
         return f"{hit} {enemy.name} for {dmg} damage"
 
 
-pcweapon:Weapon = Weapon(name="Fists", value=0, scale="str",
-                        stats=WeaponStatTable(dmg=5, spd=1.0, rng=1, cc=.2, cm=1.5, acc=.95, scalar=.1, stat="str"))
 
+# TODO: move testing variables to testing cog 
 punchcd = SingleTargetAttack("Punch", "👊", WeaponStatTable(
     dmg=10, spd=3.5, rng=1, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
 ), acted="punched")
@@ -128,12 +128,12 @@ enemy:Enemy = Enemy("Training Dummy",
 # TODO: implement enemy dodge and resistance logic
 # TODO: run probability should be the difference between player and enemy spd
 class CombatInstance():
-    def __init__(self):
-        self.players = [pc]
-        self.cooldowns = [[punchcd, pummelcd]]
+    def __init__(self, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
+        self.players = players
+        self.cooldowns = cooldowns
         self.playerhealthpools = self.initialize_player_healthpools()
         self.playerpositions = []
-        self.enemies = [enemy]     
+        self.enemies = enemies  
         self.enemypositions = []
         self.scale_cooldown_damages(self.cooldowns, self.characters)
         # TODO: broken, pass correct values
