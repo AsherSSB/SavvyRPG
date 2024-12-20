@@ -23,7 +23,15 @@ Attunement: {self.att}"""
             self.att + other.att
         )
     
-
+    def to_dict(self):
+        return {
+            "str": self.str,
+            "wil": self.wil,
+            "dex": self.dex,
+            "int": self.int,
+            "att": self.att
+        }
+    
 class Origin():
     def __init__(self):
         self.stats:StatTable

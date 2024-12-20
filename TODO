@@ -1,7 +1,7 @@
 # Currently Working On
 - Add Combat
     - Define and seperate Cooldown class
-    - 
+    - add range system
 
 # HIGH PRIORITY (CORE FEATURES)
 - Add Inventory system (store as json in db)(each inventory "bag" should be of size 25)

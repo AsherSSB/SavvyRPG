@@ -23,6 +23,8 @@ class WeaponStatTable():
     cc: float
     cm: float
     acc: float
+    scalar: float
+    stat: str
 
 
 @dataclass
@@ -54,15 +56,56 @@ class Enemy():
         self.weapon = weapon
 
 
-@dataclass
-class Cooldown:
-    name: str
-    emoji: str | None
-    acted: str
-    time: float
-    active: Callable
 
+class Cooldown():
+    def __init__(self, name, emoji, stats: WeaponStatTable, active):
+        self.name: str = name
+        self.emoji: str = emoji
+        self.stats: WeaponStatTable = stats
+        self.active: Callable = active
+        self.acted: str | None = None
 
+    def miss(self) -> bool:
+        if random.random < self.stats.acc:
+            return False
+        return True
+
+    def calculate_crit(self) -> int:
+        if random.random < self.stats.cc:
+            return self.stats.cm
+        return 1.0
+    
+    def scale_damage(self, player:PlayableCharacter):
+        playerstats = player.stats.to_dict()
+        playerstats = playerstats[self.stats.stat]
+        if playerstats > 10:
+            self.stats.dmg = self.stats.dmg * self.stats.scalar * playerstats
+        
+def punch_active(enemy:Enemy, cd:Cooldown):
+    if cd.miss():
+        return "missed Punch"
+    mult = cd.calculate_crit()
+    hit = "crit punched" if mult > 1.0 else "punched"
+    dmg = cd.stats.dmg * mult
+    enemy.stats.hp = enemy.stats.hp - dmg
+    return f"{hit} {enemy.name} for {dmg}"
+
+punchcd = Cooldown("Punch", "👊", WeaponStatTable(
+    dmg=10, spd=3.5, rng=1, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
+), punch_active)
+
+def pummel_active(enemy:Enemy, cd:Cooldown):
+    if cd.miss():
+        return "missed Pummel"
+    mult = cd.calculate_crit()
+    hit = "crit pummeled" if mult > 1.0 else "pummeled"
+    dmg = cd.stats.dmg * mult
+    enemy.stats.hp = enemy.stats.hp - dmg
+    return f"{hit} {enemy.name} for {dmg}"
+
+pummelcd = Cooldown("Pummel", "✊", WeaponStatTable(
+    dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
+), pummel_active)    
 
 
 class Testing(commands.Cog):
@@ -107,30 +150,25 @@ class Testing(commands.Cog):
         return view.interaction
 
     # TODO: CLEAN THIS SHIT UP
-    # TODO: detect if player dies before their next input
     async def combat(self, interaction: discord.Interaction):
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
         choice = 0
 
         def punch_active(enemyhp):
-            return enemyhp - 10
-        punchcd = Cooldown("Punch", "👊", "Punched", 3.5, punch_active)
+            if random.random() < .2:
+                return ((enemyhp - 15), 15)
+            return ((enemyhp - 10), 10)
+        punchcd = Cooldown("Punch", "👊", 3.5, punch_active)
 
         def pummel_active(enemyhp):
-            return enemyhp - 30
-        pummelcd = Cooldown("Pummel", "✊", "Pummeled", 7.5, pummel_active)
+            if random.random() < .2:
+                return ((enemyhp - 45), 45)
+            return ((enemyhp - 30), 30)
+        pummelcd = Cooldown("Pummel", "✊", 7.5, pummel_active)
 
         cds = (punchcd, pummelcd)
 
-        punch = CooldownButton("Punch", 0, 3.5, "👊")
-        pummel = CooldownButton("Pummel", 1, 7.5, "✊")
-        view = CombatView(interaction)
-        view.add_item(punch)
-        view.add_item(pummel)
-        cooldowns = {
-            0: self.punch,
-            1: self.pummel
-        }
+        view = self.initialize_combat_view(interaction, cds)
         
         await interaction.response.send_message("Combat", view=view, embed=self.embed)
         
@@ -176,7 +214,7 @@ class Testing(commands.Cog):
                     self.fix_embed_players()
                     await interaction.edit_original_response(view=view)
             else:
-                cooldowns[choice]()
+                self.enemy.stats.hp = cds[choice].active(self.enemy.stats.hp)
                 self.logcount += 1
 
             view.event = asyncio.Event()
@@ -185,10 +223,18 @@ class Testing(commands.Cog):
         view.clear_items()
         enemy_task.cancel()
         
+    def use_cooldown(self, cooldown: Cooldown, target, targetstat):
+        targetstat, dealt = cooldown.active(target)
+        self.embed = self.embed.insert_field_at(-2, name=f"{self.pc.name} struck {self.enemy.name}", value=f"for {dealt} damage", inline=False)
+        self.trim_embed()
+        self.fix_embed_players()
+
+
     def initialize_combat_view(self, interaction, cds:tuple[Cooldown]):
         view = CombatView(interaction)
         for i, cd in enumerate(cds):
             view.add_item(CooldownButton(cd.name, i, cd.time, cd.emoji))
+        return view
 
     async def enemy_attack(self, interaction:discord.Interaction):
         while self.enemy.stats.hp > 0 and self.pchp > 0:
