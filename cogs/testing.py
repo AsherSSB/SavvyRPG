@@ -15,6 +15,7 @@ class Item():
     quantity: int = field(default=1, kw_only=True)
 
 
+
 @dataclass
 class WeaponStatTable():
     dmg: int
@@ -27,27 +28,6 @@ class WeaponStatTable():
     stat: str
 
 
-@dataclass
-class Weapon(Item):
-    stats: WeaponStatTable
-    scale: str
-    slots: int = field(default=2, kw_only=True)
-
-
-@dataclass
-class Drops():
-    xp: int
-    gold: int
-    item: Item | None
-
-
-@dataclass
-class NPCStatTable():
-    hp: int
-    resist: float
-    speed: int
-
-
 # currently used by both players and enemies, should maybe change that later
 class Cooldown():
     def __init__(self, name, emoji, stats: WeaponStatTable, active, acted):
@@ -56,6 +36,11 @@ class Cooldown():
         self.stats: WeaponStatTable = stats
         self.active: Callable = active
         self.acted: str = acted
+
+    def in_range(self, mypos, targetpos) -> bool:
+        if targetpos - mypos <= self.stats.rng:
+            return True
+        return False
 
     def miss(self) -> bool:
         if random.random() < self.stats.acc:
@@ -74,20 +59,60 @@ class Cooldown():
         if playerstats > 10:
             self.stats.dmg = int(self.stats.dmg * self.stats.scalar * playerstats)
 
+@dataclass
+class Weapon(Item):
+    cooldown: Cooldown
+    scale: str
+    slots: int = field(default=2, kw_only=True)
+
+
+@dataclass
+class Drops():
+    xp: int
+    gold: int
+    item: Item | None
+
+
+@dataclass
+class NPCStatTable():
+    hp: int
+    resist: float
+    speed: int
+
+
+class EnemyCooldown(Cooldown):
+    def __init__(self, name, emoji, stats, active, acted):
+        super().__init__(name, emoji, stats, active, acted)
+
+    def in_range(self, mypos, targetpos) -> bool:
+        if -(targetpos - mypos) <= self.stats.rng:
+            return True
+        return False
+
+    def attack(self, player: PlayableCharacter, playerhealthpools: list[int], playerindex: int) -> str:
+        if self.miss():
+            return f"missed {self.name}"
+        mult = self.calculate_crit()
+        hit = f"crit {self.acted}" if mult > 1.0 else self.acted
+        dmg = int(self.stats.dmg * mult)
+        playerhealthpools[playerindex] -= dmg
+        return f"{hit} {player.name} for {dmg} damage"
+
 
 class Enemy():
-    def __init__(self, name:str, stats:NPCStatTable, drops:Drops, attack:Cooldown):
+    def __init__(self, name:str, stats:NPCStatTable, drops:Drops, attack:EnemyCooldown, position:int):
         self.name = name
         self.stats = stats
         self.drops = drops
         self.attack = attack
+        self.position = position
 
 
 class SingleTargetAttack(Cooldown):
     def __init__(self, name, emoji, stats, acted):
         super().__init__(name=name, emoji=emoji, stats=stats, acted=acted, active=self.attack)
 
-    def attack(self, enemy:Enemy):
+    def attack(self, enemy:Enemy) -> str:
         if self.miss():
             return f"missed {self.name}"
         mult = self.calculate_crit()
@@ -97,28 +122,6 @@ class SingleTargetAttack(Cooldown):
         return f"{hit} {enemy.name} for {dmg} damage"
 
 
-
-# TODO: move testing variables to testing cog 
-punchcd = SingleTargetAttack("Punch", "👊", WeaponStatTable(
-    dmg=10, spd=3.5, rng=1, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
-), acted="punched")
-
-pummelcd = SingleTargetAttack("Pummel", "✊", WeaponStatTable(
-    dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
-), acted="pummeled")    
-
-pc:PlayableCharacter = PlayableCharacter(
-            "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
-
-enemy:Enemy = Enemy("Training Dummy", 
-                    NPCStatTable(120, 0, 0), 
-                    Drops(1, 1, None),
-                    Weapon(name="Stick Arms", value=0, 
-                        stats=WeaponStatTable(dmg=1, spd=2.5, rng=1, cc=.1, cm=1.5, acc=.25, scalar=0, stat="str"),
-                        scale="str"))
-
-
-# TODO: assign weapons cooldowns
 # TODO: initialize player/enemy positions (what range do players/enemies start??)
 # TODO: implement range logic for cooldowns
 # TODO: implement range logic for enemies
@@ -127,11 +130,12 @@ enemy:Enemy = Enemy("Training Dummy",
 # TODO: implement target selection for cooldowns
 # TODO: implement enemy dodge and resistance logic
 # TODO: run probability should be the difference between player and enemy spd
+# TODO: implement status effects
 class CombatInstance():
     def __init__(self, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
         self.players = players
         self.cooldowns = cooldowns
-        self.playerhealthpools = self.initialize_player_healthpools()
+        self.playerhealthpools:list[int] = self.initialize_player_healthpools()
         self.playerpositions = []
         self.enemies = enemies  
         self.enemypositions = []
@@ -212,6 +216,7 @@ class CombatInstance():
             for j in range(len(all_players_cooldowns[i])):
                 all_players_cooldowns[i][j].scale_damage(players[i])
 
+    # TODO: refactor, pass message directly?
     async def use_cooldown(self, cooldown: Cooldown, target:Enemy, interaction:discord.Interaction):
         message = cooldown.active(target)
         self.embed = self.embed.insert_field_at(-2, name=f"{self.pc.name} ", value=message, inline=False)
@@ -325,6 +330,24 @@ class TestingView(discord.ui.View):
 class Testing(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+        punchcd = SingleTargetAttack("Punch", "👊", WeaponStatTable(
+            dmg=10, spd=3.5, rng=1, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
+        ), acted="punched")
+
+        pummelcd = SingleTargetAttack("Pummel", "✊", WeaponStatTable(
+            dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
+        ), acted="pummeled")    
+
+        pc:PlayableCharacter = PlayableCharacter(
+            "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
+
+        enemy:Enemy = Enemy("Training Dummy", 
+                    NPCStatTable(120, 0, 0), 
+                    Drops(1, 1, None),
+                    Weapon(name="Stick Arms", value=0, 
+                        stats=WeaponStatTable(dmg=1, spd=2.5, rng=1, cc=.1, cm=1.5, acc=.25, scalar=0, stat="str"),
+                        scale="str"))
     
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
