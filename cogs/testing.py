@@ -200,21 +200,15 @@ class CombatInstance():
         enemy_task.cancel()
 
     def initialize_player_positions(self):
-        positions = []
-        for player in self.players:
-            positions.append(self.bounds[0])
+        return [self.bounds[0] for _ in self.players]
 
     def initialize_player_healthpools(self):
-        player_healthpools = []
-        for player in self.players:
-            playerhp= self.calculate_player_hp(player)
-            player_healthpools.append(playerhp)
-        return player_healthpools
-        
-    def scale_cooldown_damages(self, all_players_cooldowns:list[list[Cooldown]], players:list[PlayableCharacter]):
-        for i in range(len(players)):
-            for j in range(len(all_players_cooldowns[i])):
-                all_players_cooldowns[i][j].scale_damage(players[i])
+        return [self.calculate_player_hp(player) for player in self.players]
+
+    def scale_cooldown_damages(self, all_players_cooldowns: list[list[Cooldown]], players: list[PlayableCharacter]):
+        for i, player in enumerate(players):
+            for cooldown in all_players_cooldowns[i]:
+                cooldown.scale_damage(player)
 
     # TODO: refactor, pass message directly?
     async def use_cooldown(self, cooldown: Cooldown, target:Enemy, interaction:discord.Interaction):
@@ -248,15 +242,6 @@ class CombatInstance():
     def trim_embed(self):
         if self.logcount > 10:
             self.embed = self.embed.remove_field(0)
-
-
-    def calculate_crit(self):
-        if self.try_crit():
-            return self.pcweapon.stats.cm
-        return 1
-
-    def try_crit(self):
-        return random.random() < self.pcweapon.stats.cc
 
     def try_run(self):
         # prob = self.calculate_run_probability()
