@@ -126,7 +126,8 @@ class SingleTargetAttack(Cooldown):
 # TODO: run probability should be the difference between player and enemy spd
 # TODO: implement status effects
 class CombatInstance():
-    def __init__(self, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy], bounds:tuple[int]):
+    def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy], bounds:tuple[int]):
+        self.interaction = interaction
         self.bounds = bounds
         self.players = players
         self.cooldowns = cooldowns
@@ -137,60 +138,58 @@ class CombatInstance():
         self.scale_cooldown_damages(self.cooldowns, self.characters)
         # TODO: broken, pass correct values
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
+        # TODO: currently only works for 1 player
+        self.view = self.initialize_combat_view(interaction, self.cooldowns[0])
         self.logcount = 0
 
-    # TODO: REFACTOR THIS NIGHTMARE
     async def combat(self, interaction: discord.Interaction):
         choice = 0
-        # TODO: replace temp indexing of cooldowns with specific player when implementing multiplayer
-        # TODO: move view to instance
-        view = self.initialize_combat_view(interaction, self.cooldowns[0])
-        await interaction.response.send_message("Combat", view=view, embed=self.embed)
-        # TODO: move enemy tasks to instance
+        await interaction.response.send_message("Combat", view=self.view, embed=self.embed)
         self.enemy_tasks = self.initialize_enemy_tasks(interaction)
        
         while self.enemy.stats.hp > 0:
             # if player hp < 1
             if self.pchp <= 0:
-                self.stop_tasks_and_views(view)
+                self.stop_tasks_and_views(self.view)
                 return
             
             # check before and after input if player died
             # TODO: refactor to literally anything else
             try:
-                await asyncio.wait_for(view.wait(), timeout=2.0)
+                await asyncio.wait_for(self.view.wait(), timeout=2.0)
             except asyncio.TimeoutError:
                 continue  # Continue the loop if timeout occurs
 
             if self.pchp <= 0:
-                self.stop_tasks_and_views(view)
+                self.stop_tasks_and_views(self.view)
                 return
                     
             # TODO: refactor run to a cooldown
-            choice = view.choice
+            choice = self.view.choice
             if choice == -1:
                 if self.try_run():
-                    self.stop_tasks_and_views(view)
+                    self.stop_tasks_and_views(self.view)
                     return
                 
                 else:
-                    view.children[0].disabled = True
+                    self.view.children[0].disabled = True
                     self.embed = self.embed.insert_field_at(-2, name="Failed to Run", value="Run option disabled", inline=False)
                     self.logcount += 1
                     self.trim_embed()
                     await self.fix_embed_players(interaction)
-                    await interaction.edit_original_response(view=view)
+                    await interaction.edit_original_response(view=self.view)
             else:
                 # TODO: select enemy to attack if there is more than 1 enemy
                 # TODO: do attack here
                 # if not in range tell user
                 # else call cooldown.attack and use cooldown
+                # if target dies
                 await self.use_cooldown(cds[choice], self.enemy, interaction)
                 self.logcount += 1
 
-            view.event = asyncio.Event()
+            self.view.event = asyncio.Event()
             
-        self.stop_tasks_and_views(view)
+        self.stop_tasks_and_views(self.view)
 
     def stop_tasks_and_views(self, view:discord.ui.View):
         view.stop()
@@ -215,8 +214,8 @@ class CombatInstance():
             for cooldown in all_players_cooldowns[i]:
                 cooldown.scale_damage(player)
 
-    async def use_cooldown(self, message, interaction:discord.Interaction):
-        self.embed = self.embed.insert_field_at(-2, name=f"{self.pc.name} ", value=message, inline=False)
+    async def use_cooldown(self, message, interaction:discord.Interaction, playerindex):
+        self.embed = self.embed.insert_field_at(-2, name=f"{self.players[playerindex].name}", value=message, inline=False)
         self.trim_embed()
         await self.fix_embed_players(interaction)
 
@@ -226,6 +225,7 @@ class CombatInstance():
             view.add_item(CooldownButton(cd.name, i, cd.stats.spd, cd.emoji))
         return view
 
+    # TODO: fix broken variables
     async def enemy_attack(self, interaction:discord.Interaction):
         while self.enemy.stats.hp > 0 and self.pchp > 0:
             await asyncio.sleep(self.enemy.weapon.stats.spd)
@@ -237,6 +237,8 @@ class CombatInstance():
             if self.pchp <= 0:
                 return
 
+
+    # TODO: fix to work for dynamic counts of enemies and players
     async def fix_embed_players(self, interaction:discord.Interaction):
         self.embed.set_field_at(-1, name=self.enemy.name, value=f"hp: {self.enemy.stats.hp}")
         self.embed.set_field_at(-2, name=self.pc.name, value=f"hp {self.pchp}")
@@ -246,11 +248,12 @@ class CombatInstance():
         if self.logcount > 10:
             self.embed = self.embed.remove_field(0)
 
+    # TODO: should recieve a player index as parameter
     def try_run(self):
-        # prob = self.calculate_run_probability()
-        prob = 0.5
+        prob = self.calculate_run_probability()
         return random.random() < prob
     
+    # TODO: fix to work for a specific player vs all enemies
     def calculate_run_probability(self):
         advantage = self.pc.stats.att - self.enemy.stats.speed
         return 0.5 + 0.05 * advantage
@@ -284,14 +287,38 @@ class CooldownButton(discord.ui.Button):
         await self.view.interaction.edit_original_response(view=self.view)
 
 
+class EnemySelectOption(discord.SelectOption):
+    def __init__(self, label: str, value: int):
+        super().__init__(label=label, value=str(value))
+
+class EnemySelectMenu(discord.ui.Select):
+    def __init__(self, enemies: list[str], min_values=1, max_values=1):
+        self.enemies = enemies
+        options = self.initialize_options(enemies)
+        super().__init__(placeholder=f"targeting: {enemies[0]}", min_values=min_values, 
+                         max_values=max_values, options=options, row=0)
+
+    def initialize_options(self, enemies: list[str]):
+        return [EnemySelectOption(enemy, i) for i, enemy in enumerate(enemies)]
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_option = int(self.values[0])  # Convert the selected value back to integer
+        self.view.target = selected_option
+        self.placeholder = f"targeting: {self.enemies[selected_option]}"
+        await self.view.interaction.edit_original_response(content=f"{self.view.target}", view=self.view)
+        await interaction.response.defer()
+        self.view.event.set()
+
+
 class CombatView(discord.ui.View):
     def __init__(self, interaction:discord.Interaction):
         super().__init__()
         self.event = asyncio.Event()
         self.choice:int
         self.interaction = interaction
+        self.target: int = 0
 
-    @discord.ui.button(label="Run", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Run", style=discord.ButtonStyle.red, row=4)
     async def run_button(self, interaction:discord.Interaction, button):
         self.choice = -1
         await interaction.response.defer()
@@ -319,39 +346,46 @@ class Testing(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        punchcd = SingleTargetAttack("Punch", "👊", WeaponStatTable(
-            dmg=10, spd=3.5, rng=1, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
-        ), acted="punched")
+    #     punchcd = SingleTargetAttack("Punch", "👊", WeaponStatTable(
+    #         dmg=10, spd=3.5, rng=1, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
+    #     ), acted="punched")
 
-        pummelcd = SingleTargetAttack("Pummel", "✊", WeaponStatTable(
-            dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
-        ), acted="pummeled")    
+    #     pummelcd = SingleTargetAttack("Pummel", "✊", WeaponStatTable(
+    #         dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
+    #     ), acted="pummeled")    
 
-        pc:PlayableCharacter = PlayableCharacter(
-            "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
+    #     pc:PlayableCharacter = PlayableCharacter(
+    #         "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
 
-        enemy:Enemy = Enemy("Training Dummy", 
-                    NPCStatTable(120, 0, 0), 
-                    Drops(1, 1, None),
-                    Weapon(name="Stick Arms", value=0, 
-                        stats=WeaponStatTable(dmg=1, spd=2.5, rng=1, cc=.1, cm=1.5, acc=.25, scalar=0, stat="str"),
-                        scale="str"))
+    #     enemy:Enemy = Enemy("Training Dummy", 
+    #                 NPCStatTable(120, 0, 0), 
+    #                 Drops(1, 1, None),
+    #                 Weapon(name="Stick Arms", value=0, 
+    #                     stats=WeaponStatTable(dmg=1, spd=2.5, rng=1, cc=.1, cm=1.5, acc=.25, scalar=0, stat="str"),
+    #                     scale="str"))
     
-    @discord.app_commands.command(name="combat")
-    async def test_combat(self, interaction:discord.Interaction):
-        instance = CombatInstance()
-        interaction = await self.send_testing_view(interaction)
-        await instance.test_combat(interaction)
-        await interaction.edit_original_response(content="Combat Over", view=None)
-        await asyncio.sleep(8.0)
-        await interaction.delete_original_response()
+    # @discord.app_commands.command(name="combat")
+    # async def test_combat(self, interaction:discord.Interaction):
+    #     instance = CombatInstance()
+    #     interaction = await self.send_testing_view(interaction)
+    #     await instance.test_combat(interaction)
+    #     await interaction.edit_original_response(content="Combat Over", view=None)
+    #     await asyncio.sleep(8.0)
+    #     await interaction.delete_original_response()
 
-    async def send_testing_view(self, interaction:discord.Interaction):
-        view = TestingView()
-        await interaction.response.send_message("## Combat Test\nThis test is for demonstration purposes only and is not representative of any finished product.", view=view)
+    # async def send_testing_view(self, interaction:discord.Interaction):
+    #     view = TestingView()
+    #     await interaction.response.send_message("## Combat Test\nThis test is for demonstration purposes only and is not representative of any finished product.", view=view)
+    #     await view.wait()
+    #     await interaction.delete_original_response()
+    #     return view.interaction
+    @discord.app_commands.command(name="selectiontest")
+    async def selection_test(self, interaction:discord.Interaction):
+        view = CombatView(interaction)
+        view.add_item(EnemySelectMenu(["enemy1", "num2", "num3", "num4"]))
+        await interaction.response.send_message("select", view=view)
         await view.wait()
-        await interaction.delete_original_response()
-        return view.interaction
+
 
 async def setup(bot):
     await bot.add_cog(Testing(bot))
