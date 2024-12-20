@@ -38,7 +38,7 @@ class Cooldown():
         self.acted: str = acted
 
     def in_range(self, mypos, targetpos) -> bool:
-        if targetpos - mypos <= self.stats.rng:
+        if abs(targetpos - mypos) <= self.stats.rng:
             return True
         return False
 
@@ -84,11 +84,6 @@ class EnemyCooldown(Cooldown):
     def __init__(self, name, emoji, stats, active, acted):
         super().__init__(name, emoji, stats, active, acted)
 
-    def in_range(self, mypos, targetpos) -> bool:
-        if -(targetpos - mypos) <= self.stats.rng:
-            return True
-        return False
-
     def attack(self, player: PlayableCharacter, playerhealthpools: list[int], playerindex: int) -> str:
         if self.miss():
             return f"missed {self.name}"
@@ -132,13 +127,13 @@ class SingleTargetAttack(Cooldown):
 # TODO: run probability should be the difference between player and enemy spd
 # TODO: implement status effects
 class CombatInstance():
-    def __init__(self, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
+    def __init__(self, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy], bounds:tuple[int]):
+        self.bounds = bounds
         self.players = players
         self.cooldowns = cooldowns
         self.playerhealthpools:list[int] = self.initialize_player_healthpools()
         self.playerpositions = []
         self.enemies = enemies  
-        self.enemypositions = []
         self.scale_cooldown_damages(self.cooldowns, self.characters)
         # TODO: broken, pass correct values
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
@@ -203,6 +198,11 @@ class CombatInstance():
         view.stop()
         view.clear_items()
         enemy_task.cancel()
+
+    def initialize_player_positions(self):
+        positions = []
+        for player in self.players:
+            positions.append(self.bounds[0])
 
     def initialize_player_healthpools(self):
         player_healthpools = []
