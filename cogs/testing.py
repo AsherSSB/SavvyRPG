@@ -117,7 +117,6 @@ class SingleTargetAttack(Cooldown):
         return f"{hit} {enemy.name} for {dmg} damage"
 
 
-# TODO: initialize player/enemy positions (what range do players/enemies start??)
 # TODO: implement range logic for cooldowns
 # TODO: implement range logic for enemies
 # TODO: give weapons knockback 
@@ -132,8 +131,9 @@ class CombatInstance():
         self.players = players
         self.cooldowns = cooldowns
         self.playerhealthpools:list[int] = self.initialize_player_healthpools()
-        self.playerpositions = []
-        self.enemies = enemies  
+        self.playerpositions = self.initialize_player_positions()
+        self.enemies = enemies
+        self.enemy_tasks = []
         self.scale_cooldown_damages(self.cooldowns, self.characters)
         # TODO: broken, pass correct values
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
@@ -147,16 +147,12 @@ class CombatInstance():
         view = self.initialize_combat_view(interaction, self.cooldowns[0])
         await interaction.response.send_message("Combat", view=view, embed=self.embed)
         # TODO: move enemy tasks to instance
-        # TODO: function to initialize all enemy tasks
-        enemy_task = asyncio.create_task(self.enemy_attack(interaction))
+        self.enemy_tasks = self.initialize_enemy_tasks(interaction)
        
         while self.enemy.stats.hp > 0:
             # if player hp < 1
             if self.pchp <= 0:
-                # TODO: refactor to function isdead
-                view.stop()
-                view.clear_items()
-                enemy_task.cancel()
+                self.stop_tasks_and_views(view)
                 return
             
             # check before and after input if player died
@@ -167,18 +163,14 @@ class CombatInstance():
                 continue  # Continue the loop if timeout occurs
 
             if self.pchp <= 0:
-                enemy_task.cancel()
-                view.stop()
-                view.clear_items()
+                self.stop_tasks_and_views(view)
                 return
                     
             # TODO: refactor run to a cooldown
             choice = view.choice
             if choice == -1:
                 if self.try_run():
-                    enemy_task.cancel()
-                    view.stop()
-                    view.clear_items()
+                    self.stop_tasks_and_views(view)
                     return
                 
                 else:
@@ -189,15 +181,28 @@ class CombatInstance():
                     await self.fix_embed_players(interaction)
                     await interaction.edit_original_response(view=view)
             else:
+                # TODO: select enemy to attack if there is more than 1 enemy
+                # TODO: do attack here
+                # if not in range tell user
+                # else call cooldown.attack and use cooldown
                 await self.use_cooldown(cds[choice], self.enemy, interaction)
                 self.logcount += 1
 
             view.event = asyncio.Event()
             
-        # TODO: move to its own function
+        self.stop_tasks_and_views(view)
+
+    def stop_tasks_and_views(self, view:discord.ui.View):
         view.stop()
         view.clear_items()
-        enemy_task.cancel()
+        self.kill_all_enemy_tasks()
+
+    def kill_all_enemy_tasks(self):
+        for task in self.enemy_tasks:
+            task.cancel()
+
+    def initialize_enemy_tasks(self, interaction):
+        [asyncio.create_task(self.enemy_attack(interaction)) for _ in self.enemies]
 
     def initialize_player_positions(self):
         return [self.bounds[0] for _ in self.players]
@@ -210,9 +215,7 @@ class CombatInstance():
             for cooldown in all_players_cooldowns[i]:
                 cooldown.scale_damage(player)
 
-    # TODO: refactor, pass message directly?
-    async def use_cooldown(self, cooldown: Cooldown, target:Enemy, interaction:discord.Interaction):
-        message = cooldown.active(target)
+    async def use_cooldown(self, message, interaction:discord.Interaction):
         self.embed = self.embed.insert_field_at(-2, name=f"{self.pc.name} ", value=message, inline=False)
         self.trim_embed()
         await self.fix_embed_players(interaction)
