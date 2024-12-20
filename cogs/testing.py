@@ -96,6 +96,9 @@ class SingleTargetAttack(Cooldown):
         return f"{hit} {enemy.name} for {dmg} damage"
 
 
+pcweapon:Weapon = Weapon(name="Fists", value=0, scale="str",
+                        stats=WeaponStatTable(dmg=5, spd=1.0, rng=1, cc=.2, cm=1.5, acc=.95, scalar=.1, stat="str"))
+
 punchcd = SingleTargetAttack("Punch", "👊", WeaponStatTable(
     dmg=10, spd=3.5, rng=1, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
 ), acted="punched")
@@ -104,34 +107,39 @@ pummelcd = SingleTargetAttack("Pummel", "✊", WeaponStatTable(
     dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
 ), acted="pummeled")    
 
-
-class Testing(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.pc:PlayableCharacter = PlayableCharacter(
+pc:PlayableCharacter = PlayableCharacter(
             "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
-        self.characters = [self.pc]
-        self.cooldowns = [[punchcd, pummelcd]]
-        
-        self.pcweapon:Weapon = Weapon(name="Fists", value=0, scale="str",
-                               stats=WeaponStatTable(dmg=5, spd=1.0, rng=1, cc=.2, cm=1.5, acc=.95, scalar=.1, stat="str"))
-        
-        self.enemy:Enemy = Enemy("Training Dummy", 
-                         NPCStatTable(120, 0, 0), 
-                         Drops(1, 1, None),
-                         Weapon(name="Stick Arms", value=0, 
-                                stats=WeaponStatTable(dmg=1, spd=2.5, rng=1, cc=.1, cm=1.5, acc=.25, scalar=0, stat="str"),
-                                scale="str"))
 
+enemy:Enemy = Enemy("Training Dummy", 
+                    NPCStatTable(120, 0, 0), 
+                    Drops(1, 1, None),
+                    Weapon(name="Stick Arms", value=0, 
+                        stats=WeaponStatTable(dmg=1, spd=2.5, rng=1, cc=.1, cm=1.5, acc=.25, scalar=0, stat="str"),
+                        scale="str"))
+
+
+# TODO: initialize healthpools
+# TODO: asign weapons cooldowns
+# TODO: initialize player/enemy positions (what range do players/enemies start??)
+# TODO: implement range logic for cooldowns
+# TODO: implement range logic for enemies
+# TODO: give weapons knockback 
+# TODO: implement knockback logic to use cooldown function
+# TODO: implement target selection for cooldowns
+class CombatInstance():
+    def __init__(self):
+        self.characters = [pc]
+        self.cooldowns = [[punchcd, pummelcd]]
+        self.playerhealthpools = []
+        self.playerpositions = []
+        self.enemies = [enemy]     
+        self.enemyhealthpools = []
+        self.enemypositions = []
         self.scale_cooldown_damages(self.cooldowns, self.characters)
-        self.pchp: int = 0
-        # init embed with player and enemy info
         self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
         self.logcount = 0
 
-    @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
-
         self.pchp = self.calculate_player_hp()
         self.enemy.stats.hp = 120
         self.logcount = 0
@@ -214,10 +222,7 @@ class Testing(commands.Cog):
             for j in range(len(all_players_cooldowns[i])):
                 all_players_cooldowns[i][j].scale_damage(players[i])
 
-
-
-
-    async def use_cooldown(self, cooldown: Cooldown, target, interaction:discord.Interaction):
+    async def use_cooldown(self, cooldown: Cooldown, target:Enemy, interaction:discord.Interaction):
         message = cooldown.active(target)
         self.embed = self.embed.insert_field_at(-2, name=f"{self.pc.name} ", value=message, inline=False)
         self.trim_embed()
@@ -266,9 +271,6 @@ class Testing(commands.Cog):
     def calculate_run_probability(self):
         advantage = self.pc.stats.att - self.enemy.stats.speed
         return 0.5 + 0.05 * advantage
-
-    def attack(self):
-        pass
     
     def calculate_player_hp(self):
         return int((10 + (self.pc.level * 2)) * (self.pc.stats.wil * .1))
@@ -329,6 +331,15 @@ class TestingView(discord.ui.View):
 
     async def wait(self):
         await self.event.wait()
+
+class Testing(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+    
+    @discord.app_commands.command(name="combat")
+    async def test_combat(self, interaction:discord.Interaction):
+        instance = CombatInstance()
+        await instance.test_combat(interaction)
 
 async def setup(bot):
     await bot.add_cog(Testing(bot))
