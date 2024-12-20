@@ -1,7 +1,9 @@
 # Currently Working On
 - Add Combat
-    - Define and seperate Cooldown class
     - add range system
+    - replace 0 or negative hp with "DEAD" 
+    - add enemy selection
+    - weapons require a cooldown field
 
 # HIGH PRIORITY (CORE FEATURES)
 - Add Inventory system (store as json in db)(each inventory "bag" should be of size 25)
