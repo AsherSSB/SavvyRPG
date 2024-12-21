@@ -138,7 +138,7 @@ class CombatInstance():
         self.enemy_tasks = []
         self.scale_cooldown_damages(self.cooldowns, self.players)
         # TODO: function to initialize embed
-        self.embed = CombatEmbed(self.players[0], self.playerhealthpools[0], self.enemies[0])
+        self.embed = CombatEmbed(self.players[0], self.playerhealthpools[0], self.enemies[0], self.playerpositions[0])
         # TODO: currently only works for 1 player
         self.view = self.initialize_combat_view(interaction, self.cooldowns[0])
         self.logcount = 0
@@ -281,10 +281,10 @@ class CombatInstance():
 
 # TODO: fix to take multiple players/enemies
 class CombatEmbed(discord.Embed):
-    def __init__(self, pc:PlayableCharacter, pchp, enemy:Enemy):
+    def __init__(self, pc:PlayableCharacter, pchp, enemy:Enemy, playerpos):
         super().__init__(color=None, title="Combat", description=None)
-        self.add_field(name=pc.name, value=f"hp: {pchp}", inline=True)
-        self.add_field(name=enemy.name, value=f"hp: {enemy.stats.hp}", inline=True)
+        self.add_field(name=pc.name, value=f"hp: {pchp}\nposition: {playerpos}", inline=True)
+        self.add_field(name=enemy.name, value=f"hp: {enemy.stats.hp}\nposition: {enemy.position}", inline=True)
 
 
 class CooldownButton(discord.ui.Button):
@@ -358,7 +358,7 @@ class ForwardButton(discord.ui.Button):
         self.positions = positions
         self.pid = playerid
         self.bounds = bounds
-        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="▶"))
+        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="▶"), row=2)
         
     async def callback(self, interaction):
         if self.positions[self.pid] < self.bounds[1]:
@@ -371,7 +371,7 @@ class BackButton(discord.ui.Button):
         self.positions = positions
         self.pid = playerid
         self.bounds = bounds
-        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="◀"))
+        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="◀"), row=2)
         
     async def callback(self, interaction):
         if self.positions[self.pid] > self.bounds[0]:
@@ -408,18 +408,18 @@ class Testing(commands.Cog):
         self.pc:PlayableCharacter = PlayableCharacter(
             "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
 
-        self.enemy:Enemy = Enemy("Training Dummy", 
+        # CombatInstance(interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy], bounds:tuple[int])
+    @discord.app_commands.command(name="combat")
+    async def test_combat(self, interaction:discord.Interaction):
+        enemy:Enemy = Enemy("Training Dummy", 
                     NPCStatTable(120, 0, 0), 
                     Drops(1, 1, None),
                     EnemyCooldown("lol", None, WeaponStatTable(
             dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
         ), "smaccd"), 0)
 
-        # CombatInstance(interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy], bounds:tuple[int])
-    @discord.app_commands.command(name="combat")
-    async def test_combat(self, interaction:discord.Interaction):
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [[self.punchcd, self.pummelcd]], [self.enemy], (0, 10))
+        instance = CombatInstance(interaction, [self.pc], [[self.punchcd, self.pummelcd]], [enemy], (0, 10))
         await instance.combat()
         await interaction.edit_original_response(content="Combat Over", view=None)
         await asyncio.sleep(8.0)
