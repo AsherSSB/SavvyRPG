@@ -150,9 +150,9 @@ class CombatInstance():
         await interaction.response.send_message("Combat", view=self.view, embed=self.embed)
         self.enemy_tasks = self.initialize_enemy_tasks(interaction)
        
-        while self.enemy.stats.hp > 0 and self.result == None:
+        while len(self.enemy_tasks) > 0 and self.result == None:
             # if player hp < 1
-            if self.pchp <= 0:
+            if self.playerhealthpools[0] <= 0:
                 self.stop_tasks_and_views()
                 return
             
@@ -163,7 +163,7 @@ class CombatInstance():
             except asyncio.TimeoutError:
                 continue  # Continue the loop if timeout occurs
 
-            if self.pchp <= 0:
+            if self.playerhealthpools[0] <= 0:
                 self.stop_tasks_and_views()
                 return
                     
@@ -189,7 +189,7 @@ class CombatInstance():
                     # TODO: this only works with singletargetattack class
                     self.use_cooldown(cooldown.attack(target), interaction, 0)
                     if target.stats.hp <= 0:
-                        self.stop_enemy_task(self.view.target)
+                        self.cleanup_enemy_task(self.view.target)
                         # TODO: fix select menu
 
                 else:
@@ -199,8 +199,10 @@ class CombatInstance():
             
         self.stop_tasks_and_views()
 
-    def stop_enemy_task(self, enemyindex):
+    def cleanup_enemy_task(self, enemyindex):
         self.enemy_tasks[enemyindex].cancel()
+        del self.enemy_tasks[enemyindex]
+        del self.enemies[enemyindex]
 
     async def append_user_not_in_range(self, playerindex):
         self.embed.insert_field_at(-2, name=f"{self.players[playerindex].name}", value="Out of Range!", inline=False)
@@ -242,35 +244,37 @@ class CombatInstance():
         view.add_item(EnemySelectMenu([enemy.name for enemy in self.enemies]))
         return view
 
-    # TODO: fix broken variables
+    # TODO: only works for 1 player and 1 enemy
     async def enemy_attack(self, interaction:discord.Interaction):
-        while self.enemy.stats.hp > 0 and self.pchp > 0:
+        while self.enemies[0].stats.hp > 0 and self.playerhealthpools[0] > 0:
             await asyncio.sleep(self.enemy.weapon.stats.spd)
-            self.pchp -= self.enemy.weapon.stats.dmg
-            self.embed = self.embed.insert_field_at(-2, name=f"{self.enemy.name} struck {self.pc.name}", value=f"for {self.enemy.weapon.stats.dmg} damage", inline=False)
+            self.playerhealthpools[0] -= 1
+            self.embed = self.embed.insert_field_at(-2, name=f"{self.enemies[0].name} struck {self.players[0].name}", value=f"for 1 damage", inline=False)
             self.logcount += 1
             self.trim_embed()
             await self.fix_embed_players(interaction)
-            if self.pchp <= 0:
+            if self.playerhealthpools[0] <= 0:
                 return
 
 
     # TODO: fix to work for dynamic counts of enemies and players
-    async def fix_embed_players(self, interaction:discord.Interaction):
-        self.embed.set_field_at(-1, name=self.enemy.name, value=f"hp: {self.enemy.stats.hp}")
-        self.embed.set_field_at(-2, name=self.pc.name, value=f"hp {self.pchp}")
+    # currently only initializes 1 player and 1 enemy
+    async def fix_embed_players(self, interaction: discord.Interaction):
+        self.embed.set_field_at(-1, name=self.enemies[0].name, value=f"hp: {self.enemies[0].stats.hp}")
+        self.embed.set_field_at(-2, name=self.players[0].name, value=f"hp {self.playerhealthpools[0]}")
         await interaction.edit_original_response(embed=self.embed)
 
     def trim_embed(self):
         if self.logcount > 10:
             self.embed = self.embed.remove_field(0)
 
-    def try_run(self, playerindex):
-        prob = self.calculate_run_probability(playerindex)
+    # always uses player 0 because run only works in single player
+    def try_run(self):
+        prob = self.calculate_run_probability(self.players[0])
         return random.random() < prob
     
     # TODO: properly implement once player "practical stats" are implemented
-    def calculate_run_probability(self, playerindex):
+    def calculate_run_probability(self, player: PlayableCharacter):
         # advantage = self.players[playerindex] - self.enemy.stats.speed
         # return 0.5 + 0.05 * advantage
         return 0.5
@@ -278,7 +282,7 @@ class CombatInstance():
     def calculate_player_hp(self, player:PlayableCharacter):
         return int((10 + (player.level * 2)) * (player.stats.wil * .1))
 
-
+# TODO: fix to take multiple players/enemies
 class CombatEmbed(discord.Embed):
     def __init__(self, pc:PlayableCharacter, pchp, enemy:Enemy):
         super().__init__(color=None, title="Combat", description=None)
