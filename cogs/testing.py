@@ -176,14 +176,10 @@ class CombatInstance():
                 else:
                     self.view.children[0].disabled = True
                     await self.interaction.edit_original_response(view=self.view)
-                    self.embed = self.embed.insert_field_at(-2, name="Failed to Run", value="Run option disabled", inline=False)
-                    self.logcount += 1
-                    self.trim_embed()
-                    await self.fix_embed_players()
+                    await self.append_combat_log("Failed to Run", "Run option disabled")
             else:
                 target = self.enemies[self.view.target]
                 cooldown = self.cooldowns[0][choice]
-                self.logcount += 1
                 if cooldown.in_range(self.playerpositions[0], target.position):
                     # TODO: this only works with singletargetattack class
                     await self.use_cooldown(cooldown.attack(target), 0)
@@ -204,9 +200,7 @@ class CombatInstance():
         del self.enemies[enemyindex]
 
     async def append_user_not_in_range(self, playerindex):
-        self.embed.insert_field_at(-2, name=f"{self.players[playerindex].name}", value="Out of Range!", inline=False)
-        self.trim_embed()
-        await self.interaction.edit_original_response(embed=self.embed)
+        await self.append_combat_log(f"{self.players[playerindex].name}", "Out of Range!")
 
     def stop_tasks_and_views(self):
         self.view.stop()
@@ -232,9 +226,7 @@ class CombatInstance():
                 cooldown.scale_damage(player)
 
     async def use_cooldown(self, message, playerindex):
-        self.embed = self.embed.insert_field_at(-2, name=f"{self.players[playerindex].name}", value=message, inline=False)
-        self.trim_embed()
-        await self.fix_embed_players()
+        await self.append_combat_log(self.players[playerindex].name, message)
 
     # TODO: currently initializes all cooldowns on row 1, causes overflow
     def initialize_combat_view(self, interaction, cds:tuple[Cooldown]):
@@ -242,6 +234,8 @@ class CombatInstance():
         for i, cd in enumerate(cds):
             view.add_item(CooldownButton(cd.name, i, cd.stats.spd, cd.emoji, row=1))
         view.add_item(EnemySelectMenu([enemy.name for enemy in self.enemies]))
+        view.add_item(ForwardButton(self.bounds, self.playerpositions, 0))
+        view.add_item(BackButton(self.bounds, self.playerpositions, 0))
         return view
 
     # TODO: only works for 1 player and 1 enemy
@@ -250,19 +244,21 @@ class CombatInstance():
         while self.enemies[0].stats.hp > 0 and self.playerhealthpools[0] > 0:
             await asyncio.sleep(2.5)
             self.playerhealthpools[0] -= 1
-            self.embed = self.embed.insert_field_at(-2, name=f"{self.enemies[0].name} struck {self.players[0].name}", value=f"for 1 damage", inline=False)
-            self.logcount += 1
-            self.trim_embed()
-            await self.fix_embed_players()
+            await self.append_combat_log(self.enemies[0].name, f"struck {self.players[0].name} for 1 damage")
             if self.playerhealthpools[0] <= 0:
                 return
 
+    async def append_combat_log(self, name: str, message: str):
+        self.embed = self.embed.insert_field_at(-2, name=name, value=message, inline=False)
+        self.logcount += 1
+        self.trim_embed()
+        await self.fix_embed_players()
 
     # TODO: fix to work for dynamic counts of enemies and players
     # currently only initializes 1 player and 1 enemy
     async def fix_embed_players(self):
-        self.embed.set_field_at(-1, name=self.enemies[0].name, value=f"hp: {self.enemies[0].stats.hp}")
-        self.embed.set_field_at(-2, name=self.players[0].name, value=f"hp {self.playerhealthpools[0]}")
+        self.embed.set_field_at(-1, name=self.enemies[0].name, value=f"hp: {self.enemies[0].stats.hp}\nposition: {self.enemies[0].position}")
+        self.embed.set_field_at(-2, name=self.players[0].name, value=f"hp {self.playerhealthpools[0]}\nposition: {self.playerpositions[0]}")
         await self.interaction.edit_original_response(embed=self.embed)
 
     def trim_embed(self):
@@ -355,6 +351,32 @@ class CombatView(discord.ui.View):
 
     async def wait(self):
         await self.event.wait()
+
+
+class ForwardButton(discord.ui.Button):
+    def __init__(self, bounds, positions, playerid):
+        self.positions = positions
+        self.pid = playerid
+        self.bounds = bounds
+        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="▶"))
+        
+    async def callback(self, interaction):
+        if self.positions[self.pid] < self.bounds[1]:
+            self.positions[self.pid] += 1
+        await interaction.response.defer() # ▶ ◀
+
+
+class BackButton(discord.ui.Button):
+    def __init__(self, bounds, positions, playerid):
+        self.positions = positions
+        self.pid = playerid
+        self.bounds = bounds
+        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="◀"))
+        
+    async def callback(self, interaction):
+        if self.positions[self.pid] > self.bounds[0]:
+            self.positions[self.pid] -= 1
+        await interaction.response.defer() # ▶ ◀
 
 
 class TestingView(discord.ui.View):
