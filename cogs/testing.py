@@ -117,11 +117,9 @@ class SingleTargetAttack(Cooldown):
         return f"{hit} {enemy.name} for {dmg} damage"
 
 
-# TODO: implement range logic for cooldowns
 # TODO: implement range logic for enemies
 # TODO: give weapons knockback 
 # TODO: implement knockback logic to use cooldown function
-# TODO: implement target selection for cooldowns
 # TODO: implement enemy dodge and resistance logic
 # TODO: run probability should be the difference between player and enemy spd
 # TODO: implement status effects
@@ -138,8 +136,8 @@ class CombatInstance():
         self.enemies:list[Enemy] = enemies
         self.enemy_tasks = []
         self.scale_cooldown_damages(self.cooldowns, self.characters)
-        # TODO: broken, pass correct values
-        self.embed = CombatEmbed(self.pc, self.pchp, self.enemy)
+        # TODO: function to initialize embed
+        self.embed = CombatEmbed(self.players[0], self.playerhealthpools[0], self.enemies[0])
         # TODO: currently only works for 1 player
         self.view = self.initialize_combat_view(interaction, self.cooldowns[0])
         self.logcount = 0
