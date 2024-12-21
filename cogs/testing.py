@@ -240,12 +240,12 @@ class CombatInstance():
     # currently initializes all cooldowns on row 1
     # errors out if the user has > 5 cooldowns
     def initialize_combat_view(self, interaction, cds:tuple[Cooldown]):
-        view = CombatView(interaction)
+        view = CombatView(interaction, self.embed_handler)
         for i, cd in enumerate(cds):
             view.add_item(CooldownButton(cd.name, i, cd.stats.spd, cd.emoji, row=1))
         view.add_item(EnemySelectMenu([enemy.name for enemy in self.enemies]))
-        view.add_item(ForwardButton(self.bounds, self.entities, 0))
         view.add_item(BackButton(self.bounds, self.entities, 0))
+        view.add_item(ForwardButton(self.bounds, self.entities, 0))
         return view
 
     # TODO: only works for 1 player and 1 enemy
@@ -358,8 +358,9 @@ class RunButton(discord.ui.Button):
 
 
 class CombatView(discord.ui.View):
-    def __init__(self, interaction:discord.Interaction):
+    def __init__(self, interaction:discord.Interaction, embed_handler):
         super().__init__()
+        self.embed_handler = embed_handler
         self.event = asyncio.Event()
         self.choice:int
         self.interaction = interaction
@@ -380,6 +381,7 @@ class ForwardButton(discord.ui.Button):
     async def callback(self, interaction):
         if self.entities[self.id].position < self.bounds[1]:
             self.entities[self.id].position += 1
+            await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer() # ▶ ◀
 
 
@@ -393,6 +395,7 @@ class BackButton(discord.ui.Button):
     async def callback(self, interaction):
         if self.entities[self.id].position > self.bounds[0]:
             self.entities[self.id].position -= 1
+            await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer() # ▶ ◀
 
 
