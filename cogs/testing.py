@@ -172,11 +172,8 @@ class CombatInstance():
                 if self.try_run():
                     self.stop_tasks_and_views()
                     return
+                await self.append_combat_log("Failed to Run", "Run option disabled")
                 
-                else:
-                    self.view.children[0].disabled = True
-                    await self.interaction.edit_original_response(view=self.view)
-                    await self.append_combat_log("Failed to Run", "Run option disabled")
             else:
                 target = self.enemies[self.view.target]
                 cooldown = self.cooldowns[0][choice]
@@ -228,7 +225,8 @@ class CombatInstance():
     async def use_cooldown(self, message, playerindex):
         await self.append_combat_log(self.players[playerindex].name, message)
 
-    # TODO: currently initializes all cooldowns on row 1, causes overflow
+    # currently initializes all cooldowns on row 1
+    # errors out if the user has > 5 cooldowns
     def initialize_combat_view(self, interaction, cds:tuple[Cooldown]):
         view = CombatView(interaction)
         for i, cd in enumerate(cds):
@@ -258,7 +256,7 @@ class CombatInstance():
     # currently only initializes 1 player and 1 enemy
     async def fix_embed_players(self):
         self.embed.set_field_at(-1, name=self.enemies[0].name, value=f"hp: {self.enemies[0].stats.hp}\nposition: {self.enemies[0].position}")
-        self.embed.set_field_at(-2, name=self.players[0].name, value=f"hp {self.playerhealthpools[0]}\nposition: {self.playerpositions[0]}")
+        self.embed.set_field_at(-2, name=self.players[0].name, value=f"hp: {self.playerhealthpools[0]}\nposition: {self.playerpositions[0]}")
         await self.interaction.edit_original_response(embed=self.embed)
 
     def trim_embed(self):
@@ -279,12 +277,18 @@ class CombatInstance():
     def calculate_player_hp(self, player:PlayableCharacter):
         return int((10 + (player.level * 2)) * (player.stats.wil * .1))
 
+
 # TODO: fix to take multiple players/enemies
 class CombatEmbed(discord.Embed):
     def __init__(self, pc:PlayableCharacter, pchp, enemy:Enemy, playerpos):
         super().__init__(color=None, title="Combat", description=None)
         self.add_field(name=pc.name, value=f"hp: {pchp}\nposition: {playerpos}", inline=True)
         self.add_field(name=enemy.name, value=f"hp: {enemy.stats.hp}\nposition: {enemy.position}", inline=True)
+
+
+class CombatEmbedHandler():
+    def __init__(self, embed: discord.Embed):
+        self.embed = embed
 
 
 class CooldownButton(discord.ui.Button):

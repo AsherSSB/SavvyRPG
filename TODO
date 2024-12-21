@@ -1,5 +1,10 @@
 # Currently Working On
 - Add Combat
+    - refactor control flow
+        - the embed should be editing the embed with a method
+        - view should be directly calling embed methods upon user interactions
+        - CombatInstance should only be handling data and business logic
+    - everything related to enemy should be moved to Enemy class
     - add range system
     - replace 0 or negative hp with "DEAD" 
     - add enemy selection
