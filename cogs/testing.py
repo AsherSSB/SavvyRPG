@@ -91,14 +91,14 @@ class EnemyCooldown(Cooldown):
     def __init__(self, name, emoji, stats, acted):
         super().__init__(name, emoji, stats, self.attack, acted)
 
-    def attack(self, player: PlayableCharacter, playerhealthpools: list[int], playerindex: int) -> str:
+    def attack(self, entities: list[Entity], playerindex: int) -> str:
         if self.miss():
             return f"missed {self.name}"
         mult = self.calculate_crit()
         hit = f"crit {self.acted}" if mult > 1.0 else self.acted
         dmg = int(self.stats.dmg * mult)
-        playerhealthpools[playerindex] -= dmg
-        return f"{hit} {player.name} for {dmg} damage"
+        entities[playerindex].hp -= dmg
+        return f"{hit} {entities[playerindex].name} for {dmg} damage"
 
 
 class Enemy():
@@ -124,8 +124,6 @@ class SingleTargetAttack(Cooldown):
         return f"{hit} {enemy.name} for {dmg} damage"
     
 
-# TODO: implement player movement
-# TODO: embed should include positions
 # TODO: implement range logic for enemies
 # TODO: give weapons knockback 
 # TODO: implement knockback logic to use cooldown function
@@ -149,6 +147,7 @@ class CombatInstance():
         self.view = self.initialize_combat_view(interaction, self.cooldowns[0])
         self.logcount = 0
         self.result: bool | None = None
+        self.initialize_enemy_cooldowns()
 
     async def combat(self):
         choice = 0
@@ -198,6 +197,12 @@ class CombatInstance():
             
         self.stop_tasks_and_views()
 
+    def initialize_enemy_cooldowns(self):
+        cds = []
+        for enemy in self.enemies:
+            cds.append(enemy.attack)
+        self.cooldowns.append(cds)
+
     def initialize_entities(self) -> list[Entity]:
         entities: list[Entity] = []
         for player in self.players:
@@ -224,7 +229,7 @@ class CombatInstance():
             task.cancel()
 
     def initialize_enemy_tasks(self):
-        return [asyncio.create_task(self.enemy_attack()) for _ in self.enemies]
+        return [asyncio.create_task(self.enemy_attack(i)) for i, _ in enumerate(self.enemies)]
 
     def initialize_player_positions(self):
         return [self.bounds[0] for _ in self.players]
@@ -250,14 +255,34 @@ class CombatInstance():
 
     # TODO: only works for 1 player and 1 enemy
     # TODO: Should use EnemyCooldown class
-    async def enemy_attack(self):
+
+    async def enemy_attack(self, enemy_index: int):
         entities = self.entities
-        while entities[1].hp > 0 and entities[0].hp > 0:
-            await asyncio.sleep(2.5)
-            entities[0].hp -= 1
-            await self.embed_handler.log(entities[1].name, f"struck {entities[0].name} for 1 damage")
-            if entities[0].hp <= 0:
-                return
+        entity_index = len(self.players) + enemy_index
+        cd: EnemyCooldown = self.cooldowns[-1][enemy_index]
+
+        while entities[entity_index].hp > 0 and entities[0].hp > 0:
+            if self.enemy_in_range(entities[entity_index], entities[0], cd.stats.rng):
+                await asyncio.sleep(1.5)
+                if self.enemy_in_range(entities[entity_index], entities[0], cd.stats.rng):
+                    message = cd.attack(entities, 0)
+                    await self.embed_handler.log(entities[entity_index].name, message)
+            else:
+                self.move_toward_player(entities, entity_index, 0)
+                await self.embed_handler.fix_embed_players()
+                await asyncio.sleep(1.0)
+
+    def enemy_in_range(self, enemy, player, range):
+        return abs(enemy.position - player.position) <= range
+
+    def move_toward_player(self, entities, enemyindex, playerindex):
+        if entities[enemyindex].position < entities[playerindex].position:
+            entities[enemyindex].position += 1
+        elif entities[enemyindex].position > entities[playerindex].position:
+            entities[enemyindex].position -= 1
+#
+
+
 
     # always uses player 0 because run only works in single player
     def try_run(self):
@@ -434,8 +459,8 @@ class Testing(commands.Cog):
         enemy:Enemy = Enemy("Training Dummy", 
                     NPCStatTable(120, 0, 0), 
                     Drops(1, 1, None),
-                    EnemyCooldown("lol", None, WeaponStatTable(
-            dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
+                    EnemyCooldown("Smack", None, WeaponStatTable(
+            dmg=1, spd=7.5, rng=0, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str" 
         ), "smaccd"), 0)
 
         interaction = await self.send_testing_view(interaction)
