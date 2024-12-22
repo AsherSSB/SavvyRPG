@@ -59,7 +59,6 @@ class Cooldown():
             return self.stats.cm
         return 1.0
     
-    # TODO: save scaled stats somewhere else, not dmg directly
     def scale_damage(self, player:PlayableCharacter):
         playerstats = player.stats.to_dict()
         playerstats = playerstats[self.stats.stat]
@@ -124,14 +123,6 @@ class SingleTargetAttack(Cooldown):
         return f"{hit} {enemy.name} for {dmg} damage"
     
 
-# TODO: 2d map grid using emoji
-# TODO: player scales twice
-# TODO: implement range logic for enemies
-# TODO: implement enemy dodge and resistance logic
-# TODO: run probability should be the difference between player and enemy spd
-# TODO: implement status effects
-# TODO: implement "practical stats" for players during combat
-# TODO: buttons turn gray if out of range
 class CombatInstance():
     def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy], bounds:tuple[int]):
         self.interaction = interaction
@@ -140,41 +131,40 @@ class CombatInstance():
         self.players: list[PlayableCharacter] = players
         self.cooldowns: list[list[Cooldown]] = cooldowns
         self.entities: list[Entity] = self.initialize_entities()
-        self.enemy_tasks = []
         self.scale_cooldown_damages(self.cooldowns, self.players)
         self.embed_handler = CombatEmbedHandler(self.entities, self.interaction)
-        # TODO: currently only works for 1 player
         self.view = self.initialize_combat_view(interaction, self.cooldowns[0])
-        self.logcount = 0
-        self.result: bool | None = None
         self.initialize_enemy_cooldowns()
 
     async def combat(self):
         choice = 0
         await self.interaction.response.send_message("Combat", view=self.view, embed=self.embed_handler.embed)
         while True:
-            pass
-            # players turn
-            # wait for view
             await self.view.wait()
             choice = self.view.choice
-            # if -1, try run
+
             if choice == -1:
                 if self.try_run():
-                    return
+                    return 0
                 else:
                     self.embed_handler.log(self.entities[0].name, "Failed to Run")
-            # else use cooldown
+
+            if choice == -2:
+                self.embed_handler.log(self.entities[0].name, "Passed their turn")
             else:
-                self.use_cooldown(self.cooldowns[0][choice], 0)
-            # if enemy is dead, return
+                confirmed = await self.use_cooldown(self.cooldowns[0][choice], 0)
+                if confirmed == False:
+                    self.view.event = asyncio.Event()
+                    continue
+            
+            # enemy is dead
             if self.entities[-1].hp <= 0:
-                return
-            # play enemy's turn
-            self.enemy_attack(-1)
-            # if player is dead, return
+                return 1
+            
+            await self.enemy_attack(-1)
+            # player is dead
             if self.entities[0].hp <=0:
-                return
+                return -1
             # reset view event
             self.view.event = asyncio.Event()
 
@@ -208,8 +198,22 @@ class CombatInstance():
             for cooldown in all_players_cooldowns[i]:
                 cooldown.scale_damage(player)
 
-    async def use_cooldown(self, message, playerindex):
-        await self.embed_handler.log(self.players[playerindex].name, message)
+    async def use_cooldown(self, cooldown:Cooldown, playerindex):
+        view = EnemySelectView() 
+        view.add_item(EnemySelectMenu([enemy.name for enemy in self.enemies]))
+        await self.interaction.edit_original_response(view=view)
+        await view.wait()
+
+        if not self.enemy_in_range(self.entities[-view.choice], self.entities[0], cooldown.stats.rng):
+            await self.embed_handler.log(self.players[playerindex].name, "Enemy not in range!")
+            return await self.use_cooldown(cooldown, playerindex)
+        
+        await self.interaction.edit_original_response(view=self.view)
+        if view.choice == 0:
+            return False
+        else:
+            await self.embed_handler.log(self.players[playerindex].name, cooldown.attack(self.entities[-1]))
+            return True
 
     # currently initializes all cooldowns on row 1
     # errors out if the user has > 5 cooldowns
@@ -217,13 +221,9 @@ class CombatInstance():
         view = CombatView(interaction, self.embed_handler)
         for i, cd in enumerate(cds):
             view.add_item(CooldownButton(cd.name, i, cd.stats.spd, cd.emoji, row=1))
-        view.add_item(EnemySelectMenu([enemy.name for enemy in self.enemies]))
         view.add_item(BackButton(self.bounds, self.entities, 0))
         view.add_item(ForwardButton(self.bounds, self.entities, 0))
         return view
-
-    # TODO: only works for 1 player and 1 enemy
-    # TODO: Should use EnemyCooldown class
 
     async def enemy_attack(self, enemy_index: int):
         entities = self.entities
@@ -252,7 +252,6 @@ class CombatInstance():
         prob = self.calculate_run_probability(self.players[0])
         return random.random() < prob
     
-    # TODO: properly implement once player "practical stats" are implemented
     def calculate_run_probability(self, player: PlayableCharacter):
         # advantage = self.players[playerindex] - self.enemy.stats.speed
         # return 0.5 + 0.05 * advantage
@@ -300,15 +299,9 @@ class CooldownButton(discord.ui.Button):
         self.cd = cooldowntime
 
     async def callback(self, interaction):
-        self.disabled = True
-        await self.view.interaction.edit_original_response(view=self.view)
         self.view.choice = self.choiceid
         await interaction.response.defer()
         self.view.event.set()
-        await asyncio.sleep(self.cd)
-        self.disabled = False
-        await self.view.interaction.edit_original_response(view=self.view)
-
 
 class EnemySelectOption(discord.SelectOption):
     def __init__(self, label: str, value: int):
@@ -319,19 +312,32 @@ class EnemySelectMenu(discord.ui.Select):
     def __init__(self, enemies: list[str], min_values=1, max_values=1):
         self.enemies = enemies
         options = self.initialize_options(enemies)
-        super().__init__(placeholder=f"targeting: {enemies[0]}", min_values=min_values, 
+        super().__init__(placeholder=f"Select Target", min_values=min_values, 
                          max_values=max_values, options=options, row=0)
 
     def initialize_options(self, enemies: list[str]):
-        return [EnemySelectOption(enemy, i) for i, enemy in enumerate(enemies)]
+        return [EnemySelectOption(enemy, i) for i, enemy in enumerate(enemies, 1)]
 
     async def callback(self, interaction: discord.Interaction):
         selected_option = int(self.values[0])  # Convert the selected value back to integer
-        self.view.target = selected_option
-        self.placeholder = f"targeting: {self.enemies[selected_option]}"
-        await self.view.interaction.edit_original_response(content=f"{self.view.target}", view=self.view)
+        self.view.choice = selected_option
         await interaction.response.defer()
+        self.view.event.set()
 
+
+class EnemySelectView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.choice: int = 0
+        self.event = asyncio.Event()
+
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.red, row=1)
+    async def back_button(self, interaction:discord.Interaction, button):
+        await interaction.response.defer()
+        self.event.set()
+
+    async def wait(self):
+        await self.event.wait()
 
 class RunButton(discord.ui.Button):
     def __init__(self):
@@ -352,8 +358,13 @@ class CombatView(discord.ui.View):
         self.event = asyncio.Event()
         self.choice:int
         self.interaction = interaction
-        self.target: int = 0
         self.add_item(RunButton())
+
+    @discord.ui.button(label="Pass", style=discord.ButtonStyle.red, row=4)
+    async def pass_button(self, interaction:discord.Interaction, button):
+        self.choice = -2
+        await interaction.response.defer()
+        self.event.set()
 
     async def wait(self):
         await self.event.wait()
@@ -440,15 +451,6 @@ class Testing(commands.Cog):
         await view.wait()
         await interaction.delete_original_response()
         return view.interaction
-
-    @discord.app_commands.command(name="ansi")
-    async def ansitest(self, interaction:discord.Interaction):
-        content = """ ```ansi
-\u001b[0;40m\u001b[1;32mThat's some cool formatted text right?\u001b[0m
-or \:smile:
-\u001b[1;40;32mThat's some cool formatted text right?\u001b[0m
-```"""
-        await interaction.response.send_message(content)
     
 
 async def setup(bot):
