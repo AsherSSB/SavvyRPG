@@ -59,7 +59,7 @@ class Cooldown():
             return self.stats.cm
         return 1.0
     
-    # only applicable to PLAYERS do NOT call for enemy cooldowns
+    # TODO: save scaled stats somewhere else, not dmg directly
     def scale_damage(self, player:PlayableCharacter):
         playerstats = player.stats.to_dict()
         playerstats = playerstats[self.stats.stat]
@@ -124,9 +124,9 @@ class SingleTargetAttack(Cooldown):
         return f"{hit} {enemy.name} for {dmg} damage"
     
 
+# TODO: 2d map grid using emoji
+# TODO: player scales twice
 # TODO: implement range logic for enemies
-# TODO: give weapons knockback 
-# TODO: implement knockback logic to use cooldown function
 # TODO: implement enemy dodge and resistance logic
 # TODO: run probability should be the difference between player and enemy spd
 # TODO: implement status effects
@@ -152,50 +152,31 @@ class CombatInstance():
     async def combat(self):
         choice = 0
         await self.interaction.response.send_message("Combat", view=self.view, embed=self.embed_handler.embed)
-        self.enemy_tasks = self.initialize_enemy_tasks()
-       
-        while len(self.enemy_tasks) > 0 and self.result == None:
-            # if player hp < 1
-            if self.entities[0].hp <= 0:
-                self.stop_tasks_and_views()
-                return
-            
-            # check before and after input if player died
-            # TODO: refactor to literally anything else
-            try:
-                await asyncio.wait_for(self.view.wait(), timeout=2.0)
-            except asyncio.TimeoutError:
-                continue  # Continue the loop if timeout occurs
-
-            if self.entities[0].hp <= 0:
-                self.stop_tasks_and_views()
-                return
-                    
-            # TODO: run might be spammable?
+        while True:
+            pass
+            # players turn
+            # wait for view
+            await self.view.wait()
             choice = self.view.choice
+            # if -1, try run
             if choice == -1:
                 if self.try_run():
-                    self.stop_tasks_and_views()
                     return
-                await self.embed_handler.log("Failed to Run", "Run option disabled")
-
-            else:
-                # only works with 1 player
-                target = self.entities[self.view.target + 1] 
-                cooldown = self.cooldowns[0][choice]
-                if cooldown.in_range(self.entities[0].position, target.position):
-                    # TODO: this only works with singletargetattack class
-                    await self.use_cooldown(cooldown.attack(target), 0)
-                    if target.hp <= 0:
-                        self.cleanup_enemy_task(self.view.target)
-                        # TODO: fix select menu
-
                 else:
-                    await self.append_user_not_in_range(0)
-
+                    self.embed_handler.log(self.entities[0].name, "Failed to Run")
+            # else use cooldown
+            else:
+                self.use_cooldown(self.cooldowns[0][choice], 0)
+            # if enemy is dead, return
+            if self.entities[-1].hp <= 0:
+                return
+            # play enemy's turn
+            self.enemy_attack(-1)
+            # if player is dead, return
+            if self.entities[0].hp <=0:
+                return
+            # reset view event
             self.view.event = asyncio.Event()
-            
-        self.stop_tasks_and_views()
 
     def initialize_enemy_cooldowns(self):
         cds = []
@@ -211,11 +192,6 @@ class CombatInstance():
             entities.append(Entity(enemy.name, enemy.stats.hp, self.bounds[1]))
         return entities
 
-    def cleanup_enemy_task(self, enemyindex):
-        self.enemy_tasks[enemyindex].cancel()
-        del self.enemy_tasks[enemyindex]
-        del self.enemies[enemyindex]
-
     async def append_user_not_in_range(self, playerindex):
         await self.embed_handler.log(f"{self.players[playerindex].name}", "Out of Range!")
 
@@ -223,13 +199,6 @@ class CombatInstance():
         self.view.stop()
         self.view.clear_items()
         self.kill_all_enemy_tasks()
-
-    def kill_all_enemy_tasks(self):
-        for task in self.enemy_tasks:
-            task.cancel()
-
-    def initialize_enemy_tasks(self):
-        return [asyncio.create_task(self.enemy_attack(i)) for i, _ in enumerate(self.enemies)]
 
     def initialize_player_positions(self):
         return [self.bounds[0] for _ in self.players]
@@ -261,16 +230,13 @@ class CombatInstance():
         entity_index = len(self.players) + enemy_index
         cd: EnemyCooldown = self.cooldowns[-1][enemy_index]
 
-        while entities[entity_index].hp > 0 and entities[0].hp > 0:
-            if self.enemy_in_range(entities[entity_index], entities[0], cd.stats.rng):
-                await asyncio.sleep(1.5)
-                if self.enemy_in_range(entities[entity_index], entities[0], cd.stats.rng):
-                    message = cd.attack(entities, 0)
-                    await self.embed_handler.log(entities[entity_index].name, message)
-            else:
-                self.move_toward_player(entities, entity_index, 0)
-                await self.embed_handler.fix_embed_players()
-                await asyncio.sleep(1.0)
+        if self.enemy_in_range(entities[entity_index], entities[0], cd.stats.rng):
+            message = cd.attack(entities, 0)
+            await self.embed_handler.log(entities[entity_index].name, message)
+        else:
+            self.move_toward_player(entities, entity_index, 0)
+            await self.embed_handler.fix_embed_players()
+
 
     def enemy_in_range(self, enemy, player, range):
         return abs(enemy.position - player.position) <= range
@@ -280,9 +246,6 @@ class CombatInstance():
             entities[enemyindex].position += 1
         elif entities[enemyindex].position > entities[playerindex].position:
             entities[enemyindex].position -= 1
-#
-
-
 
     # always uses player 0 because run only works in single player
     def try_run(self):
@@ -450,12 +413,13 @@ class Testing(commands.Cog):
             dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
         ), acted="pummeled")    
 
-        self.pc:PlayableCharacter = PlayableCharacter(
-            "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
-
         # CombatInstance(interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy], bounds:tuple[int])
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
+
+        self.pc:PlayableCharacter = PlayableCharacter(
+            "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
+
         enemy:Enemy = Enemy("Training Dummy", 
                     NPCStatTable(120, 0, 0), 
                     Drops(1, 1, None),
@@ -476,6 +440,16 @@ class Testing(commands.Cog):
         await view.wait()
         await interaction.delete_original_response()
         return view.interaction
+
+    @discord.app_commands.command(name="ansi")
+    async def ansitest(self, interaction:discord.Interaction):
+        content = """ ```ansi
+\u001b[0;40m\u001b[1;32mThat's some cool formatted text right?\u001b[0m
+or \:smile:
+\u001b[1;40;32mThat's some cool formatted text right?\u001b[0m
+```"""
+        await interaction.response.send_message(content)
+    
 
 async def setup(bot):
     await bot.add_cog(Testing(bot))
