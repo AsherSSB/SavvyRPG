@@ -250,6 +250,12 @@ class RaceView(discord.ui.View):
         self.interaction = interaction
         self.event.set()
 
+    @discord.ui.button(label="High Elf")
+    async def pick_highelf(self, interaction:discord.Interaction, button):
+        self.race = origins.HighElf()
+        self.interaction = interaction
+        self.event.set()
+
     @discord.ui.button(label="Any Other Race")
     async def pick_subhuman(self, interaction:discord.Interaction, button):
         self.race = origins.NotHuman()

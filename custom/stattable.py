@@ -169,7 +169,7 @@ class Race():
 
 class Human(Race):
     def __init__(self):
-        self.statmods = StatTable(0, 2, -1, 1, -1)
+        self.statmods = StatTable(1, 2, -1, 0, -1)
         self.description = f"""
 # Human
 
@@ -187,16 +187,27 @@ Bonus Stats:\n{self.statmods}"""
         return "Human"
 
 
-class NotHuman(Race):
+class HighElf(Race):
     def __init__(self):
-        self.statmods = StatTable(-5, -5, -5, -5, -5)
-        self.description = f"# Not Human \n\nWhy would you ever pick a non-human? Humans are superior in every way!\n(This is a placeholder)\n\n\"Bonus\" Stats:\n{self.statmods}"
+        self.statmods = StatTable(-2, 0, 0, 1, 2)
+        self.description = f"""
+# High Elf
 
+Discerning and graceful, High Elves are known for their vast knowledge of and \
+strong connection with nature. A race local to Aether, they are tall and \
+beautiful beings with pointed ears whos lifespan lasts many times that of a \
+human. Most High Elves devote their long lives to the persuit of knowledge, \
+living in the Ancient Forests while studying the physical and arcane. \
+Although preferring deplomacy, they are also very capable warriors, trained \
+to protect themselves and others using percise and deadly blows.
+
+Bonus Stats:\n{self.statmods}"""
+        
     def __str__(self):
-        return "~~Filth~~Not Human"
+        return "High Elf"
     
 
 class OriginsInfo():
     def __init__(self):
         self.origins:set = {Nomad(), Bard(), Barbarian(), Rogue(), Ranger(), Wizard()}
-        self.races:set = {Human(), NotHuman()}
+        self.races:set = {Human(), HighElf()}
