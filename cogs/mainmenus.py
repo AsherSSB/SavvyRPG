@@ -64,6 +64,7 @@ class MainMenus(commands.Cog):
             await view.interaction.response.defer()
             await self.send_main_menu(interaction)
         if view.choice == 2:
+            await interaction.delete_original_response()
             interaction = view.interaction
             await self.confirm_character_deletion(interaction)
         else:
@@ -75,13 +76,22 @@ class MainMenus(commands.Cog):
         name = self.user_character.name.upper()
         modal = SingleTextSubmission("ARE YOU SURE?", f"Type \"{name}\" and submit to delete character")
         await interaction.response.send_modal(modal)
-        await modal.wait()
-        interaction = modal.interaction
-        if modal.textinput.value == name:
-            await self.db.delete_character(interaction)
-        else:
-            await interaction.response.send_message("Names do Not Match, Returning to Character Menu")
-            await asyncio.sleep(2.5)
+        try:
+            await asyncio.wait_for(modal.wait(), timeout=20.0)
+            interaction = modal.interaction
+
+            if modal.textinput.value == name:
+                await self.db.delete_character(interaction)
+            else:
+                await interaction.response.send_message("Names do Not Match, Returning to Character Menu")
+                await asyncio.sleep(4)
+                await self.send_character_menu(interaction)
+        except asyncio.TimeoutError:
+            view = PlaceholderView()
+            followup = await interaction.followup.send("Deletion Timed Out", view=view)
+            await view.wait()
+            interaction = view.interaction
+            await interaction.response.send_message("Loading...")
             await self.send_character_menu(interaction)
 
     async def send_market_menu(self, interaction:discord.Interaction):
