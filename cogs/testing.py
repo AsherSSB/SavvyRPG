@@ -235,12 +235,14 @@ class CombatInstance():
         entities = self.entities
         cd: EnemyCooldown = self.cooldowns[-1][-1]
 
+        if not self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
+            self.move_toward_player(entities, enemy_index, 0)
+            await self.embed_handler.fix_embed_players()
+
         if self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
             message = cd.attack(entities, 0)
             await self.embed_handler.log(entities[enemy_index].name, message)
-        else:
-            self.move_toward_player(entities, enemy_index, 0)
-            await self.embed_handler.fix_embed_players()
+        
 
 
     def enemy_in_range(self, enemy, player, range):
@@ -488,7 +490,16 @@ class Testing(commands.Cog):
 
     async def send_testing_view(self, interaction:discord.Interaction):
         view = TestingView()
-        await interaction.response.send_message("## Combat Test\nThis test is for demonstration purposes only and is not representative of any finished product.", view=view)
+        await interaction.response.send_message("""## Combat Test
+This test is for demonstration purposes only and is not representative of any finished product.
+                                                
+**Rules**: 
+You may move twice and attack once each turn
+You are allowed to try and run once before the option to run is disabled
+You must be in range to attack the enemy, Punch has a range of 1, Pummel has a range of 0
+The enemy will move to get in range, and then will attack if in range before ending their turn
+""", view=view)
+        
         await view.wait()
         await interaction.delete_original_response()
         return view.interaction

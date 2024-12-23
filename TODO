@@ -1,6 +1,7 @@
 # Currently Working On
 - Add Combat
     - targeting menu should only include enemies in range
+    - detect when player interaction is about to timeout and replace with new interaction on end turn button
     # TODO: CombatView is initialized with 2 instead of player's speed
     # TODO: 2d map grid using emoji
     # TODO: save scaled stats somewhere else, not cooldown dmg directly
