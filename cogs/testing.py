@@ -133,40 +133,48 @@ class CombatInstance():
         self.entities: list[Entity] = self.initialize_entities()
         self.scale_cooldown_damages(self.cooldowns, self.players)
         self.embed_handler = CombatEmbedHandler(self.entities, self.interaction)
-        self.view = self.initialize_combat_view(interaction, self.cooldowns[0])
+        self.view = self.initialize_combat_view()
         self.initialize_enemy_cooldowns()
 
     async def combat(self):
         choice = 0
         await self.interaction.response.send_message("Combat", view=self.view, embed=self.embed_handler.embed)
+        # general combat loop
         while True:
+            
+            # player turn loop
             await self.view.wait()
             choice = self.view.choice
+            while choice != -2:
 
-            if choice == -1:
-                if self.try_run():
-                    return 0
+                if choice == -1:
+                    if self.try_run():
+                        return 0
+                    else:
+                        await self.embed_handler.log(self.entities[0].name, "Failed to Run")
                 else:
-                    self.embed_handler.log(self.entities[0].name, "Failed to Run")
+                    confirmed = await self.use_cooldown(self.cooldowns[0][choice], 0)
+                    if confirmed == True:
+                        await self.view.disable_cooldowns(True)
 
-            if choice == -2:
-                self.embed_handler.log(self.entities[0].name, "Passed their turn")
-            else:
-                confirmed = await self.use_cooldown(self.cooldowns[0][choice], 0)
-                if confirmed == False:
-                    self.view.event = asyncio.Event()
-                    continue
+                # enemy is dead
+                if self.entities[-1].hp <= 0:
+                    return 1
+                
+                self.view.event = asyncio.Event()
+                await self.view.wait()
+                choice = self.view.choice
+                
+
+            await self.embed_handler.log(self.entities[0].name, "Ended their turn")
             
-            # enemy is dead
-            if self.entities[-1].hp <= 0:
-                return 1
             
             await self.enemy_attack(-1)
             # player is dead
             if self.entities[0].hp <=0:
                 return -1
             # reset view event
-            self.view.event = asyncio.Event()
+            await self.view.reset()
 
     def initialize_enemy_cooldowns(self):
         cds = []
@@ -217,24 +225,21 @@ class CombatInstance():
 
     # currently initializes all cooldowns on row 1
     # errors out if the user has > 5 cooldowns
-    def initialize_combat_view(self, interaction, cds:tuple[Cooldown]):
-        view = CombatView(interaction, self.embed_handler)
-        for i, cd in enumerate(cds):
-            view.add_item(CooldownButton(cd.name, i, cd.stats.spd, cd.emoji, row=1))
-        view.add_item(BackButton(self.bounds, self.entities, 0))
-        view.add_item(ForwardButton(self.bounds, self.entities, 0))
+    def initialize_combat_view(self):
+        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2)
+        for i, cd in enumerate(self.cooldowns[0]):
+            view.add_item(CooldownButton(cd.name, i, cd.stats.spd, cd.emoji, row=0))
         return view
 
     async def enemy_attack(self, enemy_index: int):
         entities = self.entities
-        entity_index = len(self.players) + enemy_index
-        cd: EnemyCooldown = self.cooldowns[-1][enemy_index]
+        cd: EnemyCooldown = self.cooldowns[-1][-1]
 
-        if self.enemy_in_range(entities[entity_index], entities[0], cd.stats.rng):
+        if self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
             message = cd.attack(entities, 0)
-            await self.embed_handler.log(entities[entity_index].name, message)
+            await self.embed_handler.log(entities[enemy_index].name, message)
         else:
-            self.move_toward_player(entities, entity_index, 0)
+            self.move_toward_player(entities, enemy_index, 0)
             await self.embed_handler.fix_embed_players()
 
 
@@ -352,19 +357,45 @@ class RunButton(discord.ui.Button):
 
 
 class CombatView(discord.ui.View):
-    def __init__(self, interaction:discord.Interaction, embed_handler):
+    def __init__(self, interaction:discord.Interaction, embed_handler, entities, bounds, moves):
         super().__init__()
         self.embed_handler = embed_handler
         self.event = asyncio.Event()
         self.choice:int
         self.interaction = interaction
         self.add_item(RunButton())
+        self.base_moves = moves
+        self.moves = moves
+        self.forward_button = ForwardButton(bounds, entities, 0)
+        self.back_button = BackButton(bounds, entities, 0)
+        self.add_item(self.forward_button)
+        self.add_item(self.back_button)
 
-    @discord.ui.button(label="Pass", style=discord.ButtonStyle.red, row=4)
-    async def pass_button(self, interaction:discord.Interaction, button):
+    @discord.ui.button(label="End Turn", style=discord.ButtonStyle.red, row=4)
+    async def end_turn_button(self, interaction:discord.Interaction, button):
         self.choice = -2
         await interaction.response.defer()
         self.event.set()
+
+    async def disable_cooldowns(self, status: bool):
+        for button in self.children:
+            if button.row == 0:
+                button.disabled = status
+        await self.interaction.edit_original_response(view=self)
+
+    async def reset(self):
+        self.moves = self.base_moves
+        self.forward_button.disabled = False
+        self.back_button.disabled = False
+        await self.disable_cooldowns(False)
+        self.event = asyncio.Event()
+        await self.interaction.edit_original_response(view=self)
+
+    async def disable_moves_if_zero(self):
+        if self.moves <= 0:
+            self.forward_button.disabled = True
+            self.back_button.disabled = True
+            await self.interaction.edit_original_response(view=self)
 
     async def wait(self):
         await self.event.wait()
@@ -379,6 +410,8 @@ class ForwardButton(discord.ui.Button):
         
     async def callback(self, interaction):
         if self.entities[self.id].position < self.bounds[1]:
+            self.view.moves -= 1
+            await self.view.disable_moves_if_zero()
             self.entities[self.id].position += 1
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer() # ▶ ◀
@@ -393,6 +426,8 @@ class BackButton(discord.ui.Button):
         
     async def callback(self, interaction):
         if self.entities[self.id].position > self.bounds[0]:
+            self.view.moves -= 1
+            await self.view.disable_moves_if_zero()
             self.entities[self.id].position -= 1
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer() # ▶ ◀
@@ -440,8 +475,14 @@ class Testing(commands.Cog):
 
         interaction = await self.send_testing_view(interaction)
         instance = CombatInstance(interaction, [self.pc], [[self.punchcd, self.pummelcd]], [enemy], (0, 3))
-        await instance.combat()
-        await interaction.edit_original_response(content="Combat Over", view=None)
+        result = await instance.combat()
+        if result == -1:
+            await interaction.edit_original_response(content="You Died.", view=None)
+        elif result == 0:
+            await interaction.edit_original_response(content="You Successfully Ran.", view=None)
+        else:
+            await interaction.edit_original_response(content=f"You Defeated {enemy.name}!", view=None)
+
         await asyncio.sleep(8.0)
         await interaction.delete_original_response()
 
