@@ -256,9 +256,33 @@ class RaceView(discord.ui.View):
         self.interaction = interaction
         self.event.set()
 
-    @discord.ui.button(label="Any Other Race")
-    async def pick_subhuman(self, interaction:discord.Interaction, button):
-        self.race = origins.NotHuman()
+    @discord.ui.button(label="Dark Elf")
+    async def pick_darkelf(self, interaction:discord.Interaction, button):
+        self.race = origins.DarkElf()
+        self.interaction = interaction
+        self.event.set()
+
+    @discord.ui.button(label="Dwarf")
+    async def pick_dwarf(self, interaction:discord.Interaction, button):
+        self.race = origins.Dwarf()
+        self.interaction = interaction
+        self.event.set()
+
+    @discord.ui.button(label="Orc")
+    async def pick_orc(self, interaction:discord.Interaction, button):
+        self.race = origins.Orc()
+        self.interaction = interaction
+        self.event.set()
+    
+    @discord.ui.button(label="Fairy")
+    async def pick_fairy(self, interaction:discord.Interaction, button):
+        self.race = origins.Fairy()
+        self.interaction = interaction
+        self.event.set()
+    
+    @discord.ui.button(label="Damned")
+    async def pick_damned(self, interaction:discord.Interaction, button):
+        self.race = origins.Damned()
         self.interaction = interaction
         self.event.set()
 

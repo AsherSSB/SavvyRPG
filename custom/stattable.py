@@ -189,7 +189,7 @@ Bonus Stats:\n{self.statmods}"""
 
 class HighElf(Race):
     def __init__(self):
-        self.statmods = StatTable(-2, 0, 0, 1, 2)
+        self.statmods = StatTable(-2, -1, 0, 2, 2)
         self.description = f"""
 # High Elf
 
@@ -207,7 +207,77 @@ Bonus Stats:\n{self.statmods}"""
         return "High Elf"
     
 
+class DarkElf(Race):
+    def __init__(self):
+        self.statmods = StatTable(-1, 1, 0, 2, -1)
+        self.description = f"""
+# Dark Elf
+
+...
+
+Bonus Stats:\n{self.statmods}"""
+        
+    def __str__(self):
+        return "Dark Elf"
+
+
+class Dwarf(Race):
+    def __init__(self):
+        self.statmods = StatTable(2, 2, -2, 0, -1)
+        self.description = f"""
+# Dwarf
+
+...
+
+Bonus Stats:\n{self.statmods}"""
+        
+    def __str__(self):
+        return "Dwarf"
+
+
+class Orc(Race):
+    def __init__(self):
+        self.statmods = StatTable(3, 1, -2, -1, 0)
+        self.description = f"""
+# Orc
+
+...
+
+Bonus Stats:\n{self.statmods}"""
+        
+    def __str__(self):
+        return "Orc"
+    
+
+class Fairy(Race):
+    def __init__(self):
+        self.statmods = StatTable(-2, -2, 1, 2, 2)
+        self.description = f"""
+# Fairy
+
+...
+
+Bonus Stats:\n{self.statmods}"""
+        
+    def __str__(self):
+        return "Fairy"
+    
+
+class Damned(Race):
+    def __init__(self):
+        self.statmods = StatTable(1, 3, -3, 2, -2)
+        self.description = f"""
+# Damned
+
+...
+
+Bonus Stats:\n{self.statmods}"""
+        
+    def __str__(self):
+        return "Damned"    
+
+
 class OriginsInfo():
     def __init__(self):
         self.origins:set = {Nomad(), Bard(), Barbarian(), Rogue(), Ranger(), Wizard()}
-        self.races:set = {Human(), HighElf()}
+        self.races:set = {Human(), HighElf(), Dwarf(), DarkElf(), Orc(), Fairy(), Damned()}
