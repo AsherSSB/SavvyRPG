@@ -124,7 +124,7 @@ class SingleTargetAttack(Cooldown):
 
 BASE_TILE = ":green_square:"
 
-# TODO: change all references to old 1d bounds
+
 class CombatInstance():
     def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
         self.interaction = interaction
@@ -412,6 +412,9 @@ class CombatView(discord.ui.View):
         self.add_item(RunButton())
         self.base_moves = moves
         self.moves = moves
+        self.initialize_movement_buttons(bounds ,entities, board)
+
+    def initialize_movement_buttons(self, bounds ,entities, board):
         self.forward_button = ForwardButton(bounds, entities, 0, board)
         self.back_button = BackButton(bounds, entities, 0, board)
         self.up_button = UpButton(bounds, entities, 0, board)
@@ -454,17 +457,20 @@ class CombatView(discord.ui.View):
     async def wait(self):
         await self.event.wait()
 
-# TODO: rework all movement buttons to allow 2d movement
-# TODO: add checks to all callbacks checking if there are entities in the way before allowing them to move
-class ForwardButton(discord.ui.Button):
-    def __init__(self, bounds, entities: list[Entity], entityid, board):
+
+class MovementButton(discord.ui.Button):
+    def __init__(self, bounds, entities: list[Entity], entityid, board, emoji):
         self.player = entities[entityid]
         self.bounds = bounds
         self.board: list[list[str]] = board
-        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="➡️"), row=2)
+        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name=emoji), row=2)
+
+class ForwardButton(MovementButton):
+    def __init__(self, bounds, entities: list[Entity], entityid, board):
+        super().__init__(bounds, entities, entityid, board, emoji="➡️")
         
     async def callback(self, interaction):
-        if self.player.position[0] < self.bounds[0] and self.board[self.player.position[1]][self.player.position[0] + 1] == BASE_TILE:
+        if self.player.position[0] < self.bounds[0] - 1 and self.board[self.player.position[1]][self.player.position[0] + 1] == BASE_TILE:
             self.view.moves -= 1
             await self.view.disable_moves_if_zero()
             self.board[self.player.position[1]][self.player.position[0] + 1] = self.player.emoji
@@ -474,12 +480,9 @@ class ForwardButton(discord.ui.Button):
         await interaction.response.defer() # ▶ ◀
 
 
-class BackButton(discord.ui.Button):
+class BackButton(MovementButton):
     def __init__(self, bounds, entities: list[Entity], entityid, board):
-        self.player = entities[entityid]
-        self.bounds = bounds
-        self.board: list[list[str]] = board
-        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="⬅️"), row=2)
+        super().__init__(bounds, entities, entityid, board, "⬅️")
         
     async def callback(self, interaction):
         # kill me
@@ -493,12 +496,9 @@ class BackButton(discord.ui.Button):
         await interaction.response.defer()
 
 
-class UpButton(discord.ui.Button):
+class UpButton(MovementButton):
     def __init__(self, bounds, entities: list[Entity], entityid, board):
-        self.player = entities[entityid]
-        self.bounds = bounds
-        self.board: list[list[str]] = board
-        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="⬆️"), row=2)
+        super().__init__(bounds, entities, entityid, board, "⬆️")
         
     async def callback(self, interaction):
         # kill me
@@ -512,12 +512,9 @@ class UpButton(discord.ui.Button):
         await interaction.response.defer()
 
 
-class DownButton(discord.ui.Button):
+class DownButton(MovementButton):
     def __init__(self, bounds, entities: list[Entity], entityid, board):
-        self.player = entities[entityid]
-        self.bounds = bounds
-        self.board: list[list[str]] = board
-        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="⬇️"), row=2)
+        super().__init__(bounds, entities, entityid, board, "⬇️")
         
     async def callback(self, interaction):
         # kill me

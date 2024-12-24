@@ -3,7 +3,6 @@
     - targeting menu should only include enemies in range
     - detect when player interaction is about to timeout and replace with new interaction on end turn button
     # TODO: CombatView is initialized with 2 instead of player's speed
-    # TODO: 2d map grid using emoji
     # TODO: save scaled stats somewhere else, not cooldown dmg directly
     # TODO: implement enemy dodge and resistance logic
     # TODO: run probability should be the difference between player and enemy spd
@@ -12,8 +11,6 @@
     # TODO: buttons turn gray if out of range
     - everything related to enemy should be moved to Enemy class
     - replace 0 or negative hp with "DEAD" 
-    - add enemy selection
-    - weapons require a cooldown field
 
 # HIGH PRIORITY (CORE FEATURES)
 - Add Inventory system (store as json in db)(each inventory "bag" should be of size 25)
@@ -22,7 +19,6 @@
     - Give Blacksmith and Enchantress inventory
     - Buy, Sell Functionality
 - Create first dungeon
-- Act 1 of Campaign
 
 
 # Low priority (QOL and fixes)
@@ -32,3 +28,4 @@
 - refactor db to hold stats as jsonb
 - Detect timeout for slots and blackjack
 - Add Opening dialogue with combat tutorial
+- Act 1 of Campaign
