@@ -353,6 +353,7 @@ class CooldownButton(discord.ui.Button):
 
     async def callback(self, interaction):
         self.view.choice = self.choiceid
+        self.view.cooldown_used = True
         await interaction.response.defer()
         self.view.event.set()
 
@@ -420,6 +421,7 @@ class CombatView(discord.ui.View):
         self.moves = moves
         self.initialize_movement_buttons(bounds, board)
         self.cooldown_buttons: list[CooldownButton] = []
+        self.cooldown_used: bool = False
 
     def initialize_movement_buttons(self, bounds, board):
         self.forward_button = ForwardButton(bounds, self.entities, 0, board)
@@ -449,6 +451,7 @@ class CombatView(discord.ui.View):
         self.back_button.disabled = False
         self.up_button.disabled = False
         self.down_button.disabled = False
+        self.cooldown_used = False
         await self.disable_cooldowns(False)
         self.event = asyncio.Event()
         self.enable_moves_if_in_range_disable_if_not()
@@ -513,7 +516,8 @@ class ForwardButton(MovementButton):
             self.board[self.player.position[1]][self.player.position[0] + 1] = self.player.emoji
             self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
             self.player.position[0] += 1
-            await self.view.adjust_buttons()
+            if not self.view.cooldown_used:
+                await self.view.adjust_buttons()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer() # ▶ ◀
 
@@ -530,7 +534,8 @@ class BackButton(MovementButton):
             self.board[self.player.position[1]][self.player.position[0] - 1] = self.player.emoji
             self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
             self.player.position[0] -= 1
-            await self.view.adjust_buttons()
+            if not self.view.cooldown_used:
+                await self.view.adjust_buttons()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer()
 
@@ -547,7 +552,8 @@ class UpButton(MovementButton):
             self.board[self.player.position[1] - 1][self.player.position[0]] = self.player.emoji
             self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
             self.player.position[1] -= 1
-            await self.view.adjust_buttons()
+            if not self.view.cooldown_used:
+                await self.view.adjust_buttons()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer()
 
@@ -564,7 +570,8 @@ class DownButton(MovementButton):
             self.board[self.player.position[1] + 1][self.player.position[0]] = self.player.emoji
             self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
             self.player.position[1] += 1
-            await self.view.adjust_buttons()
+            if not self.view.cooldown_used:
+                await self.view.adjust_buttons()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer()
 
