@@ -15,6 +15,11 @@ class Item():
     quantity: int = field(default=1, kw_only=True)
 
 
+@dataclass
+class PlayerPracticalStats():
+    dodge: float
+    resistance: float
+    
 
 @dataclass
 class WeaponStatTable():
