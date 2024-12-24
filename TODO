@@ -5,15 +5,12 @@
     # TODO: CombatView is initialized with 2 instead of player's speed
     # TODO: 2d map grid using emoji
     # TODO: save scaled stats somewhere else, not cooldown dmg directly
-    # TODO: implement range logic for enemies
     # TODO: implement enemy dodge and resistance logic
     # TODO: run probability should be the difference between player and enemy spd
     # TODO: implement status effects
     # TODO: implement "practical stats" for players during combat
     # TODO: buttons turn gray if out of range
     - everything related to enemy should be moved to Enemy class
-    - create initializer that turns both players and enemies into generic entities
-    - add range system
     - replace 0 or negative hp with "DEAD" 
     - add enemy selection
     - weapons require a cooldown field
