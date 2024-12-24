@@ -32,8 +32,8 @@ class WeaponStatTable():
 class Entity():
     name: str
     hp: int
-    position: int
-
+    position: list[int]
+    emoji: str
 
 # currently used by both players and enemies, should maybe change that later
 class Cooldown():
@@ -101,12 +101,12 @@ class EnemyCooldown(Cooldown):
 
 
 class Enemy():
-    def __init__(self, name:str, stats:NPCStatTable, drops:Drops, attack:EnemyCooldown, position:int):
+    def __init__(self, name:str, stats:NPCStatTable, drops:Drops, attack:EnemyCooldown, emoji: str):
         self.name = name
         self.stats = stats
         self.drops = drops
         self.attack = attack
-        self.position = position
+        self.emoji = emoji
 
 
 class SingleTargetAttack(Cooldown):
@@ -121,20 +121,24 @@ class SingleTargetAttack(Cooldown):
         dmg = int(self.stats.dmg * mult)
         enemy.hp -= dmg
         return f"{hit} {enemy.name} for {dmg} damage"
-    
 
+BASE_TILE = ":green_square:"
+
+# TODO: change all references to old 1d bounds
 class CombatInstance():
-    def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy], bounds:tuple[int]):
+    def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
         self.interaction = interaction
-        self.bounds = bounds
+        self.bounds = (6, 4)
+        self.game_grid = self.initialize_game_bounds(self.bounds[1], self.bounds[0])
         self.enemies:list[Enemy] = enemies
         self.players: list[PlayableCharacter] = players
         self.cooldowns: list[list[Cooldown]] = cooldowns
         self.entities: list[Entity] = self.initialize_entities()
         self.scale_cooldown_damages(self.cooldowns, self.players)
-        self.embed_handler = CombatEmbedHandler(self.entities, self.interaction)
+        self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
         self.view = self.initialize_combat_view()
         self.initialize_enemy_cooldowns()
+
 
     async def combat(self):
         choice = 0
@@ -176,6 +180,12 @@ class CombatInstance():
             # reset view event
             await self.view.reset()
 
+    def stringify_game_grid(self):
+        return '\n'.join(''.join(row) for row in self.bounds)
+
+    def initialize_game_bounds(self, rows, columns):
+        return [[BASE_TILE for _ in range(columns)] for _ in range(rows)]
+
     def initialize_enemy_cooldowns(self):
         cds = []
         for enemy in self.enemies:
@@ -184,22 +194,22 @@ class CombatInstance():
 
     def initialize_entities(self) -> list[Entity]:
         entities: list[Entity] = []
-        for player in self.players:
-            entities.append(Entity(player.name, self.calculate_player_hp(player), self.bounds[0]))
-        for enemy in self.enemies:
-            entities.append(Entity(enemy.name, enemy.stats.hp, self.bounds[1]))
+        origin_emojis = {
+            "Barbarian" : ":axe:" 
+        }
+        for i, player in enumerate(self.players):
+            emoji = origin_emojis[str(player.origin)]
+            entities.append(Entity(player.name, self.calculate_player_hp(player), [0, i], emoji))
+            self.game_grid[i][0] = emoji
+        for i, enemy in enumerate(self.enemies):
+            entities.append(Entity(enemy.name, enemy.stats.hp, [self.bounds[0]-1, i], enemy.emoji))
+            self.game_grid[i][self.bounds[0]-1] = enemy.emoji
         return entities
+
+
 
     async def append_user_not_in_range(self, playerindex):
         await self.embed_handler.log(f"{self.players[playerindex].name}", "Out of Range!")
-
-    def stop_tasks_and_views(self):
-        self.view.stop()
-        self.view.clear_items()
-        self.kill_all_enemy_tasks()
-
-    def initialize_player_positions(self):
-        return [self.bounds[0] for _ in self.players]
 
     def scale_cooldown_damages(self, all_players_cooldowns: list[list[Cooldown]], players: list[PlayableCharacter]):
         for i, player in enumerate(players):
@@ -226,7 +236,7 @@ class CombatInstance():
     # currently initializes all cooldowns on row 1
     # errors out if the user has > 5 cooldowns
     def initialize_combat_view(self):
-        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2)
+        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2, self.game_grid)
         for i, cd in enumerate(self.cooldowns[0]):
             view.add_item(CooldownButton(cd.name, i, cd.stats.spd, cd.emoji, row=0))
         return view
@@ -243,16 +253,29 @@ class CombatInstance():
             message = cd.attack(entities, 0)
             await self.embed_handler.log(entities[enemy_index].name, message)
         
-
-
-    def enemy_in_range(self, enemy, player, range):
-        return abs(enemy.position - player.position) <= range
+    def enemy_in_range(self, enemy, player, max_range):
+        horizontal_distance = abs(enemy.position[0] - player.position[0])
+        vertical_distance = abs(enemy.position[1] - player.position[1])
+        # Check if both distances are within the maximum range
+        return horizontal_distance <= max_range and vertical_distance <= max_range
 
     def move_toward_player(self, entities, enemyindex, playerindex):
-        if entities[enemyindex].position < entities[playerindex].position:
-            entities[enemyindex].position += 1
-        elif entities[enemyindex].position > entities[playerindex].position:
-            entities[enemyindex].position -= 1
+        enemy: Entity = entities[enemyindex]
+        player: Entity = entities[playerindex]
+        diff = [a - b for a, b in zip(player.position, enemy.position)]
+
+        # player is further horizontal
+        if abs(diff[0]) > abs(diff[1]):
+            if diff[0] < 0:
+                enemy.position[0] -= 1
+            else:
+                enemy.position[0] += 1
+        # player is further vertical
+        else:
+            if diff[0] < 0:
+                enemy.position[1] -= 1
+            else:
+                enemy.position[1] += 1
 
     # always uses player 0 because run only works in single player
     def try_run(self):
@@ -274,16 +297,19 @@ class CombatEmbed(discord.Embed):
 
 
 class CombatEmbedHandler():
-    def __init__(self, entities: list[Entity], interaction:discord.Interaction):
+    def __init__(self, entities: list[Entity], interaction:discord.Interaction, game_board: list[list[str]]):
         self.embed = CombatEmbed()
         self.logcount = 0
         self.entities = entities
         self.interaction = interaction
+        self.game_board = game_board
+        self.embed.add_field(value=self.stringify_game_grid(), name="Game Board", inline=False)
         for entity in entities:
-            self.embed.add_field(name=entity.name, value=f"hp: {entity.hp}\nposition:{entity.position}", inline=True)
+            self.embed.add_field(name=entity.name, value=f"hp: {entity.hp}", inline=True)
 
+    # this breaks with more than 2 players because of static insert location
     async def log(self, name: str, message: str):
-        self.embed = self.embed.insert_field_at(-2, name=name, value=message, inline=False)
+        self.embed = self.embed.insert_field_at(-3, name=name, value=message, inline=False)
         self.logcount += 1
         self.trim()
         await self.fix_embed_players()
@@ -295,8 +321,13 @@ class CombatEmbedHandler():
     async def fix_embed_players(self):
         for i in range(1, len(self.entities) + 1):
             entity = self.entities[-i]
-            self.embed.set_field_at(-i, name=entity.name, value=f"hp: {entity.hp}\nposition: {entity.position}")
+            self.embed.set_field_at(-i, name=entity.name, value=f"hp: {entity.hp}")
+        self.embed.set_field_at(-i-1, value=self.stringify_game_grid(), name="Game Board", inline=False)
         await self.interaction.edit_original_response(embed=self.embed)
+
+    def stringify_game_grid(self):
+        return '\n'.join(''.join(row) for row in self.game_board)
+
 
 class CooldownButton(discord.ui.Button):
     def __init__(self, label, choiceid, cooldowntime, emoji, row):
@@ -309,6 +340,7 @@ class CooldownButton(discord.ui.Button):
         self.view.choice = self.choiceid
         await interaction.response.defer()
         self.view.event.set()
+
 
 class EnemySelectOption(discord.SelectOption):
     def __init__(self, label: str, value: int):
@@ -359,7 +391,7 @@ class RunButton(discord.ui.Button):
 
 
 class CombatView(discord.ui.View):
-    def __init__(self, interaction:discord.Interaction, embed_handler, entities, bounds, moves):
+    def __init__(self, interaction:discord.Interaction, embed_handler, entities, bounds, moves, board):
         super().__init__()
         self.embed_handler = embed_handler
         self.event = asyncio.Event()
@@ -368,8 +400,8 @@ class CombatView(discord.ui.View):
         self.add_item(RunButton())
         self.base_moves = moves
         self.moves = moves
-        self.forward_button = ForwardButton(bounds, entities, 0)
-        self.back_button = BackButton(bounds, entities, 0)
+        self.forward_button = ForwardButton(bounds, entities, 0, board)
+        self.back_button = BackButton(bounds, entities, 0, board)
         self.add_item(self.forward_button)
         self.add_item(self.back_button)
 
@@ -402,37 +434,43 @@ class CombatView(discord.ui.View):
     async def wait(self):
         await self.event.wait()
 
-
+# TODO: rework all movement buttons to allow 2d movement
+# TODO: add checks to all callbacks checking if there are entities in the way before allowing them to move
 class ForwardButton(discord.ui.Button):
-    def __init__(self, bounds, entities: list[Entity], entityid):
-        self.entities = entities
-        self.id = entityid
+    def __init__(self, bounds, entities: list[Entity], entityid, board):
+        self.player = entities[entityid]
         self.bounds = bounds
-        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="▶"), row=2)
+        self.board: list[list[str]] = board
+        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="➡️"), row=2)
         
     async def callback(self, interaction):
-        if self.entities[self.id].position < self.bounds[1]:
+        if self.player.position[0] < self.bounds[0] and self.board[self.player.position[1]][self.player.position[0] + 1] == BASE_TILE:
             self.view.moves -= 1
             await self.view.disable_moves_if_zero()
-            self.entities[self.id].position += 1
+            self.board[self.player.position[1]][self.player.position[0] + 1] = self.player.emoji
+            self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
+            self.player.position[0] += 1
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer() # ▶ ◀
 
 
 class BackButton(discord.ui.Button):
-    def __init__(self, bounds, entities: list[Entity], entityid):
-        self.entities = entities
-        self.id = entityid
+    def __init__(self, bounds, entities: list[Entity], entityid, board):
+        self.player = entities[entityid]
         self.bounds = bounds
-        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="◀"), row=2)
+        self.board: list[list[str]] = board
+        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="⬅️"), row=2)
         
     async def callback(self, interaction):
-        if self.entities[self.id].position > self.bounds[0]:
+        # kill me
+        if self.player.position[0] > 0 and self.board[self.player.position[1]][self.player.position[0] - 1] == BASE_TILE:
             self.view.moves -= 1
             await self.view.disable_moves_if_zero()
-            self.entities[self.id].position -= 1
+            self.board[self.player.position[1]][self.player.position[0] - 1] = self.player.emoji
+            self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
+            self.player.position[0] -= 1
             await self.view.embed_handler.fix_embed_players()
-        await interaction.response.defer() # ▶ ◀
+        await interaction.response.defer()
 
 
 class TestingView(discord.ui.View):
@@ -461,7 +499,18 @@ class Testing(commands.Cog):
             dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
         ), acted="pummeled")    
 
-        # CombatInstance(interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy], bounds:tuple[int])
+    @discord.app_commands.command(name="gridtest")
+    async def test_grid(self, interaction:discord.Interaction):
+        content = ""
+        grid = self.initialize_game_bounds(4, 6)
+        content = '\n'.join(''.join(row) for row in grid)
+        embed = discord.Embed()
+        embed.add_field(name="Game Board", value=content, inline=False)
+        await interaction.response.send_message("grid", embed=embed)
+
+    def initialize_game_bounds(self, rows, columns):
+        return [[":green_square:" for _ in range(columns)] for _ in range(rows)]
+
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
 
@@ -473,10 +522,10 @@ class Testing(commands.Cog):
                     Drops(1, 1, None),
                     EnemyCooldown("Smack", None, WeaponStatTable(
             dmg=1, spd=7.5, rng=0, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str" 
-        ), "smaccd"), 0)
+        ), "smaccd"), ":dizzy_face:")
 
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [[self.punchcd, self.pummelcd]], [enemy], (0, 3))
+        instance = CombatInstance(interaction, [self.pc], [[self.punchcd, self.pummelcd]], [enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
