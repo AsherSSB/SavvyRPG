@@ -169,14 +169,14 @@ class CombatInstance():
                 await self.view.wait()
                 choice = self.view.choice
                 
-
+            await self.interaction.edit_original_response(view=None)
             await self.embed_handler.log(self.entities[0].name, "Ended their turn")
-            
             
             await self.enemy_attack(-1)
             # player is dead
             if self.entities[0].hp <=0:
                 return -1
+            # take away player view
             # reset view event
             await self.view.reset()
 
@@ -236,9 +236,12 @@ class CombatInstance():
     # currently initializes all cooldowns on row 1
     # errors out if the user has > 5 cooldowns
     def initialize_combat_view(self):
-        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2, self.game_grid)
+        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2, self.game_grid, 0, len(self.players))
         for i, cd in enumerate(self.cooldowns[0]):
-            view.add_item(CooldownButton(cd.name, i, cd.stats.spd, cd.emoji, row=0))
+            button = CooldownButton(cd.name, i, cd.stats.rng, cd.emoji, row=0)
+            view.cooldown_buttons.append(button)
+            view.add_item(button)
+        view.enable_moves_if_in_range_disable_if_not()
         return view
 
     async def enemy_attack(self, enemy_index: int):
@@ -342,11 +345,11 @@ class CombatEmbedHandler():
 
 
 class CooldownButton(discord.ui.Button):
-    def __init__(self, label, choiceid, cooldowntime, emoji, row):
-        super().__init__(style=discord.ButtonStyle.blurple, label=label, emoji=discord.PartialEmoji(name=emoji), row=row)
+    def __init__(self, label, choiceid, rng, emoji, row):
+        super().__init__(style=discord.ButtonStyle.green, label=label, emoji=discord.PartialEmoji(name=emoji), row=row)
         self.disabled = False
         self.choiceid = choiceid
-        self.cd = cooldowntime
+        self.rng = rng
 
     async def callback(self, interaction):
         self.view.choice = self.choiceid
@@ -403,8 +406,11 @@ class RunButton(discord.ui.Button):
 
 
 class CombatView(discord.ui.View):
-    def __init__(self, interaction:discord.Interaction, embed_handler, entities, bounds, moves, board):
+    def __init__(self, interaction:discord.Interaction, embed_handler, entities, bounds, moves, board, playerid, playercount):
         super().__init__()
+        self.player = entities[playerid]
+        self.playercount = playercount
+        self.entities= entities
         self.embed_handler = embed_handler
         self.event = asyncio.Event()
         self.choice:int
@@ -412,13 +418,14 @@ class CombatView(discord.ui.View):
         self.add_item(RunButton())
         self.base_moves = moves
         self.moves = moves
-        self.initialize_movement_buttons(bounds ,entities, board)
+        self.initialize_movement_buttons(bounds, board)
+        self.cooldown_buttons: list[CooldownButton] = []
 
-    def initialize_movement_buttons(self, bounds ,entities, board):
-        self.forward_button = ForwardButton(bounds, entities, 0, board)
-        self.back_button = BackButton(bounds, entities, 0, board)
-        self.up_button = UpButton(bounds, entities, 0, board)
-        self.down_button = DownButton(bounds, entities, 0, board)
+    def initialize_movement_buttons(self, bounds, board):
+        self.forward_button = ForwardButton(bounds, self.entities, 0, board)
+        self.back_button = BackButton(bounds, self.entities, 0, board)
+        self.up_button = UpButton(bounds, self.entities, 0, board)
+        self.down_button = DownButton(bounds, self.entities, 0, board)
         self.add_item(self.back_button)
         self.add_item(self.forward_button)
         self.add_item(self.up_button)
@@ -444,6 +451,7 @@ class CombatView(discord.ui.View):
         self.down_button.disabled = False
         await self.disable_cooldowns(False)
         self.event = asyncio.Event()
+        self.enable_moves_if_in_range_disable_if_not()
         await self.interaction.edit_original_response(view=self)
 
     async def disable_moves_if_zero(self):
@@ -454,6 +462,34 @@ class CombatView(discord.ui.View):
             self.down_button.disabled = True
             await self.interaction.edit_original_response(view=self)
 
+    async def adjust_buttons(self):
+        changes_made = self.enable_moves_if_in_range_disable_if_not()
+
+        if changes_made:
+            await self.interaction.edit_original_response(view=self)
+    
+    def enable_moves_if_in_range_disable_if_not(self):
+        changes_made = False
+        enemies = self.entities[self.playercount:]
+
+        for button in filter(lambda x: x.disabled, self.cooldown_buttons):
+            if any(self.enemy_in_range(enemy, self.player, button.rng) for enemy in enemies):
+                button.disabled = False
+                changes_made = True
+
+        for button in filter(lambda x: not x.disabled, self.cooldown_buttons):
+            if all(not self.enemy_in_range(enemy, self.player, button.rng) for enemy in enemies):
+                button.disabled = True
+                changes_made = True
+
+        return changes_made
+
+    def enemy_in_range(self, enemy, player, max_range):
+        horizontal_distance = abs(enemy.position[0] - player.position[0])
+        vertical_distance = abs(enemy.position[1] - player.position[1])
+        return horizontal_distance <= max_range and vertical_distance <= max_range
+
+
     async def wait(self):
         await self.event.wait()
 
@@ -463,7 +499,8 @@ class MovementButton(discord.ui.Button):
         self.player = entities[entityid]
         self.bounds = bounds
         self.board: list[list[str]] = board
-        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name=emoji), row=2)
+        super().__init__(style=discord.ButtonStyle.gray, label="", emoji=discord.PartialEmoji(name=emoji), row=2)
+
 
 class ForwardButton(MovementButton):
     def __init__(self, bounds, entities: list[Entity], entityid, board):
@@ -476,6 +513,7 @@ class ForwardButton(MovementButton):
             self.board[self.player.position[1]][self.player.position[0] + 1] = self.player.emoji
             self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
             self.player.position[0] += 1
+            await self.view.adjust_buttons()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer() # ▶ ◀
 
@@ -492,6 +530,7 @@ class BackButton(MovementButton):
             self.board[self.player.position[1]][self.player.position[0] - 1] = self.player.emoji
             self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
             self.player.position[0] -= 1
+            await self.view.adjust_buttons()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer()
 
@@ -508,6 +547,7 @@ class UpButton(MovementButton):
             self.board[self.player.position[1] - 1][self.player.position[0]] = self.player.emoji
             self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
             self.player.position[1] -= 1
+            await self.view.adjust_buttons()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer()
 
@@ -524,6 +564,7 @@ class DownButton(MovementButton):
             self.board[self.player.position[1] + 1][self.player.position[0]] = self.player.emoji
             self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
             self.player.position[1] += 1
+            await self.view.adjust_buttons()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer()
 
