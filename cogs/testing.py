@@ -414,8 +414,12 @@ class CombatView(discord.ui.View):
         self.moves = moves
         self.forward_button = ForwardButton(bounds, entities, 0, board)
         self.back_button = BackButton(bounds, entities, 0, board)
-        self.add_item(self.forward_button)
+        self.up_button = UpButton(bounds, entities, 0, board)
+        self.down_button = DownButton(bounds, entities, 0, board)
         self.add_item(self.back_button)
+        self.add_item(self.forward_button)
+        self.add_item(self.up_button)
+        self.add_item(self.down_button)
 
     @discord.ui.button(label="End Turn", style=discord.ButtonStyle.red, row=4)
     async def end_turn_button(self, interaction:discord.Interaction, button):
@@ -433,6 +437,8 @@ class CombatView(discord.ui.View):
         self.moves = self.base_moves
         self.forward_button.disabled = False
         self.back_button.disabled = False
+        self.up_button.disabled = False
+        self.down_button.disabled = False
         await self.disable_cooldowns(False)
         self.event = asyncio.Event()
         await self.interaction.edit_original_response(view=self)
@@ -441,6 +447,8 @@ class CombatView(discord.ui.View):
         if self.moves <= 0:
             self.forward_button.disabled = True
             self.back_button.disabled = True
+            self.up_button.disabled = True
+            self.down_button.disabled = True
             await self.interaction.edit_original_response(view=self)
 
     async def wait(self):
@@ -485,6 +493,44 @@ class BackButton(discord.ui.Button):
         await interaction.response.defer()
 
 
+class UpButton(discord.ui.Button):
+    def __init__(self, bounds, entities: list[Entity], entityid, board):
+        self.player = entities[entityid]
+        self.bounds = bounds
+        self.board: list[list[str]] = board
+        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="⬆️"), row=2)
+        
+    async def callback(self, interaction):
+        # kill me
+        if self.player.position[1] > 0 and self.board[self.player.position[1] - 1][self.player.position[0]] == BASE_TILE:
+            self.view.moves -= 1
+            await self.view.disable_moves_if_zero()
+            self.board[self.player.position[1] - 1][self.player.position[0]] = self.player.emoji
+            self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
+            self.player.position[1] -= 1
+            await self.view.embed_handler.fix_embed_players()
+        await interaction.response.defer()
+
+
+class DownButton(discord.ui.Button):
+    def __init__(self, bounds, entities: list[Entity], entityid, board):
+        self.player = entities[entityid]
+        self.bounds = bounds
+        self.board: list[list[str]] = board
+        super().__init__(style=discord.ButtonStyle.secondary, label="", emoji=discord.PartialEmoji(name="⬇️"), row=2)
+        
+    async def callback(self, interaction):
+        # kill me
+        if self.player.position[1] < self.bounds[1] - 1 and self.board[self.player.position[1] + 1][self.player.position[0]] == BASE_TILE:
+            self.view.moves -= 1
+            await self.view.disable_moves_if_zero()
+            self.board[self.player.position[1] + 1][self.player.position[0]] = self.player.emoji
+            self.board[self.player.position[1]][self.player.position[0]] = BASE_TILE
+            self.player.position[1] += 1
+            await self.view.embed_handler.fix_embed_players()
+        await interaction.response.defer()
+
+
 class TestingView(discord.ui.View):
     def __init__(self):
         super().__init__()
@@ -510,18 +556,6 @@ class Testing(commands.Cog):
         self.pummelcd = SingleTargetAttack("Pummel", "✊", WeaponStatTable(
             dmg=30, spd=7.5, rng=1, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
         ), acted="pummeled")    
-
-    @discord.app_commands.command(name="gridtest")
-    async def test_grid(self, interaction:discord.Interaction):
-        content = ""
-        grid = self.initialize_game_bounds(4, 6)
-        content = '\n'.join(''.join(row) for row in grid)
-        embed = discord.Embed()
-        embed.add_field(name="Game Board", value=content, inline=False)
-        await interaction.response.send_message("grid", embed=embed)
-
-    def initialize_game_bounds(self, rows, columns):
-        return [[":green_square:" for _ in range(columns)] for _ in range(rows)]
 
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
