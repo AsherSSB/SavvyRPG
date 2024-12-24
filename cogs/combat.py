@@ -595,7 +595,7 @@ class TestingView(discord.ui.View):
     async def wait(self):
         await self.event.wait()
 
-class Testing(commands.Cog):
+class Combat(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -651,4 +651,4 @@ The enemy will move to get in range, and then will attack if in range before end
     
 
 async def setup(bot):
-    await bot.add_cog(Testing(bot))
+    await bot.add_cog(Combat(bot))
