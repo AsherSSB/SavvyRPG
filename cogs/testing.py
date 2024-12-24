@@ -259,23 +259,35 @@ class CombatInstance():
         # Check if both distances are within the maximum range
         return horizontal_distance <= max_range and vertical_distance <= max_range
 
-    def move_toward_player(self, entities, enemyindex, playerindex):
-        enemy: Entity = entities[enemyindex]
-        player: Entity = entities[playerindex]
-        diff = [a - b for a, b in zip(player.position, enemy.position)]
-
-        # player is further horizontal
+    def move_toward_player(self, entities, enemy_index, player_index):
+        enemy = entities[enemy_index]
+        player = entities[player_index]
+        diff = [p - e for p, e in zip(player.position, enemy.position)]
+        
+        # Store potential new position
+        new_pos = enemy.position.copy()
+        
+        # Try horizontal movement if player is further horizontally
         if abs(diff[0]) > abs(diff[1]):
-            if diff[0] < 0:
-                enemy.position[0] -= 1
-            else:
-                enemy.position[0] += 1
-        # player is further vertical
-        else:
-            if diff[0] < 0:
-                enemy.position[1] -= 1
-            else:
-                enemy.position[1] += 1
+            # Try moving left/right
+            new_pos[0] += -1 if diff[0] < 0 else 1
+            if (0 <= new_pos[0] < len(self.game_grid[0]) and 
+                self.game_grid[enemy.position[1]][new_pos[0]] == BASE_TILE):
+                # Valid horizontal move
+                    self.game_grid[enemy.position[1]][enemy.position[0]] = BASE_TILE
+                    enemy.position[0] = new_pos[0]
+                    self.game_grid[enemy.position[1]][enemy.position[0]] = enemy.emoji
+                    return
+                
+        # Try vertical movement
+        new_pos = enemy.position.copy() 
+        new_pos[1] += -1 if diff[1] < 0 else 1
+        if (0 <= new_pos[1] < len(self.game_grid) and
+            self.game_grid[new_pos[1]][enemy.position[0]] == BASE_TILE):
+                # Valid vertical move
+                self.game_grid[enemy.position[1]][enemy.position[0]] = BASE_TILE
+                enemy.position[1] = new_pos[1]
+                self.game_grid[enemy.position[1]][enemy.position[0]] = enemy.emoji
 
     # always uses player 0 because run only works in single player
     def try_run(self):
@@ -492,11 +504,11 @@ class Testing(commands.Cog):
         self.bot = bot
 
         self.punchcd = SingleTargetAttack("Punch", "👊", WeaponStatTable(
-            dmg=10, spd=3.5, rng=1, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
+            dmg=10, spd=3.5, rng=2, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
         ), acted="punched")
 
         self.pummelcd = SingleTargetAttack("Pummel", "✊", WeaponStatTable(
-            dmg=30, spd=7.5, rng=0, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
+            dmg=30, spd=7.5, rng=1, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
         ), acted="pummeled")    
 
     @discord.app_commands.command(name="gridtest")
@@ -521,7 +533,7 @@ class Testing(commands.Cog):
                     NPCStatTable(120, 0, 0), 
                     Drops(1, 1, None),
                     EnemyCooldown("Smack", None, WeaponStatTable(
-            dmg=1, spd=7.5, rng=0, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str" 
+            dmg=1, spd=7.5, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str" 
         ), "smaccd"), ":dizzy_face:")
 
         interaction = await self.send_testing_view(interaction)
@@ -545,7 +557,7 @@ This test is for demonstration purposes only and is not representative of any fi
 **Rules**: 
 You may move twice and attack once each turn
 You are allowed to try and run once before the option to run is disabled
-You must be in range to attack the enemy, Punch has a range of 1, Pummel has a range of 0
+You must be in range to attack the enemy, Punch has a range of 2, Pummel has a range of 1
 The enemy will move to get in range, and then will attack if in range before ending their turn
 """, view=view)
         
