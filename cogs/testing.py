@@ -68,7 +68,7 @@ class Testing(commands.Cog):
 
     @discord.app_commands.command(name="geartest")
     async def gear_test(self, interaction: discord.Interaction):
-        view = ButtonGearView()
+        view = ButtonGearView(interaction)
         await interaction.response.send_message("Choose gear slot to edit", view=view)
         await view.wait()
         if view.choice == -1:
@@ -79,47 +79,78 @@ class Testing(commands.Cog):
             await interaction.delete_original_response()
 
 
-class ButtonGearView(discord.ui.View):
+
+class GearSelect(discord.ui.Select):
     def __init__(self):
+        super().__init__(max_values=1)
+        self.add_option(label="Head", value="0")
+        self.add_option(label="Chest", value="1")
+        self.add_option(label="Hands", value="2")
+        self.add_option(label="Legs", value="3")
+        self.add_option(label="Feet", value="4")
+
+    async def callback(self, interaction):
+        self.view.choice = int(self.values[0])
+        await interaction.response.defer()
+        self.view.event.set()
+
+
+class ButtonGearView(discord.ui.View):
+    def __init__(self, interaction):
         super().__init__()
+        self.interaction: discord.Interaction
         self.choice: int
         self.event = asyncio.Event()
+        self.method = 0
+        self.buttons = []
 
-    @discord.ui.button(label="Head", style=discord.ButtonStyle.blurple)
-    async def head_button(self, interaction: discord.Interaction, button):
-        self.choice = 0
-        await interaction.response.defer()
-        self.event.set()
+        button_dict = [
+            {"label": "Head", "style": discord.ButtonStyle.blurple},
+            {"label": "Chest", "style": discord.ButtonStyle.blurple},
+            {"label": "Hands", "style": discord.ButtonStyle.blurple},
+            {"label": "Legs", "style": discord.ButtonStyle.blurple},
+            {"label": None, "style": discord.ButtonStyle.blurple, "emoji": "👢"}
+        ]
+        
+        # Create and add buttons
+        for i, btn in enumerate(button_dict):
+            button = discord.ui.Button(
+                label=btn["label"],
+                style=btn["style"],
+                emoji=btn.get("emoji"),
+                row=0
+            )
+            button.callback = self.create_callback(i)
+            self.buttons.append(button)
+        
+        for button in self.buttons:
+            self.add_item(button)
 
-    @discord.ui.button(label="Chest", style=discord.ButtonStyle.blurple)
-    async def chest_button(self, interaction: discord.Interaction, button):
-        self.choice = 1
-        await interaction.response.defer()
-        self.event.set()
-
-    @discord.ui.button(label="Hands", style=discord.ButtonStyle.blurple)
-    async def hands_button(self, interaction: discord.Interaction, button):
-        self.choice = 2
-        await interaction.response.defer()
-        self.event.set()
-
-    @discord.ui.button(label="Legs", style=discord.ButtonStyle.blurple)
-    async def legs_button(self, interaction: discord.Interaction, button):
-        self.choice = 3
-        await interaction.response.defer()
-        self.event.set()
-
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="👢")
-    async def feet_button(self, interaction: discord.Interaction, button):
-        self.choice = 4
-        await interaction.response.defer()
-        self.event.set()
-
-    @discord.ui.button(label="Back", style=discord.ButtonStyle.red)
+    def create_callback(self, choice: int):
+        async def callback(interaction: discord.Interaction):
+            self.choice = choice
+            await interaction.response.defer()
+            self.event.set()
+        return callback
+    
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.red, row=2)
     async def back_button(self, interaction: discord.Interaction, button):
         self.choice = -1
         await interaction.response.defer()
         self.event.set()
+
+    @discord.ui.button(label="Swap Select Method", style=discord.ButtonStyle.green, row=2)
+    async def swap_method_button(self, interaction: discord.Interaction, button):
+        self.choice = -2
+        await interaction.response.defer()
+    
+    async def swap_to_buttons(self):
+        for child in filter(lambda x: isinstance(x, discord.ui.Select)):
+            self.remove_item(child)
+        for button in self.buttons:
+            self.add_item(button)
+        await self.interaction.edit_original_response(view=self)
+
 
     async def wait(self):
         await self.event.wait()
