@@ -13,7 +13,48 @@ class Item():
 
 @dataclass
 class GearStatTable():
-    pass
+    resist: float
+    maxhp: int
+    dodge: float
+    strength: int
+    will: int
+    dexterity: int
+    intelligence: int
+    attunement: int
+
+
+@dataclass
+class HeadGear():
+    basestats: GearStatTable
+    critchance: float
+    multicast: float
+
+
+@dataclass
+class ChestGear():
+    basestats: GearStatTable
+    healing: float
+    attacks: int
+
+
+@dataclass
+class HandGear():
+    basestats: GearStatTable
+    critmult: float
+    attacks: int
+
+
+@dataclass
+class LegGear():
+    basestats: GearStatTable
+    healing: float
+
+
+@dataclass
+class FootGear():
+    basestats: GearStatTable
+    moves: int
+    critchance: float
 
 
 class Gear(Item):
@@ -31,8 +72,6 @@ class GearView(discord.ui.View):
         super().__init__()
         self.choice: int
         self.event = asyncio.Event()
-
-    
 
 
 async def setup(bot):
