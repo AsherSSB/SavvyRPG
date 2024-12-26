@@ -176,6 +176,30 @@ class Testing(commands.Cog):
             await asyncio.sleep(6.0)
             await interaction.delete_original_response()
 
+
+# TODO: implement these
+class InventoryEmbed(discord.Embed):
+    def __init__(self, inventory: list[Item], title = "Inventory"):
+        super().__init__(title=title)
+        self.inventory = inventory
+
+
+class InventorySelect(discord.ui.Select):
+    def __init__(self, inventory: list[Item], placeholder="Select Item", max_values=1, row=0):
+        options = self.initialize_select_options()
+        super().__init__(placeholder=placeholder, min_values=1, max_values=max_values, options=options, row=row)
+
+    def initialize_select_options(self):
+        pass
+
+
+class InventoryView(discord.ui.View):
+    def __init__(self, inventory: list[Item]):
+        super().__init__()
+        self.select = InventorySelect()
+        self.embed = InventoryEmbed()
+
+
 class GearSelect(discord.ui.Select):
     def __init__(self):
         super().__init__(max_values=1)
@@ -291,6 +315,7 @@ class ButtonGearView(discord.ui.View):
 
     async def wait(self):
         await self.event.wait()
+
 
 async def setup(bot):
     await bot.add_cog(Testing(bot))
