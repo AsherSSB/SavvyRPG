@@ -26,62 +26,57 @@ class GearStatTable():
     bonus_stats: BonusStatsTable
 
 
-@dataclass
+
 class Gear(Item):
-    rarity: str
-    stats: GearStatTable
-    stack_size = field(default=1, kw_only=True)
-    quantity = field(default=1, kw_only=True)
+    def __init__(self, name, rarity, stats, value=0):
+        super().__init__(name, value=value)
+        self.rarity: str = rarity
+        self.stats: GearStatTable = stats
     
+    def randomize_gear_stats(self, maxres, maxhp, maxdodge):
+        resist = round(random.uniform(maxres/5, maxres), 1)
+        hp = random.randint(maxhp//5, maxhp)
+        dodge: float = round(random.uniform(maxdodge/5, maxdodge), 1)
+        return GearStatTable(resist, hp, dodge)
 
 class HeadGear(Gear):
     def __init__(self, name, rarity, value, critchance, multicast):
-        stats = self.randomize_gear_stats()
+        stats = self.randomize_gear_stats(0.1, 5, .05)
         super().__init__(name, rarity, stats, value=value)
         self.critchance: float = critchance
         self.multicast: float = multicast
 
-    def randomize_gear_stats(self):
-        resist = random.uniform(.02, .1)
-        maxhp = random.randint(1, 5)
-        dodge: float = random.uniform(.01, .05)
-        return GearStatTable(resist, maxhp, dodge)
-
 
 class ChestGear(Gear):
     def __init__(self, name, rarity, value, healing, attacks):
-        stats = self.randomize_gear_stats()
+        stats = self.randomize_gear_stats(0.2, 10, 0.1)
         super().__init__(name, rarity, stats, value=value)
         self.healing: float = healing
         self.attacks: int = attacks
 
-    def randomize_gear_stats(self):
-        resist = random.uniform(.04, .2)
-        maxhp = random.randint(2, 10)
-        dodge: float = random.uniform(.02, .1)
-        return GearStatTable(resist, maxhp, dodge)
-
 
 class HandGear(Gear):
     def __init__(self, name, rarity, value, critmult, attacks):
-        stats = self.randomize_gear_stats()
+        stats = self.randomize_gear_stats(0.05, 5, 0.03)
         super().__init__(name, rarity, stats, value=value)
-        critmult: float = critmult
+        self.critmult: float = critmult
         self.attacks: int = attacks
 
-    
 
-
-@dataclass
 class LegGear(Gear):
-    healing: float
-    critmult:float
+    def __init__(self, name, rarity, value, healing, critmult):
+        stats = self.randomize_gear_stats(0.1, 10, 0.05)
+        super().__init__(name, rarity, stats, value=value)
+        self.healing: float = healing
+        self.critmult: float = critmult
 
 
-@dataclass
 class FootGear(Gear):
-    moves: int
-    critchance: float
+    def __init__(self, name, rarity, value, moves, critchance):
+        stats = self.randomize_gear_stats(0.05, 5, 0.1)
+        super().__init__(name, rarity, stats, value=value)
+        self.moves: int = moves
+        self.critchance: float = critchance
 
 
 class LootGenerator():
