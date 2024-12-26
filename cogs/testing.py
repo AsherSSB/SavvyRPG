@@ -1,15 +1,12 @@
 import discord
 from discord.ext import commands
 import asyncio
-from dataclasses import dataclass, field
-
-@dataclass
-class Item():
-    name: str
-    value: int = field(default=0, kw_only=True)
-    stack_size: int = field(default=1, kw_only=True)
-    quantity: int = field(default=1, kw_only=True)
-
+from dataclasses import dataclass, field, fields
+from custom.playable_character import PlayableCharacter
+from cogs.mainmenus import CharacterEmbed, CharacterView
+from cogs.database import Database
+from cogs.combat import Weapon, Item
+import random
 
 @dataclass
 class GearStatTable():
@@ -24,50 +21,105 @@ class GearStatTable():
 
 
 @dataclass
-class HeadGear():
-    basestats: GearStatTable
+class Gear(Item):
+    stats: GearStatTable
+    stack_size = field(default=1, kw_only=True)
+    quantity = field(default=1, kw_only=True)
+    
+
+@dataclass
+class HeadGear(Gear):
     critchance: float
     multicast: float
 
 
 @dataclass
-class ChestGear():
-    basestats: GearStatTable
+class ChestGear(Gear):
     healing: float
     attacks: int
 
 
 @dataclass
-class HandGear():
-    basestats: GearStatTable
+class HandGear(Gear):
     critmult: float
     attacks: int
 
 
 @dataclass
-class LegGear():
-    basestats: GearStatTable
+class LegGear(Gear):
     healing: float
+    critmult:float
 
 
 @dataclass
-class FootGear():
-    basestats: GearStatTable
+class FootGear(Gear):
     moves: int
     critchance: float
 
 
-class Gear(Item):
-    def __init__(self, name: str , value: int, slot: str):
-        super().__init__(name=name, value=value, stack_size=1, quantity=1)
-        self.slot: str = slot
+class LootGenerator():
+    def __init__(self, player_level, player_origin):
+        self.rarity_list = ["Common", "Uncommon", "Rare", "Exotic", "Mythical"]
+        self.rarity_chances = [0.7, 0.2, 0.06, 0.03, .01]
+        self.gear_list = [HeadGear, ChestGear, HandGear, LegGear, FootGear]
+        self.l
+
+    def generate_loot(self):
+        type_names = {
+            HeadGear : "Helmet",
+            ChestGear : "Chestplate",
+            HandGear : "Gloves", 
+            LegGear : "Pants", 
+            FootGear : "Shoes"
+        }
+        special_att_counts = {
+            "Common" : 0,
+            "Uncommon" : 1,
+            "Rare" : 2, 
+            "Exotic" : 3,
+            "Mythical" : 4
+        }
+        rarity = self.choose_rarity()
+        gear_type = self.choose_random_gear_type()
+
+
+    def choose_rarity(self):
+        return random.choices(
+            population=self.rarity_list, 
+            weights=self.rarity_chances, k=1)[0]
+
+    def choose_random_gear_type(self):
+        return random.choice(self.gear_list)
+    
+    def get_random_attribute(self, gear_class):
+        # Get all fields except common ones from base classes
+        gear_fields = [field.name for field in fields(gear_class) 
+                      if field.name not in ['stats', 'stack_size', 'quantity']]
+        return random.choice(gear_fields)
 
 class Testing(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.db = Database(self.bot)
+        self.usercharacter: PlayableCharacter
 
+    @discord.app_commands.command(name="charactermenutesting")
+    async def send_character_menu(self, interaction:discord.Interaction):
+        self.usercharacter = self.db.get_character(interaction.user.id)
+        embed = CharacterEmbed(self.usercharacter)
+        view = CharacterView()
+        await interaction.response.send_message(content="Character", embed=embed, view=view)
+        await view.wait()
+        if view.choice == 0:
+            await self.send_gear_type_selection_menu(view.interaction)
+        else:
+            await view.interaction.response.defer()
+        
     @discord.app_commands.command(name="gear")
     async def gear_test(self, interaction: discord.Interaction):
+        await self.send_gear_type_selection_menu(interaction)
+
+    async def send_gear_type_selection_menu(self, interaction: discord.Interaction):
         view = ButtonGearView(interaction)
         await interaction.response.send_message("Choose gear slot to edit", view=view)
         await view.wait()
@@ -77,8 +129,6 @@ class Testing(commands.Cog):
             await interaction.edit_original_response(content=f"You selected: {view.labels[view.choice]}")
             await asyncio.sleep(6.0)
             await interaction.delete_original_response()
-
-
 
 class GearSelect(discord.ui.Select):
     def __init__(self):
