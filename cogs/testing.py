@@ -8,29 +8,44 @@ from cogs.database import Database
 from cogs.combat import Weapon, Item
 import random
 
+
+@dataclass
+class BonusStatsTable():
+    strength: int = field(default=0, kw_only=True)
+    will: int = field(default=0, kw_only=True)
+    dexterity: int = field(default=0, kw_only=True)
+    intelligence: int = field(default=0, kw_only=True)
+    attunement: int = field(default=0, kw_only=True)
+
+
 @dataclass
 class GearStatTable():
-    resist: float
+    resist: float 
     maxhp: int
-    dodge: float
-    strength: int
-    will: int
-    dexterity: int
-    intelligence: int
-    attunement: int
+    dodge: float | None
+    bonus_stats: BonusStatsTable
 
 
 @dataclass
 class Gear(Item):
+    rarity: str
     stats: GearStatTable
     stack_size = field(default=1, kw_only=True)
     quantity = field(default=1, kw_only=True)
     
 
-@dataclass
 class HeadGear(Gear):
-    critchance: float
-    multicast: float
+    def __init__(self, name, rarity, value, critchance, multicast):
+        stats = self.randomize_gear_stats()
+        super().__init__(name, rarity, stats, value=value)
+        critchance: float = critchance
+        multicast: float = multicast
+
+    def randomize_gear_stats(self):
+        resist = random.uniform(.2, .1)
+        maxhp = random.randint(2, 8)
+        dodge: float = random.uniform()
+        stats = GearStatTable()
 
 
 @dataclass
@@ -61,8 +76,10 @@ class LootGenerator():
     def __init__(self, player_level, player_origin):
         self.rarity_list = ["Common", "Uncommon", "Rare", "Exotic", "Mythical"]
         self.rarity_chances = [0.7, 0.2, 0.06, 0.03, .01]
+        self.weights = ["Light", "Medium", "Heavy"]
         self.gear_list = [HeadGear, ChestGear, HandGear, LegGear, FootGear]
-        self.l
+        self.level = player_level
+        self.origin = player_origin
 
     def generate_loot(self):
         type_names = {
@@ -79,9 +96,25 @@ class LootGenerator():
             "Exotic" : 3,
             "Mythical" : 4
         }
+        # TODO: move to seperate function
+        base_stat_rarity_scaling = {
+            "Common" : 1.0,
+            "Uncommon" : 1.5,
+            "Rare" : 2, 
+            "Exotic" : 2.5,
+            "Mythical" : 3.0
+        }
         rarity = self.choose_rarity()
         gear_type = self.choose_random_gear_type()
+        name = type_names[gear_type]
+        attribute_count = special_att_counts[rarity]
+        for _ in attribute_count:
+            # add attribute to gear
+            pass
+        
 
+    def level_scale_gear():
+        pass
 
     def choose_rarity(self):
         return random.choices(
