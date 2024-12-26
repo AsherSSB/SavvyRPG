@@ -38,26 +38,38 @@ class HeadGear(Gear):
     def __init__(self, name, rarity, value, critchance, multicast):
         stats = self.randomize_gear_stats()
         super().__init__(name, rarity, stats, value=value)
-        critchance: float = critchance
-        multicast: float = multicast
+        self.critchance: float = critchance
+        self.multicast: float = multicast
 
     def randomize_gear_stats(self):
-        resist = random.uniform(.2, .1)
-        maxhp = random.randint(2, 8)
-        dodge: float = random.uniform()
-        stats = GearStatTable()
+        resist = random.uniform(.02, .1)
+        maxhp = random.randint(1, 5)
+        dodge: float = random.uniform(.01, .05)
+        return GearStatTable(resist, maxhp, dodge)
 
 
-@dataclass
 class ChestGear(Gear):
-    healing: float
-    attacks: int
+    def __init__(self, name, rarity, value, healing, attacks):
+        stats = self.randomize_gear_stats()
+        super().__init__(name, rarity, stats, value=value)
+        self.healing: float = healing
+        self.attacks: int = attacks
+
+    def randomize_gear_stats(self):
+        resist = random.uniform(.04, .2)
+        maxhp = random.randint(2, 10)
+        dodge: float = random.uniform(.02, .1)
+        return GearStatTable(resist, maxhp, dodge)
 
 
-@dataclass
 class HandGear(Gear):
-    critmult: float
-    attacks: int
+    def __init__(self, name, rarity, value, critmult, attacks):
+        stats = self.randomize_gear_stats()
+        super().__init__(name, rarity, stats, value=value)
+        critmult: float = critmult
+        self.attacks: int = attacks
+
+    
 
 
 @dataclass
