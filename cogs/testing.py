@@ -186,19 +186,70 @@ class InventoryEmbed(discord.Embed):
 
 class InventorySelect(discord.ui.Select):
     def __init__(self, inventory: list[Item], placeholder="Select Item", max_values=1, row=0):
-        options = self.initialize_select_options()
-        super().__init__(placeholder=placeholder, min_values=1, max_values=max_values, options=options, row=row)
+        super().__init__(placeholder=placeholder, min_values=1, max_values=max_values, row=row)
+        self.inventory = inventory
+        self.page = 1
+        self.update_options()
 
-    def initialize_select_options(self):
-        pass
+    def update_options(self):
+        max_items = min(len(self.inventory), self.page * 10)
+        slice_start = (self.page - 1) * 10
+        # Create new options list
+        self.options = [
+            discord.SelectOption(
+                label=item.name, 
+                emoji=item.emoji,
+                value=f"{i}"
+            ) for i, item in enumerate(self.inventory[slice_start:max_items], slice_start)
+        ]
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.choice = int(self.values[0])
+        await interaction.response.defer()
+        self.view.event.set()
+
+
+class PreviousButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Previous", emoji="⬅️", row=1, disabled=True)
+
+    async def callback(self, interaction):
+        await interaction.response.defer()
+        self.view.select.page -= 1
+        self.view.correct_buttons()
+
+
+class NextButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Next", emoji="➡️", row=1)
+
+    async def callback(self, interaction):
+        await interaction.response.defer()
+        self.view.select.page += 1
+        self.view.correct_buttons()
 
 
 class InventoryView(discord.ui.View):
-    def __init__(self, inventory: list[Item]):
+    def __init__(self, interaction, inventory: list[Item]):
         super().__init__()
-        self.select = InventorySelect()
+        self.interaction: discord.Interaction = interaction
+        self.select = InventorySelect(inventory)
         self.embed = InventoryEmbed()
+        self.event = asyncio.Event()
+        self.back_button = PreviousButton()
+        self.next_button = NextButton()
+        self.add_item(self.back_button)
+        self.add_item(self.next_button)
 
+    
+    async def correct_buttons(self):
+        self.back_button.disabled = self.select.page <= 1
+
+        total_pages = (len(self.select.inventory) + 9) // 10
+        self.next_button.disabled = self.select.page >= total_pages
+
+    async def wait(self):
+        await self.event.wait()
 
 class GearSelect(discord.ui.Select):
     def __init__(self):
