@@ -11,11 +11,11 @@ import random
 
 @dataclass
 class BonusStatsTable():
-    strength: int = field(default=0, kw_only=True)
-    will: int = field(default=0, kw_only=True)
-    dexterity: int = field(default=0, kw_only=True)
-    intelligence: int = field(default=0, kw_only=True)
-    attunement: int = field(default=0, kw_only=True)
+    strength: int | None = field(default=None, kw_only=True)
+    will: int | None = field(default=None, kw_only=True)
+    dexterity: int | None = field(default=None, kw_only=True)
+    intelligence: int | None = field(default=None, kw_only=True)
+    attunement: int | None = field(default=None, kw_only=True)
 
 
 @dataclass
@@ -24,7 +24,6 @@ class GearStatTable():
     maxhp: int
     dodge: float | None
     bonus_stats: BonusStatsTable
-
 
 
 class Gear(Item):
@@ -38,6 +37,7 @@ class Gear(Item):
         hp = random.randint(maxhp//5, maxhp)
         dodge: float = round(random.uniform(maxdodge/5, maxdodge), 1)
         return GearStatTable(resist, hp, dodge)
+
 
 class HeadGear(Gear):
     def __init__(self, name, rarity, value, critchance, multicast):
