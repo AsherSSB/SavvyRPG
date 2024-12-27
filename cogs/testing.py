@@ -197,9 +197,12 @@ class Testing(commands.Cog):
         embed = InventoryEmbed(dummy_inventory)
         view = InventoryView(interaction, dummy_inventory, embed)
         await interaction.response.send_message(content="inventory", view=view, embed=embed)
+        await view.wait()
+        await interaction.edit_original_response(
+            content=f"You chose {dummy_inventory[view.choice].name}",
+            view=None, embed=None)
 
 
-# TODO: implement Embed
 class InventoryEmbed(discord.Embed):
     def __init__(self, inventory: list[Item], title = "Inventory"):
         super().__init__(title=title)
@@ -216,7 +219,7 @@ class InventoryEmbed(discord.Embed):
             self.add_field(name=EMBED_NEWLINE, value=EMBED_NEWLINE, inline=True)
             self.add_field(name=EMBED_NEWLINE, value=EMBED_NEWLINE, inline=False)
 
-    # function from hell
+    # embed update from hell
     def update_items(self):
         slice_start = (self.page - 1) * 10
         max_items = min(len(self.inventory), slice_start + 10)
@@ -323,6 +326,7 @@ class InventoryView(discord.ui.View):
         self.add_item(self.back_button)
         self.add_item(self.next_button)
         self.add_item(self.select)
+        self.choice = None
 
     async def correct_inventory_response(self):
         self.correct_buttons()
