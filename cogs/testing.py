@@ -210,22 +210,59 @@ class InventoryEmbed(discord.Embed):
 
     # needed for set_field_at method in update_items to properly function
     def initialize_with_blank_fields(self):
-        for i in range(10):
-            self.add_field(name=EMBED_NEWLINE, value=EMBED_NEWLINE, inline=(i % 2 == 0))
+    # Initialize pattern of 2 inline + 1 separator, repeated 5 times
+        for i in range(5):  # 5 rows of 2 items each = 10 items total
+            self.add_field(name=EMBED_NEWLINE, value=EMBED_NEWLINE, inline=True)
+            self.add_field(name=EMBED_NEWLINE, value=EMBED_NEWLINE, inline=True)
+            self.add_field(name=EMBED_NEWLINE, value=EMBED_NEWLINE, inline=False)
 
+    # function from hell
     def update_items(self):
         slice_start = (self.page - 1) * 10
         max_items = min(len(self.inventory), slice_start + 10)
         working_inv = self.inventory[slice_start:max_items]
-        needed_whitespace = 10 - (max_items - slice_start)
-        for i, item in enumerate(working_inv):
-            name=f"{item.emoji} {item.name}"
-            value=f"placeholder short description.\nQuantity:{item.quantity}\nWorth: {item.value}g each"
-            self.set_field_at(i, name=name, value=value, inline=(i % 2 == 0))
-        for i in range(1, needed_whitespace + 1):
-            value = f"{EMBED_NEWLINE}{EMBED_NEWLINE}{EMBED_NEWLINE}"
-            self.set_field_at(-i, name=EMBED_NEWLINE, value=value, inline=False)
-    
+        
+        field_index = 0  # Track actual field position including separators
+        for i in range(0, len(working_inv), 2):
+            # First item
+            item = working_inv[i]
+            self.set_field_at(field_index,
+                name=f"{item.emoji} {item.name}",
+                value=f"placeholder short description.\nQuantity:{item.quantity}\nWorth: {item.value}g each",
+                inline=True)
+            field_index += 1
+            
+            # Second item if exists
+            if i + 1 < len(working_inv):
+                item = working_inv[i + 1]
+                self.set_field_at(field_index,
+                    name=f"{item.emoji} {item.name}",
+                    value=f"placeholder short description.\nQuantity:{item.quantity}\nWorth: {item.value}g each",
+                    inline=True)
+                field_index += 1
+            else:
+                # Empty second slot
+                self.set_field_at(field_index,
+                    name=EMBED_NEWLINE,
+                    value=EMBED_NEWLINE,
+                    inline=True)
+                field_index += 1
+                
+            # Separator after pair
+            self.set_field_at(field_index,
+                name=EMBED_NEWLINE,
+                value="\n\n\n",
+                inline=False)
+            field_index += 1
+
+        # Clear remaining fields
+        while field_index < 15:  # 15 total fields (5 rows × 3 fields per row)
+            self.set_field_at(field_index,
+                name=EMBED_NEWLINE,
+                value=EMBED_NEWLINE,
+                inline=True if field_index % 3 != 2 else False)
+            field_index += 1
+                
 
 class InventorySelect(discord.ui.Select):
     def __init__(self, inventory: list[Item], placeholder="Select Item", max_values=1, row=0):
