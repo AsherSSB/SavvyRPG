@@ -42,48 +42,48 @@ class Gear(Item):
 
 
 class HeadGear(Gear):
-    def __init__(self, name, rarity, value, critchance, multicast, stats=None):
+    def __init__(self, name, rarity, value, critchance=None, multicast=None, stats=None):
         if stats == None:
             stats = self.randomize_gear_stats(0.1, 5, .05)
         super().__init__(name, rarity, stats, value=value)
-        self.critchance: float = critchance
-        self.multicast: float = multicast
+        self.critchance: float | None = critchance
+        self.multicast: float | None = multicast
 
 
 class ChestGear(Gear):
-    def __init__(self, name, rarity, value, healing, attacks, stats=None):
+    def __init__(self, name, rarity, value, healing=None, attacks=None, stats=None):
         if stats == None:
             stats = self.randomize_gear_stats(0.2, 10, 0.1)
         super().__init__(name, rarity, stats, value=value)
-        self.healing: float = healing
-        self.attacks: int = attacks
+        self.healing: float | None = healing
+        self.attacks: int | None = attacks
 
 
 class HandGear(Gear):
-    def __init__(self, name, rarity, value, critmult, attacks, stats=None):
+    def __init__(self, name, rarity, value, critmult=None, attacks=None, stats=None):
         if stats == None:
             stats = self.randomize_gear_stats(0.05, 5, 0.03)
         super().__init__(name, rarity, stats, value=value)
-        self.critmult: float = critmult
-        self.attacks: int = attacks
+        self.critmult: float | None = critmult
+        self.attacks: int | None = attacks
 
 
 class LegGear(Gear):
-    def __init__(self, name, rarity, value, healing, critmult, stats=None):
+    def __init__(self, name, rarity, value, healing=None, critmult=None, stats=None):
         if stats == None:
             stats = self.randomize_gear_stats(0.1, 10, 0.05)
         super().__init__(name, rarity, stats, value=value)
-        self.healing: float = healing
-        self.critmult: float = critmult
+        self.healing: float | None = healing
+        self.critmult: float | None = critmult
 
 
 class FootGear(Gear):
-    def __init__(self, name, rarity, value, moves, critchance, stats=None):
+    def __init__(self, name, rarity, value, moves=None, critchance=None, stats=None):
         if stats == None:
             stats = self.randomize_gear_stats(0.05, 5, 0.1)
         super().__init__(name, rarity, stats, value=value)
-        self.moves: int = moves
-        self.critchance: float = critchance
+        self.moves: int | None = moves
+        self.critchance: float | None = critchance
 
 
 class LootGenerator():
@@ -123,7 +123,10 @@ class LootGenerator():
         name = type_names[gear_type]
         attribute_count = special_att_counts[rarity]
         for _ in attribute_count:
-            # add attribute to gear
+            # get random valid attribute
+            att_name = self.get_random_attribute(gear_type)
+            # randomize an appropriate value
+            # asign value to item
             pass
         
 
@@ -143,6 +146,9 @@ class LootGenerator():
         gear_fields = [field.name for field in fields(gear_class) 
                       if field.name not in ['name', 'rarity', 'value', 'stats', 'stack_size', 'quantity']]
         return random.choice(gear_fields)
+    
+    def get_field_by_name(self, gear, field):
+        return getattr()
 
 class Testing(commands.Cog):
     def __init__(self, bot):

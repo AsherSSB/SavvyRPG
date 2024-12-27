@@ -113,7 +113,7 @@ class NextButton(discord.ui.Button):
         self.view.embed.page += 1
         await self.view.correct_inventory_response()
 
-
+# TODO: this needs a back button
 class InventoryView(discord.ui.View):
     def __init__(self, interaction, inventory: list[Item], embed):
         super().__init__()
