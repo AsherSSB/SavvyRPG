@@ -205,6 +205,26 @@ class InventoryEmbed(discord.Embed):
         super().__init__(title=title)
         self.inventory = inventory
         self.page = 1
+        self.initialize_with_blank_fields()
+        self.update_items()
+
+    # needed for set_field_at method in update_items to properly function
+    def initialize_with_blank_fields(self):
+        for i in range(10):
+            self.add_field(name=EMBED_NEWLINE, value=EMBED_NEWLINE, inline=(i % 2 == 0))
+
+    def update_items(self):
+        slice_start = (self.page - 1) * 10
+        max_items = min(len(self.inventory), slice_start + 10)
+        working_inv = self.inventory[slice_start:max_items]
+        needed_whitespace = 10 - (max_items - slice_start)
+        for i, item in enumerate(working_inv):
+            name=f"{item.emoji} {item.name}"
+            value=f"placeholder short description.\nQuantity:{item.quantity}\nWorth: {item.value}g each"
+            self.set_field_at(i, name=name, value=value, inline=(i % 2 == 0))
+        for i in range(1, needed_whitespace + 1):
+            value = f"{EMBED_NEWLINE}{EMBED_NEWLINE}{EMBED_NEWLINE}"
+            self.set_field_at(-i, name=EMBED_NEWLINE, value=value, inline=False)
     
 
 class InventorySelect(discord.ui.Select):
@@ -239,8 +259,8 @@ class PreviousButton(discord.ui.Button):
     async def callback(self, interaction):
         await interaction.response.defer()
         self.view.select.page -= 1
-        await self.view.correct_buttons()
-        await self.view.correct_select()
+        self.view.embed.page -= 1
+        await self.view.correct_inventory_response()
 
 
 class NextButton(discord.ui.Button):
@@ -250,8 +270,8 @@ class NextButton(discord.ui.Button):
     async def callback(self, interaction):
         await interaction.response.defer()
         self.view.select.page += 1
-        await self.view.correct_buttons()
-        await self.view.correct_select()
+        self.view.embed.page += 1
+        await self.view.correct_inventory_response()
 
 
 class InventoryView(discord.ui.View):
@@ -259,7 +279,7 @@ class InventoryView(discord.ui.View):
         super().__init__()
         self.interaction: discord.Interaction = interaction
         self.select = InventorySelect(inventory)
-        self.embed = embed
+        self.embed: InventoryEmbed = embed
         self.event = asyncio.Event()
         self.back_button = PreviousButton()
         self.next_button = NextButton()
@@ -267,16 +287,23 @@ class InventoryView(discord.ui.View):
         self.add_item(self.next_button)
         self.add_item(self.select)
 
+    async def correct_inventory_response(self):
+        self.correct_buttons()
+        self.correct_select()
+        self.correct_embed()
+        await self.interaction.edit_original_response(view=self, embed=self.embed)
     
-    async def correct_buttons(self):
+    def correct_buttons(self):
         self.back_button.disabled = self.select.page <= 1
 
         total_pages = (len(self.select.inventory) + 9) // 10
         self.next_button.disabled = self.select.page >= total_pages
 
-    async def correct_select(self):
+    def correct_select(self):
         self.select.update_options()
-        await self.interaction.edit_original_response(view=self, embed=self.embed)
+
+    def correct_embed(self):
+        self.embed.update_items()
 
     async def wait(self):
         await self.event.wait()
