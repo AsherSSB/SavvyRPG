@@ -8,6 +8,7 @@ from cogs.database import Database
 from cogs.combat import Weapon, Item
 import random
 
+EMBED_NEWLINE = "\u200b"
 
 @dataclass
 class BonusStatsTable():
@@ -177,12 +178,34 @@ class Testing(commands.Cog):
             await interaction.delete_original_response()
 
 
-# TODO: implement these
+    @discord.app_commands.command(name="invtest")
+    async def inventory_menu_test(self, interaction: discord.Interaction):
+        dummy_inventory = [
+            Item("Health Potion", "❤️", value=50, stack_size=99, quantity=15),
+            Item("Mana Potion", "💙", value=75, stack_size=99, quantity=10),
+            Item("Phoenix Down", "🪶", value=500, stack_size=10, quantity=3),
+            Item("Iron Sword", "⚔️", value=100, stack_size=1, quantity=1),
+            Item("Wooden Shield", "🛡️", value=50, stack_size=1, quantity=1),
+            Item("Magic Scroll", "📜", value=200, stack_size=5, quantity=2),
+            Item("Gold Ring", "💍", value=1000, stack_size=1, quantity=1),
+            Item("Dragon Scale", "🐉", value=2000, stack_size=10, quantity=5),
+            Item("Ancient Coin", "🪙", value=100, stack_size=999, quantity=50),
+            Item("Healing Herb", "🌿", value=25, stack_size=99, quantity=30),
+            Item("Magic Crystal", "💎", value=150, stack_size=50, quantity=12),
+            Item("Steel Arrows", "🏹", value=5, stack_size=999, quantity=200)
+        ]
+        embed = InventoryEmbed(dummy_inventory)
+        view = InventoryView(interaction, dummy_inventory, embed)
+        await interaction.response.send_message(content="inventory", view=view, embed=embed)
+
+
+# TODO: implement Embed
 class InventoryEmbed(discord.Embed):
     def __init__(self, inventory: list[Item], title = "Inventory"):
         super().__init__(title=title)
         self.inventory = inventory
-
+        self.page = 1
+    
 
 class InventorySelect(discord.ui.Select):
     def __init__(self, inventory: list[Item], placeholder="Select Item", max_values=1, row=0):
@@ -216,7 +239,8 @@ class PreviousButton(discord.ui.Button):
     async def callback(self, interaction):
         await interaction.response.defer()
         self.view.select.page -= 1
-        self.view.correct_buttons()
+        await self.view.correct_buttons()
+        await self.view.correct_select()
 
 
 class NextButton(discord.ui.Button):
@@ -226,20 +250,22 @@ class NextButton(discord.ui.Button):
     async def callback(self, interaction):
         await interaction.response.defer()
         self.view.select.page += 1
-        self.view.correct_buttons()
+        await self.view.correct_buttons()
+        await self.view.correct_select()
 
 
 class InventoryView(discord.ui.View):
-    def __init__(self, interaction, inventory: list[Item]):
+    def __init__(self, interaction, inventory: list[Item], embed):
         super().__init__()
         self.interaction: discord.Interaction = interaction
         self.select = InventorySelect(inventory)
-        self.embed = InventoryEmbed()
+        self.embed = embed
         self.event = asyncio.Event()
         self.back_button = PreviousButton()
         self.next_button = NextButton()
         self.add_item(self.back_button)
         self.add_item(self.next_button)
+        self.add_item(self.select)
 
     
     async def correct_buttons(self):
@@ -247,6 +273,10 @@ class InventoryView(discord.ui.View):
 
         total_pages = (len(self.select.inventory) + 9) // 10
         self.next_button.disabled = self.select.page >= total_pages
+
+    async def correct_select(self):
+        self.select.update_options()
+        await self.interaction.edit_original_response(view=self, embed=self.embed)
 
     async def wait(self):
         await self.event.wait()
