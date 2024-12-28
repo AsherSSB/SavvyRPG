@@ -97,6 +97,13 @@ class LootGenerator():
         self.gear_list = [HeadGear, ChestGear, HandGear, LegGear, FootGear]
         self.level = player_level
         self.origin = player_origin
+        self.rarity_scaling = {
+            "Common" : 1.0,
+            "Uncommon" : 1.5,
+            "Rare" : 2, 
+            "Exotic" : 2.5,
+            "Mythical" : 3.0
+        }
 
     def generate_loot(self):
         type_names = {
@@ -117,9 +124,14 @@ class LootGenerator():
         rarity = self.choose_rarity()
         gear_type = self.choose_random_gear_type()
         name = type_names[gear_type]
+
         attribute_count = special_att_counts[rarity]
         stats = self.generate_random_stats(gear_type)
         new_gear = gear_type(name=name, rarity=rarity, stats=stats, value=1)
+        # scale stats table with rarity
+        self.scale_base_stats_with_rarity(new_gear)
+
+        # add special stats/attributes
         for _ in range(attribute_count):
             # get random valid attribute
             att_name = self.get_random_attribute(gear_type)
@@ -127,30 +139,21 @@ class LootGenerator():
             if current_val is None:
                 current_val = 0
             add_val = self.randomize_attribute_value(att_name)
-            # TODO: scale add_val with rarity, weight and level
-            # TODO
+            # TODO: scale add_val with rarity, weight and player level
             if isinstance(add_val, float):
                 new_val = round((current_val + add_val), 2)
             else:
                 new_val = current_val + add_val
             # asign value to item
             self.set_field_by_name_value(new_gear, att_name, new_val)
-            # scale with rarity
-            self.scale_base_stats_with_rarity(new_gear)
 
         return new_gear
-    
-    def scale_base_stats_with_rarity(self, gear: Gear):
-        base_stat_rarity_scaling = {
-            "Common" : 1.0,
-            "Uncommon" : 1.5,
-            "Rare" : 2, 
-            "Exotic" : 2.5,
-            "Mythical" : 3.0
-        }
-        multiplier = base_stat_rarity_scaling[gear.rarity]
 
-        for field in fields(type(gear.stats)):
+    def scale_base_stats_with_rarity(self, gear: Gear):
+        
+        multiplier = self.rarity_scaling[gear.rarity]
+
+        for field in [stat for stat in fields(type(gear.stats)) if stat.name != "bonus_stats"]:
             value = getattr(gear.stats, field.name)
             if isinstance(value, int):
                 value = int(value * multiplier)
