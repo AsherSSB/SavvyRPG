@@ -113,14 +113,7 @@ class LootGenerator():
             "Exotic" : 3,
             "Mythical" : 4
         }
-        # TODO: move to seperate function
-        base_stat_rarity_scaling = {
-            "Common" : 1.0,
-            "Uncommon" : 1.5,
-            "Rare" : 2, 
-            "Exotic" : 2.5,
-            "Mythical" : 3.0
-        }
+        
         rarity = self.choose_rarity()
         gear_type = self.choose_random_gear_type()
         name = type_names[gear_type]
@@ -142,9 +135,29 @@ class LootGenerator():
                 new_val = current_val + add_val
             # asign value to item
             self.set_field_by_name_value(new_gear, att_name, new_val)
-        
+            # scale with rarity
+            self.scale_base_stats_with_rarity(new_gear)
+
         return new_gear
     
+    def scale_base_stats_with_rarity(self, gear: Gear):
+        base_stat_rarity_scaling = {
+            "Common" : 1.0,
+            "Uncommon" : 1.5,
+            "Rare" : 2, 
+            "Exotic" : 2.5,
+            "Mythical" : 3.0
+        }
+        multiplier = base_stat_rarity_scaling[gear.rarity]
+
+        for field in fields(type(gear.stats)):
+            value = getattr(gear.stats, field.name)
+            if isinstance(value, int):
+                value = int(value * multiplier)
+            else:
+                value = round((value * multiplier), 2)
+            setattr(gear.stats, field.name, value)
+
     def randomize_gear_stats(self, maxres, maxhp, maxdodge):
         resist = round(random.uniform(maxres/5, maxres), 2)
         hp = random.randint(maxhp//5, maxhp)
