@@ -28,64 +28,65 @@ class GearStatTable():
     bonus_stats: BonusStatsTable
 
 
+@dataclass
 class Gear(Item):
-    def __init__(self, name, rarity, stats, value=0):
-        super().__init__(name, value=value, emoji="💁‍♀️")
-        self.rarity: str = rarity
-        self.stats: GearStatTable = stats
-    
-    # why the fuck did i put this here and not in the loot generator
-    def randomize_gear_stats(self, maxres, maxhp, maxdodge):
-        resist = round(random.uniform(maxres/5, maxres), 1)
-        hp = random.randint(maxhp//5, maxhp)
-        dodge: float = round(random.uniform(maxdodge/5, maxdodge), 1)
-        # TODO: Bonus stats moves to loot gen
-        return GearStatTable(resist, hp, dodge, BonusStatsTable())
+    rarity: str
+    stats: GearStatTable
 
 
+@dataclass
 class HeadGear(Gear):
-    def __init__(self, name, rarity, value, critchance=None, multicast=None, stats=None):
+    critchance: float | None = field(default=None, kw_only=True)
+    multicast: float | None = field(default=None, kw_only=True)
+
+    def __init__(self, name, rarity, value, stats=None):
         if stats == None:
             stats = self.randomize_gear_stats(0.1, 5, .05)
         super().__init__(name, rarity, stats, value=value)
-        self.critchance: float | None = critchance
-        self.multicast: float | None = multicast
 
 
+@dataclass
 class ChestGear(Gear):
-    def __init__(self, name, rarity, value, healing=None, attacks=None, stats=None):
+    healing: float | None = field(default=None, kw_only=True)
+    attacks: int | None = field(default=None, kw_only=True)
+
+    def __init__(self, name, rarity, value, stats=None):
         if stats == None:
             stats = self.randomize_gear_stats(0.2, 10, 0.1)
         super().__init__(name, rarity, stats, value=value)
-        self.healing: float | None = healing
-        self.attacks: int | None = attacks
 
 
+@dataclass
 class HandGear(Gear):
-    def __init__(self, name, rarity, value, critmult=None, attacks=None, stats=None):
+    critmult: float | None = field(default=None, kw_only=True)
+    attacks: int | None = field(default=None, kw_only=True)
+
+    def __init__(self, name, rarity, value, stats=None):
         if stats == None:
             stats = self.randomize_gear_stats(0.05, 5, 0.03)
         super().__init__(name, rarity, stats, value=value)
-        self.critmult: float | None = critmult
-        self.attacks: int | None = attacks
 
 
+@dataclass
 class LegGear(Gear):
-    def __init__(self, name, rarity, value, healing=None, critmult=None, stats=None):
+    healing: float | None = field(default=None, kw_only=True)
+    critmult: float | None = field(default=None, kw_only=True)
+
+    def __init__(self, name, rarity, value, stats=None):
         if stats == None:
             stats = self.randomize_gear_stats(0.1, 10, 0.05)
         super().__init__(name, rarity, stats, value=value)
-        self.healing: float | None = healing
-        self.critmult: float | None = critmult
 
 
+@dataclass
 class FootGear(Gear):
-    def __init__(self, name, rarity, value, moves=None, critchance=None, stats=None):
+    moves: int | None = field(default=None, kw_only=True)
+    critchance: float | None = field(default=None, kw_only=True)
+
+    def __init__(self, name, rarity, value, stats=None):
         if stats == None:
             stats = self.randomize_gear_stats(0.05, 5, 0.1)
         super().__init__(name, rarity, stats, value=value)
-        self.moves: int | None = moves
-        self.critchance: float | None = critchance
 
 
 class LootGenerator():
@@ -124,7 +125,8 @@ class LootGenerator():
         gear_type = self.choose_random_gear_type()
         name = type_names[gear_type]
         attribute_count = special_att_counts[rarity]
-        new_gear = gear_type(name=name, rarity=rarity, value=1)
+        stats = self.generate_random_stats(gear_type)
+        new_gear = gear_type(name=name, rarity=rarity, stats=stats, value=1)
         for _ in range(attribute_count):
             # get random valid attribute
             att_name = self.get_random_attribute(gear_type)
@@ -143,6 +145,23 @@ class LootGenerator():
         
         return new_gear
     
+    def randomize_gear_stats(self, maxres, maxhp, maxdodge):
+        resist = round(random.uniform(maxres/5, maxres), 1)
+        hp = random.randint(maxhp//5, maxhp)
+        dodge: float = round(random.uniform(maxdodge/5, maxdodge), 1)
+        # TODO: Bonus stats moves to loot gen
+        return GearStatTable(resist, hp, dodge, BonusStatsTable())
+
+    def generate_random_stats(self, gear_type):
+        type_stat_randomizers = {
+            HeadGear : self.randomize_gear_stats(0.1, 5, .05),
+            ChestGear : self.randomize_gear_stats(0.2, 10, 0.1),
+            HandGear : self.randomize_gear_stats(0.05, 5, 0.03), 
+            LegGear : self.randomize_gear_stats(0.1, 10, 0.05), 
+            FootGear : self.randomize_gear_stats(0.05, 5, 0.1)
+        }
+        return type_stat_randomizers(gear_type)
+
     def randomize_attribute_value(self, attribute: str):
         attribute_values = {
             "moves" : random.randint(1, 2),
@@ -167,8 +186,10 @@ class LootGenerator():
     
     def get_random_attribute(self, gear_class):
         # Get all fields except common ones from base classes
+        excluded = ['name', 'emoji', 'rarity', 'value', 'stack_size', 'quantity']
         gear_fields = [field.name for field in fields(gear_class) 
-                      if field.name not in ['name', 'rarity', 'value', 'stats', 'stack_size', 'quantity']]
+                       if field.name not in excluded]
+        
         return random.choice(gear_fields)
     
     def get_field_by_name(self, gear, field):
