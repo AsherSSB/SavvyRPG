@@ -146,9 +146,9 @@ class LootGenerator():
         return new_gear
     
     def randomize_gear_stats(self, maxres, maxhp, maxdodge):
-        resist = round(random.uniform(maxres/5, maxres), 1)
+        resist = round(random.uniform(maxres/5, maxres), 2)
         hp = random.randint(maxhp//5, maxhp)
-        dodge: float = round(random.uniform(maxdodge/5, maxdodge), 1)
+        dodge: float = round(random.uniform(maxdodge/5, maxdodge), 2)
         # TODO: Bonus stats moves to loot gen
         return GearStatTable(resist, hp, dodge, BonusStatsTable())
 
@@ -160,7 +160,7 @@ class LootGenerator():
             LegGear : self.randomize_gear_stats(0.1, 10, 0.05), 
             FootGear : self.randomize_gear_stats(0.05, 5, 0.1)
         }
-        return type_stat_randomizers(gear_type)
+        return type_stat_randomizers[gear_type]
 
     def randomize_attribute_value(self, attribute: str):
         attribute_values = {
@@ -186,7 +186,7 @@ class LootGenerator():
     
     def get_random_attribute(self, gear_class):
         # Get all fields except common ones from base classes
-        excluded = ['name', 'emoji', 'rarity', 'value', 'stack_size', 'quantity']
+        excluded = ['name', 'emoji', 'rarity', 'value', 'stack_size', 'quantity', 'stats']
         gear_fields = [field.name for field in fields(gear_class) 
                        if field.name not in excluded]
         
@@ -216,9 +216,6 @@ class Testing(commands.Cog):
                 continue
                 
             value = getattr(randgear, field.name)
-            # Format floats to 2 decimal places
-            if isinstance(value, float):
-                value = f"{value:.2f}"
                 
             content.append(f"{field.name}: {value}")
         
