@@ -30,7 +30,7 @@ class GearStatTable():
 
 class Gear(Item):
     def __init__(self, name, rarity, stats, value=0):
-        super().__init__(name, value=value)
+        super().__init__(name, value=value, emoji="💁‍♀️")
         self.rarity: str = rarity
         self.stats: GearStatTable = stats
     
@@ -39,7 +39,8 @@ class Gear(Item):
         resist = round(random.uniform(maxres/5, maxres), 1)
         hp = random.randint(maxhp//5, maxhp)
         dodge: float = round(random.uniform(maxdodge/5, maxdodge), 1)
-        return GearStatTable(resist, hp, dodge)
+        # TODO: Bonus stats moves to loot gen
+        return GearStatTable(resist, hp, dodge, BonusStatsTable())
 
 
 class HeadGear(Gear):
@@ -124,7 +125,7 @@ class LootGenerator():
         name = type_names[gear_type]
         attribute_count = special_att_counts[rarity]
         new_gear = gear_type(name=name, rarity=rarity, value=1)
-        for _ in attribute_count:
+        for _ in range(attribute_count):
             # get random valid attribute
             att_name = self.get_random_attribute(gear_type)
             current_val = self.get_field_by_name(new_gear, att_name)
@@ -132,6 +133,7 @@ class LootGenerator():
                 current_val = 0
             add_val = self.randomize_attribute_value(att_name)
             # TODO: scale add_val with rarity, weight and level
+            # TODO
             if isinstance(add_val, float):
                 new_val = round((current_val + add_val), 2)
             else:
