@@ -9,6 +9,7 @@ from cogs.combat import Weapon, Item
 import random
 from custom.gearview import ButtonGearView
 from custom.inventory import InventoryEmbed, InventoryView
+from custom.stattable import Nomad
 
 @dataclass
 class BonusStatsTable():
@@ -122,15 +123,36 @@ class LootGenerator():
         gear_type = self.choose_random_gear_type()
         name = type_names[gear_type]
         attribute_count = special_att_counts[rarity]
+        new_gear = gear_type(name=name, rarity=rarity, value=1)
         for _ in attribute_count:
             # get random valid attribute
             att_name = self.get_random_attribute(gear_type)
-            # randomize an appropriate value
+            current_val = self.get_field_by_name(new_gear, att_name)
+            if current_val is None:
+                current_val = 0
+            add_val = self.randomize_attribute_value(att_name)
+            # TODO: scale add_val with rarity, weight and level
+            if isinstance(add_val, float):
+                new_val = round((current_val + add_val), 2)
+            else:
+                new_val = current_val + add_val
             # asign value to item
-            pass
+            self.set_field_by_name_value(new_gear, att_name, new_val)
         
-
-    def level_scale_gear():
+        return new_gear
+    
+    def randomize_attribute_value(self, attribute: str):
+        attribute_values = {
+            "moves" : random.randint(1, 2),
+            "critchance" : round(random.uniform(0.03, 0.12), 2),
+            "critmult" : round(random.uniform(0.05, 0.25), 2),
+            "attacks" : random.randint(1, 2),
+            "multicast" : round(random.uniform(0.02, 0.08), 2),
+            "healing" : round(random.uniform(0.08, 0.32), 2),
+        }
+        return attribute_values[attribute]
+    
+    def level_scale_gear(self):
         pass
 
     def choose_rarity(self):
@@ -148,13 +170,38 @@ class LootGenerator():
         return random.choice(gear_fields)
     
     def get_field_by_name(self, gear, field):
-        return getattr()
+        return getattr(gear, field, None)
+    
+    def set_field_by_name_value(self, gear, field, value):
+        setattr(gear, field, value)
 
 class Testing(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = Database(self.bot)
         self.usercharacter: PlayableCharacter
+
+    @discord.app_commands.command(name="randomloot")
+    async def generate_random_gear(self, interaction: discord.Interaction):
+        generator = LootGenerator(0, Nomad())
+        randgear = generator.generate_loot()
+        content = []
+        
+        for field in fields(type(randgear)):
+            # Skip private fields
+            if field.name.startswith('_'):
+                continue
+                
+            value = getattr(randgear, field.name)
+            # Format floats to 2 decimal places
+            if isinstance(value, float):
+                value = f"{value:.2f}"
+                
+            content.append(f"{field.name}: {value}")
+        
+        formatted_content = "\n".join(content)
+        await interaction.response.send_message(formatted_content)
+
 
     @discord.app_commands.command(name="charactermenutesting")
     async def send_character_menu(self, interaction:discord.Interaction):
