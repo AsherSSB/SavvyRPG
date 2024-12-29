@@ -130,11 +130,9 @@ class LootGenerator():
         attribute_count = special_att_counts[rarity]
         stats = self.generate_random_stats(gear_type)
         new_gear: Gear = gear_type(name=name, rarity=rarity, stats=stats, value=1)
-        # scale stats table with rarity
         self.scale_base_stats_with_rarity(new_gear)
-        # scale stats with weight
         self.scale_base_stats_with_weight(weight, new_gear.stats)
-        # scale stats with level
+        self.scale_base_stats_with_level(new_gear.stats, self.level)
         # add special stats/attributes
         for _ in range(attribute_count):
             # get random valid attribute
@@ -152,6 +150,9 @@ class LootGenerator():
             self.set_field_by_name_value(new_gear, att_name, new_val)
 
         return new_gear
+
+    def scale_base_stats_with_level(self, stats: GearStatTable, level: int):
+        stats.maxhp = int(stats.maxhp * (1 + 0.2 * level))
 
     def scale_base_stats_with_weight(self, weight, stats: GearStatTable):
         if weight == "Medium":
