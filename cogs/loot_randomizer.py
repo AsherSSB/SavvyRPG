@@ -252,7 +252,7 @@ class LootGenerator():
     def set_field_by_name_value(self, gear, field, value):
         setattr(gear, field, value)
 
-class Testing(commands.Cog):
+class Loot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = Database(self.bot)
@@ -331,6 +331,6 @@ class Testing(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(Testing(bot))
+    await bot.add_cog(Loot(bot))
 
    
