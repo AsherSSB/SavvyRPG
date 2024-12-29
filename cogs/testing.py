@@ -113,6 +113,7 @@ class LootGenerator():
             LegGear : "Pants", 
             FootGear : "Shoes"
         }
+        # TODO: move attribute assigning to different function
         special_att_counts = {
             "Common" : 0,
             "Uncommon" : 1,
@@ -140,6 +141,7 @@ class LootGenerator():
                 current_val = 0
             add_val = self.randomize_attribute_value(att_name)
             # TODO: scale add_val with rarity, weight and player level
+            add_val = self.scale_attribue_with_rarity(add_val, att_name, rarity)
             if isinstance(add_val, float):
                 new_val = round((current_val + add_val), 2)
             else:
@@ -149,8 +151,20 @@ class LootGenerator():
 
         return new_gear
 
+    def scale_attribue_with_rarity(self, stat: int | float, name, rarity: str):
+        multiplier = self.rarity_scaling[rarity]
+        attribute_rarity_scaling = {
+            "moves" : lambda x: int(x + 1 * (multiplier - 1)),
+            "critchance" : lambda x: round(x * multiplier, 2),
+            "critmult" : lambda x: round(x + 1 * (multiplier - 1), 2),
+            "attacks" : lambda x: int(x + 1 * (multiplier - 1)),
+            "multicast" : lambda x: round(x * 1 + multiplier / 2, 2),
+            "healing" : lambda x: round(x * multiplier, 2)
+        }
+        return attribute_rarity_scaling[name](stat)
+
+
     def scale_base_stats_with_rarity(self, gear: Gear):
-        
         multiplier = self.rarity_scaling[gear.rarity]
 
         for field in [stat for stat in fields(type(gear.stats)) if stat.name != "bonus_stats"]:
