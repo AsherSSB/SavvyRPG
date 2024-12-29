@@ -5,7 +5,7 @@ from dataclasses import dataclass, field, fields
 from custom.playable_character import PlayableCharacter
 from cogs.mainmenus import CharacterEmbed, CharacterView
 from cogs.database import Database
-from cogs.combat import Weapon, Item
+from custom.gear import Item
 import random
 from custom.gearview import ButtonGearView
 from custom.inventory import InventoryEmbed, InventoryView
