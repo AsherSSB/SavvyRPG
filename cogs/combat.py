@@ -8,97 +8,10 @@ from dataclasses import dataclass, field
 from typing import Callable
 from custom.gear import WeaponStatTable, Drops
 from custom.combat.view import *
+from custom.combat.entities import *
+from custom.combat.cooldown_base_classes import *
 
 BASE_TILE = ":green_square:"
-
-@dataclass
-class PlayerPracticalStats():
-    dodge: float
-    resistance: float
-
-
-@dataclass
-class Entity():
-    name: str
-    hp: int
-    position: list[int]
-    emoji: str
-
-# currently used by both players and enemies, should maybe change that later
-class Cooldown():
-    def __init__(self, name, emoji, stats: WeaponStatTable, active, acted):
-        self.name: str = name
-        self.emoji: str = emoji
-        self.stats: WeaponStatTable = stats
-        self.active: Callable = active
-        self.acted: str = acted
-
-    def in_range(self, mypos, targetpos) -> bool:
-        if abs(targetpos - mypos) <= self.stats.rng:
-            return True
-        return False
-
-    def miss(self) -> bool:
-        if random.random() < self.stats.acc:
-            return False
-        return True
-
-    def calculate_crit(self) -> int:
-        if random.random() < self.stats.cc:
-            return self.stats.cm
-        return 1.0
-    
-    def scale_damage(self, player:PlayableCharacter):
-        playerstats = player.stats.to_dict()
-        playerstats = playerstats[self.stats.stat]
-        if playerstats > 10:
-            self.stats.dmg = int(self.stats.dmg * self.stats.scalar * playerstats)
-
-
-@dataclass
-class NPCStatTable():
-    hp: int
-    resist: float
-    speed: int
-
-
-class EnemyCooldown(Cooldown):
-    def __init__(self, name, emoji, stats, acted):
-        super().__init__(name, emoji, stats, self.attack, acted)
-
-    def attack(self, entities: list[Entity], playerindex: int) -> str:
-        if self.miss():
-            return f"missed {self.name}"
-        mult = self.calculate_crit()
-        hit = f"crit {self.acted}" if mult > 1.0 else self.acted
-        dmg = int(self.stats.dmg * mult)
-        entities[playerindex].hp -= dmg
-        return f"{hit} {entities[playerindex].name} for {dmg} damage"
-
-
-class Enemy():
-    def __init__(self, name:str, stats:NPCStatTable, drops:Drops, attack:EnemyCooldown, emoji: str):
-        self.name = name
-        self.stats = stats
-        self.drops = drops
-        self.attack = attack
-        self.emoji = emoji
-
-
-class SingleTargetAttack(Cooldown):
-    def __init__(self, name, emoji, stats, acted):
-        super().__init__(name, emoji, stats, self.attack, acted)
-
-    def attack(self, enemy:Entity) -> str:
-        if self.miss():
-            return f"missed {self.name}"
-        mult = self.calculate_crit()
-        hit = f"crit {self.acted}" if mult > 1.0 else self.acted
-        dmg = int(self.stats.dmg * mult)
-        enemy.hp -= dmg
-        return f"{hit} {enemy.name} for {dmg} damage"
-
-
 
 class CombatInstance():
     def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
