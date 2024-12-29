@@ -6,32 +6,12 @@ from custom.playable_character import PlayableCharacter
 import random
 from dataclasses import dataclass, field
 from typing import Callable
-
-@dataclass
-class Item():
-    name: str
-    emoji: str = field(default="💁‍♀️", kw_only=True)
-    value: int = field(default=0, kw_only=True)
-    stack_size: int = field(default=1, kw_only=True)
-    quantity: int = field(default=1, kw_only=True)
-
+from custom.gear import WeaponStatTable, Drops
 
 @dataclass
 class PlayerPracticalStats():
     dodge: float
     resistance: float
-    
-
-@dataclass
-class WeaponStatTable():
-    dmg: int
-    spd: float
-    rng: int
-    cc: float
-    cm: float
-    acc: float
-    scalar: float
-    stat: str
 
 
 @dataclass
@@ -70,19 +50,6 @@ class Cooldown():
         playerstats = playerstats[self.stats.stat]
         if playerstats > 10:
             self.stats.dmg = int(self.stats.dmg * self.stats.scalar * playerstats)
-
-@dataclass
-class Weapon(Item):
-    cooldown: Cooldown
-    scale: str
-    slots: int = field(default=2, kw_only=True)
-
-
-@dataclass
-class Drops():
-    xp: int
-    gold: int
-    item: Item | None
 
 
 @dataclass
