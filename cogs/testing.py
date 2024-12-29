@@ -124,14 +124,17 @@ class LootGenerator():
         
         rarity = self.choose_rarity()
         gear_type = self.choose_random_gear_type()
-        name = type_names[gear_type]
+        weight = self.choose_random_weight()
+        name = weight + type_names[gear_type]
 
         attribute_count = special_att_counts[rarity]
         stats = self.generate_random_stats(gear_type)
-        new_gear = gear_type(name=name, rarity=rarity, stats=stats, value=1)
+        new_gear: Gear = gear_type(name=name, rarity=rarity, stats=stats, value=1)
         # scale stats table with rarity
         self.scale_base_stats_with_rarity(new_gear)
-
+        # scale stats with weight
+        self.scale_base_stats_with_weight(weight, new_gear.stats)
+        # scale stats with level
         # add special stats/attributes
         for _ in range(attribute_count):
             # get random valid attribute
@@ -140,7 +143,6 @@ class LootGenerator():
             if current_val is None:
                 current_val = 0
             add_val = self.randomize_attribute_value(att_name)
-            # TODO: scale add_val with rarity, weight and player level
             add_val = self.scale_attribue_with_rarity(add_val, att_name, rarity)
             if isinstance(add_val, float):
                 new_val = round((current_val + add_val), 2)
@@ -150,6 +152,27 @@ class LootGenerator():
             self.set_field_by_name_value(new_gear, att_name, new_val)
 
         return new_gear
+
+    def scale_base_stats_with_weight(self, weight, stats: GearStatTable):
+        if weight == "Medium":
+            return
+        elif weight == "Light":
+            self.scale_stats_light(stats)
+        else:
+            self.scale_stats_heavy(stats)
+
+    def scale_stats_heavy(self, stats: GearStatTable):
+        stats.dodge = 0.0
+        stats.resist = round(stats.resist * 2, 2)
+        stats.maxhp = int(stats.maxhp * 1.5)
+
+    def scale_stats_light(self, stats: GearStatTable):
+        stats.dodge = round(stats.dodge * 2, 2)
+        stats.resist = round(stats.resist / 2, 2)
+        stats.maxhp = int(stats.maxhp * 3/4)
+
+    def choose_random_weight(self):
+        return random.choice(self.weights)
 
     def scale_attribue_with_rarity(self, stat: int | float, name, rarity: str):
         multiplier = self.rarity_scaling[rarity]
@@ -163,7 +186,7 @@ class LootGenerator():
         }
         return attribute_rarity_scaling[name](stat)
 
-
+    # hp uses mult, resist and dodge should be altered
     def scale_base_stats_with_rarity(self, gear: Gear):
         multiplier = self.rarity_scaling[gear.rarity]
 
