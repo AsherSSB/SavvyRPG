@@ -32,7 +32,6 @@ class PlayableCharacter():
     def level_progress(self):
         current_level_xp = int((self.level ** (21/9)) * 100)
         return int(self.xp - current_level_xp)
-        
 
     def __str__(self):
         return f"Name: {self.name}\nGender: {self.gender}\nRace: {self.race}\nClass: {self.origin}\n\n{self.stats}"
