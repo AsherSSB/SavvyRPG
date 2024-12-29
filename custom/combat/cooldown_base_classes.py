@@ -4,7 +4,7 @@ from custom.playable_character import PlayableCharacter
 from custom.gear import Weapon, WeaponStatTable
 from custom.combat.entities import Entity
 
-# currently used by both players and enemies, should maybe change that later
+
 class Cooldown():
     def __init__(self, name, emoji, stats: WeaponStatTable, active, acted):
         self.name: str = name
@@ -35,7 +35,6 @@ class Cooldown():
             self.stats.dmg = int(self.stats.dmg * self.stats.scalar * playerstats)
 
 
-
 class EnemyCooldown(Cooldown):
     def __init__(self, name, emoji, stats, acted):
         super().__init__(name, emoji, stats, self.attack, acted)
@@ -62,3 +61,5 @@ class SingleTargetAttack(Cooldown):
         dmg = int(self.stats.dmg * mult)
         enemy.hp -= dmg
         return f"{hit} {enemy.name} for {dmg} damage"
+    
+    

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from custom.gear import Drops
 from custom.combat.cooldown_base_classes import EnemyCooldown
 
+
 @dataclass
 class PlayerPracticalStats():
     dodge: float
@@ -15,11 +16,13 @@ class Entity():
     position: list[int]
     emoji: str
 
+
 @dataclass
 class NPCStatTable():
     hp: int
     resist: float
     speed: int
+
 
 class Enemy():
     def __init__(self, name:str, stats:NPCStatTable, drops:Drops, attack:EnemyCooldown, emoji: str):
@@ -28,3 +31,4 @@ class Enemy():
         self.drops = drops
         self.attack = attack
         self.emoji = emoji
+

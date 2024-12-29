@@ -1,6 +1,6 @@
 import discord
 import asyncio
-from cogs.combat import Item
+from custom.gear import Item
 EMBED_NEWLINE = "\u200b"
 
 class InventoryEmbed(discord.Embed):

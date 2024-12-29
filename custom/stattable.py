@@ -32,6 +32,7 @@ Attunement: {self.att}"""
             "att": self.att
         }
     
+
 class Origin():
     def __init__(self):
         self.stats:StatTable
@@ -57,7 +58,6 @@ Base Stats:\n{self.stats}"""
 
     def __str__(self):
         return "Nomad"
-
 
 
 class Barbarian(Origin):
@@ -99,6 +99,7 @@ Base Stats:\n{self.stats}"""
     def __str__(self):
         return "Bard"
 
+
 class Rogue(Origin):
     def __init__(self):
         self.stats = StatTable(7, 6, 16, 9, 14)
@@ -119,6 +120,7 @@ Base Stats:\n{self.stats}"""
     def __str__(self):
         return "Rogue"
 
+
 class Ranger(Origin):
     def __init__(self):
         self.stats = StatTable(8, 8, 14, 10, 12)
@@ -138,6 +140,7 @@ Base Stats:\n{self.stats}"""
 
     def __str__(self):
         return "Ranger"
+
 
 class Wizard(Origin):
     def __init__(self):
@@ -281,3 +284,4 @@ class OriginsInfo():
     def __init__(self):
         self.origins:set = {Nomad(), Bard(), Barbarian(), Rogue(), Ranger(), Wizard()}
         self.races:set = {Human(), HighElf(), Dwarf(), DarkElf(), Orc(), Fairy(), Damned()}
+

@@ -93,6 +93,7 @@ class EnemySelectView(discord.ui.View):
     async def wait(self):
         await self.event.wait()
 
+
 class RunButton(discord.ui.Button):
     def __init__(self):
         super().__init__(style=discord.ButtonStyle.red, label="Run", row=4)
@@ -190,7 +191,6 @@ class CombatView(discord.ui.View):
         horizontal_distance = abs(enemy.position[0] - player.position[0])
         vertical_distance = abs(enemy.position[1] - player.position[1])
         return horizontal_distance <= max_range and vertical_distance <= max_range
-
 
     async def wait(self):
         await self.event.wait()

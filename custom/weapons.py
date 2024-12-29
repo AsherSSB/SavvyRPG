@@ -25,6 +25,7 @@ Crit Multiplier: {self.cm}
 Accuracy: {self.acc}
 Slots: {self.slots} Handed"""
 
+
 class Sword(Weapon):
     def __init__(self):
         super().__init__(5, 1, 0.1, 2.0, 0.95, 1)

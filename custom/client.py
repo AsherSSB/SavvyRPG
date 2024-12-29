@@ -27,3 +27,5 @@ class Client(commands.Bot):
                 await cog.cog_unload()
         
         await super().close()
+
+        

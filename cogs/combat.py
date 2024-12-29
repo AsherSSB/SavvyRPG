@@ -4,8 +4,6 @@ import asyncio
 import custom.stattable as sts
 from custom.playable_character import PlayableCharacter
 import random
-from dataclasses import dataclass, field
-from typing import Callable
 from custom.gear import WeaponStatTable, Drops
 from custom.combat.view import *
 from custom.combat.entities import *
