@@ -176,6 +176,7 @@ class LootGenerator():
     def set_field_by_name_value(self, gear, field, value):
         setattr(gear, field, value)
 
+
 class Loot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -199,7 +200,6 @@ class Loot(commands.Cog):
         
         formatted_content = "\n".join(content)
         await interaction.response.send_message(formatted_content)
-
 
     @discord.app_commands.command(name="charactermenutesting")
     async def send_character_menu(self, interaction:discord.Interaction):
@@ -227,7 +227,6 @@ class Loot(commands.Cog):
             await interaction.edit_original_response(content=f"You selected: {view.labels[view.choice]}")
             await asyncio.sleep(6.0)
             await interaction.delete_original_response()
-
 
     @discord.app_commands.command(name="invtest")
     async def inventory_menu_test(self, interaction: discord.Interaction):

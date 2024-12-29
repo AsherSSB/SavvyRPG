@@ -264,3 +264,4 @@ The enemy will move to get in range, and then will attack if in range before end
 
 async def setup(bot):
     await bot.add_cog(Combat(bot))
+
