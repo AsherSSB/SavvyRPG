@@ -18,7 +18,7 @@ class CombatInstance():
         self.game_grid = self.initialize_game_bounds(self.bounds[1], self.bounds[0])
         self.enemies:list[Enemy] = enemies
         self.players: list[PlayableCharacter] = players
-        player_practicals = self.initialize_practical_stats(gear)
+        self.player_practicals: list[PlayerPracticalStats] = self.initialize_practical_stats(gear)
         self.cooldowns: list[list[Cooldown]] = cooldowns
         self.entities: list[Entity] = self.initialize_entities()
         self.scale_cooldown_damages(self.cooldowns, self.players)
@@ -115,10 +115,10 @@ class CombatInstance():
         }
         for i, player in enumerate(self.players):
             emoji = origin_emojis[str(player.origin)]
-            entities.append(Entity(player.name, self.calculate_player_hp(player), [0, i], emoji))
+            entities.append(Entity(player.name, self.calculate_player_hp(player), self.player_practicals[i].resistance, self.player_practicals[i].dodge, [0, i], emoji))
             self.game_grid[i][0] = emoji
         for i, enemy in enumerate(self.enemies):
-            entities.append(Entity(enemy.name, enemy.stats.hp, [self.bounds[0]-1, i], enemy.emoji))
+            entities.append(Entity(enemy.name, enemy.stats.hp, enemy.stats.resist, enemy.stats.dodge,[self.bounds[0]-1, i], enemy.emoji))
             self.game_grid[i][self.bounds[0]-1] = enemy.emoji
         return entities
 
@@ -135,10 +135,6 @@ class CombatInstance():
         view.add_item(EnemySelectMenu([enemy.name for enemy in self.enemies]))
         await self.interaction.edit_original_response(view=view)
         await view.wait()
-
-        if not self.enemy_in_range(self.entities[-view.choice], self.entities[0], cooldown.stats.rng):
-            await self.embed_handler.log(self.players[playerindex].name, "Enemy not in range!")
-            return await self.use_cooldown(cooldown, playerindex)
         
         await self.interaction.edit_original_response(view=self.view)
         if view.choice == 0:
@@ -239,11 +235,11 @@ class Combat(commands.Cog):
         self.bot = bot
 
         self.punchcd = SingleTargetAttack("Punch", "👊", WeaponStatTable(
-            dmg=10, spd=3.5, rng=2, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
+            dmg=10, spd=1, rng=2, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
         ), acted="punched")
 
         self.pummelcd = SingleTargetAttack("Pummel", "✊", WeaponStatTable(
-            dmg=30, spd=7.5, rng=1, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
+            dmg=30, spd=2, rng=1, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
         ), acted="pummeled")    
 
     @discord.app_commands.command(name="combat")
@@ -253,10 +249,10 @@ class Combat(commands.Cog):
             "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
 
         enemy:Enemy = Enemy("Training Dummy", 
-                    NPCStatTable(120, 0, 0), 
+                    NPCStatTable(120, 1.0, 1.0), 
                     Drops(1, 1, None),
                     EnemyCooldown("Smack", None, WeaponStatTable(
-            dmg=1, spd=7.5, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str" 
+            dmg=1, spd=3, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str" 
         ), "smaccd"), ":dizzy_face:")
 
         interaction = await self.send_testing_view(interaction)

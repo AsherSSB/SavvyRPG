@@ -14,7 +14,7 @@ class Item():
 @dataclass
 class WeaponStatTable():
     dmg: int
-    spd: float
+    spd: int
     rng: int
     cc: float
     cm: float

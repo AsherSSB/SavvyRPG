@@ -13,6 +13,8 @@ class PlayerPracticalStats():
 class Entity():
     name: str
     hp: int
+    res: float
+    dodge: float
     position: list[int]
     emoji: str
 
@@ -21,7 +23,15 @@ class Entity():
 class NPCStatTable():
     hp: int
     resist: float
-    speed: int
+    dodge: float
+
+
+@dataclass
+class EntitiesInfo():
+    lst: list[Entity]
+    user_index: int
+    player_count: int
+    enemy_count: int
 
 
 class Enemy():
