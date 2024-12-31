@@ -17,7 +17,7 @@ class WeaponStatTable():
 
 
 class Cooldown():
-    def __init__(self, name, emoji, stats: WeaponStatTable, active, acted, entities):
+    def __init__(self, name, emoji, stats: WeaponStatTable, active, acted, entities=None):
         self.name: str = name
         self.emoji: str = emoji
         self.stats: WeaponStatTable = stats
@@ -99,3 +99,4 @@ class AOEAttack(Cooldown):
         # remove trailing comma
         message = message[0:-1]
         return message
+    

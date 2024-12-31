@@ -20,12 +20,13 @@ class CombatInstance():
         self.enemies:list[Enemy] = enemies
         self.players: list[PlayableCharacter] = players
         self.player_practicals: list[PlayerPracticalStats] = self.initialize_practical_stats(gear)
-        self.cooldowns: list[list[Cooldown]] = cooldowns
         self.entities: list[Entity] = self.initialize_entities()
+        self.cooldowns: list[list[Cooldown]] = cooldowns
         self.scale_cooldown_damages(self.cooldowns, self.players)
         self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
         self.view = self.initialize_combat_view()
         self.initialize_enemy_cooldowns()
+        self.pass_entities_to_cooldowns()
 
     async def combat(self):
         choice = 0
@@ -66,6 +67,11 @@ class CombatInstance():
             # take away player view
             # reset view event
             await self.view.reset()
+
+    def pass_entities_to_cooldowns(self):
+        cds: list[Cooldown] = [item for row in self.cooldowns for item in row]
+        for cd in cds:
+            cd.entities = self.entities
 
     def initialize_practical_stats(self, gear: list[list[Gear]]):
         practicals = []
