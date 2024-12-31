@@ -25,6 +25,7 @@ class CombatInstance():
         self.scale_cooldown_damages(self.cooldowns, self.players)
         self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
         self.view = self.initialize_combat_view()
+        # cooldowns need EntitiesInfo
         self.initialize_enemy_cooldowns()
         self.pass_entities_to_cooldowns()
 
@@ -69,9 +70,10 @@ class CombatInstance():
             await self.view.reset()
 
     def pass_entities_to_cooldowns(self):
-        cds: list[Cooldown] = [item for row in self.cooldowns for item in row]
-        for cd in cds:
-            cd.entities = self.entities
+        for i, cdlist in enumerate(self.cooldowns):
+            entities = EntitiesInfo(self.entities, i, len(self.players), len(self.enemies))
+            for cd in cdlist:
+                cd.entities = entities
 
     def initialize_practical_stats(self, gear: list[list[Gear]]):
         practicals = []
@@ -170,7 +172,7 @@ class CombatInstance():
             await self.embed_handler.fix_embed_players()
 
         if self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
-            message = cd.attack(entities, 0)
+            message = cd.attack(0)
             await self.embed_handler.log(entities[enemy_index].name, message)
         
     def enemy_in_range(self, enemy, player, max_range):
@@ -263,7 +265,7 @@ class Combat(commands.Cog):
         ), "smaccd"), ":dizzy_face:")
 
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [[self.punchcd, self.pummelcd]], [enemy])
+        instance = CombatInstance(interaction, [self.pc], [[]],[[self.punchcd, self.pummelcd]], [enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)

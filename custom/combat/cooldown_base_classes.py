@@ -54,7 +54,7 @@ class EnemyCooldown(Cooldown):
     def attack(self, playerindex: int) -> str:
         if self.miss():
             return f"missed {self.name}"
-        if random.random > self.entities.lst[playerindex].dodge:
+        if random.random() > self.entities.lst[playerindex].dodge:
             return f"{self.entities.lst[playerindex].name} dodged {self.name}"
         mult = self.calculate_crit()
         hit = f"crit {self.acted}" if mult > 1.0 else self.acted
@@ -70,7 +70,7 @@ class SingleTargetAttack(Cooldown):
     def attack(self, enemy:Entity) -> str:
         if self.miss():
             return f"missed {self.name}"
-        if random.random > enemy.dodge:
+        if random.random() > enemy.dodge:
             return f"{enemy.name} dodged {self.name}"
         mult = self.calculate_crit()
         hit = f"crit {self.acted}" if mult > 1.0 else self.acted
