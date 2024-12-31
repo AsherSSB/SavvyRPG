@@ -18,7 +18,6 @@ class CombatInstance():
         self.game_grid = self.initialize_game_bounds(self.bounds[1], self.bounds[0])
         self.enemies:list[Enemy] = enemies
         self.players: list[PlayableCharacter] = players
-        # TODO: initialize practical stats
         player_practicals = self.initialize_practical_stats(gear)
         self.cooldowns: list[list[Cooldown]] = cooldowns
         self.entities: list[Entity] = self.initialize_entities()
@@ -71,6 +70,7 @@ class CombatInstance():
         practicals = []
         for loadout in gear:
             practicals.append(self.calculate_practical_stats(loadout))
+        return practicals
 
     def calculate_practical_stats(self, gear: list[Gear]):
         # calculate total resistance given gear
