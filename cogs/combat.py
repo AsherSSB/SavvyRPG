@@ -4,7 +4,8 @@ import asyncio
 import custom.stattable as sts
 from custom.playable_character import PlayableCharacter
 import random
-from custom.gear import WeaponStatTable, Drops, Gear
+from custom.gear import Gear
+from custom.combat.enemy import Enemy
 from custom.combat.view import *
 from custom.combat.entities import *
 from custom.combat.cooldown_base_classes import *
@@ -240,7 +241,7 @@ class Combat(commands.Cog):
 
         self.pummelcd = SingleTargetAttack("Pummel", "✊", WeaponStatTable(
             dmg=30, spd=2, rng=1, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str" 
-        ), acted="pummeled")    
+        ), acted="pummeled")
 
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):

@@ -1,6 +1,6 @@
 import discord
 import asyncio
-from cogs.combat import Entity
+from custom.combat.entities import Entity
 
 BASE_TILE = ":green_square:"
 

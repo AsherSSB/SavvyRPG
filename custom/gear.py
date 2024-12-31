@@ -1,40 +1,12 @@
 from dataclasses import dataclass, field
-from cogs.combat import Cooldown
-
-
-@dataclass
-class Item():
-    name: str
-    emoji: str = field(default="💁‍♀️", kw_only=True)
-    value: int = field(default=0, kw_only=True)
-    stack_size: int = field(default=1, kw_only=True)
-    quantity: int = field(default=1, kw_only=True)
-
-
-@dataclass
-class WeaponStatTable():
-    dmg: int
-    spd: int
-    rng: int
-    cc: float
-    cm: float
-    acc: float
-    scalar: float
-    stat: str
-
+from custom.combat.cooldown_base_classes import Cooldown
+from custom.base_items import Item
 
 @dataclass
 class Weapon(Item):
     cooldown: Cooldown
     scale: str
     slots: int = field(default=2, kw_only=True)
-
-
-@dataclass
-class Drops():
-    xp: int
-    gold: int
-    item: Item | None
 
 
 @dataclass

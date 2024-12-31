@@ -1,8 +1,19 @@
 from typing import Callable
 import random
 from custom.playable_character import PlayableCharacter
-from custom.gear import Weapon, WeaponStatTable
 from custom.combat.entities import Entity, EntitiesInfo
+from dataclasses import dataclass
+
+@dataclass
+class WeaponStatTable():
+    dmg: int
+    spd: int
+    rng: int
+    cc: float
+    cm: float
+    acc: float
+    scalar: float
+    stat: str
 
 
 class Cooldown():
