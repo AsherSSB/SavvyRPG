@@ -4,7 +4,7 @@ import asyncio
 import custom.stattable as sts
 from custom.playable_character import PlayableCharacter
 import random
-from custom.gear import WeaponStatTable, Drops
+from custom.gear import WeaponStatTable, Drops, Gear
 from custom.combat.view import *
 from custom.combat.entities import *
 from custom.combat.cooldown_base_classes import *
@@ -12,19 +12,20 @@ from custom.combat.cooldown_base_classes import *
 BASE_TILE = ":green_square:"
 
 class CombatInstance():
-    def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
+    def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter], gear:list[list[Gear]], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
         self.interaction = interaction
         self.bounds = (6, 4)
         self.game_grid = self.initialize_game_bounds(self.bounds[1], self.bounds[0])
         self.enemies:list[Enemy] = enemies
         self.players: list[PlayableCharacter] = players
+        # TODO: initialize practical stats
+        player_practicals = self.initialize_practical_stats(gear)
         self.cooldowns: list[list[Cooldown]] = cooldowns
         self.entities: list[Entity] = self.initialize_entities()
         self.scale_cooldown_damages(self.cooldowns, self.players)
         self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
         self.view = self.initialize_combat_view()
         self.initialize_enemy_cooldowns()
-
 
     async def combat(self):
         choice = 0
@@ -66,6 +67,35 @@ class CombatInstance():
             # reset view event
             await self.view.reset()
 
+    def initialize_practical_stats(self, gear: list[list[Gear]]):
+        practicals = []
+        for loadout in gear:
+            practicals.append(self.calculate_practical_stats(loadout))
+
+    def calculate_practical_stats(self, gear: list[Gear]):
+        # calculate total resistance given gear
+        resistances = [min(v.stats.resist/100 if v.stats.resist > 1 else v.stats.resist, 0.95) for v in gear]
+            
+        # Calculate combined resistance
+        total = 1.0
+        for r in resistances:
+            total *= (1 - r)
+        
+        # Apply scaling factor to approach but never reach 95%
+        # resistmult is the MULTIPLIER applied to damage
+        # smaller resistmult = higher resistance
+        resistmult = round(1 - (1 - total) * 0.95, 2)
+        
+        # repeat with dodge capping at 85
+        dodges = [min(v.stats.dodge/100 if v.stats.dodge > 1 else v.stats.dodge, 0.85) for v in gear]
+            
+        total = 1.0
+        for d in dodges:
+            total *= (1 - d)
+
+        hitchance = round(1 - (1 - total) * 0.85, 2)
+        return PlayerPracticalStats(hitchance, resistmult)
+
     def stringify_game_grid(self):
         return '\n'.join(''.join(row) for row in self.bounds)
 
@@ -91,8 +121,6 @@ class CombatInstance():
             entities.append(Entity(enemy.name, enemy.stats.hp, [self.bounds[0]-1, i], enemy.emoji))
             self.game_grid[i][self.bounds[0]-1] = enemy.emoji
         return entities
-
-
 
     async def append_user_not_in_range(self, playerindex):
         await self.embed_handler.log(f"{self.players[playerindex].name}", "Out of Range!")
@@ -190,7 +218,6 @@ class CombatInstance():
     
     def calculate_player_hp(self, player:PlayableCharacter):
         return int((10 + (player.level * 2)) * (player.stats.wil * .1))
-
 
 
 class TestingView(discord.ui.View):
