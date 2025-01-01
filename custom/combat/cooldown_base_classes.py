@@ -23,7 +23,7 @@ class Cooldown():
         self.stats: WeaponStatTable = stats
         self.active: Callable = active
         self.acted: str = acted
-        self.entities: EntitiesInfo = entities
+        self.entities: EntitiesInfo | None = entities
 
     def in_range(self, mypos, targetpos) -> bool:
         if abs(targetpos - mypos) <= self.stats.rng:
@@ -35,7 +35,7 @@ class Cooldown():
             return False
         return True
 
-    def calculate_crit(self) -> int:
+    def calculate_crit(self) -> float:
         if random.random() < self.stats.cc:
             return self.stats.cm
         return 1.0
@@ -46,6 +46,9 @@ class Cooldown():
         if playerstats > 10:
             self.stats.dmg = int(self.stats.dmg * self.stats.scalar * playerstats)
 
+    # needs to be defined in child classes
+    def attack(self, target):
+        pass
 
 class EnemyCooldown(Cooldown):
     def __init__(self, name, emoji, stats, acted):
@@ -84,7 +87,7 @@ class AOEAttack(Cooldown):
         super().__init__(name, emoji, stats, self.attack, acted)  
     
     def attack(self, entities: list[Entity]):
-        message = {self.name}
+        message = self.name
         for entity in entities:
             if self.miss():
                 message += f" missed {entity.name},"

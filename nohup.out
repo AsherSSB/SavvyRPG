@@ -1,0 +1,43 @@
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+[Parent 3584, Main Thread] WARNING: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+: 'glib warning', file /usr/src/debug/firefox/firefox-133.0.3/toolkit/xre/nsSigHandlers.cpp:201
+
+** (firefox:3584): WARNING **: 12:15:04.940: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+
+[Parent 3584, Main Thread] WARNING: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+: 'glib warning', file /usr/src/debug/firefox/firefox-133.0.3/toolkit/xre/nsSigHandlers.cpp:201
+
+** (firefox:3584): WARNING **: 12:15:16.378: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+
+[Parent 3584, Main Thread] WARNING: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+: 'glib warning', file /usr/src/debug/firefox/firefox-133.0.3/toolkit/xre/nsSigHandlers.cpp:201
+
+** (firefox:3584): WARNING **: 12:23:43.864: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+
+[Child 4696, MediaDecoderStateMachine #1] WARNING: Decoder=736925a8d000 state=DECODING_METADATA Decode metadata failed, shutting down decoder: file /usr/src/debug/firefox/firefox-133.0.3/dom/media/MediaDecoderStateMachine.cpp:372
+[Child 4696, MediaDecoderStateMachine #1] WARNING: Decoder=736925a8d000 Decode error: NS_ERROR_DOM_MEDIA_METADATA_ERR (0x806e0006) - static MP4Metadata::ResultAndByteBuffer mozilla::MP4Metadata::Metadata(ByteStream *): Cannot parse metadata: file /usr/src/debug/firefox/firefox-133.0.3/dom/media/MediaDecoderStateMachineBase.cpp:168
+[Child 4696, MediaDecoderStateMachine #1] WARNING: Decoder=736922e53d00 state=DECODING_METADATA Decode metadata failed, shutting down decoder: file /usr/src/debug/firefox/firefox-133.0.3/dom/media/MediaDecoderStateMachine.cpp:372
+[Child 4696, MediaDecoderStateMachine #1] WARNING: Decoder=736922e53d00 Decode error: NS_ERROR_DOM_MEDIA_METADATA_ERR (0x806e0006) - static MP4Metadata::ResultAndByteBuffer mozilla::MP4Metadata::Metadata(ByteStream *): Cannot parse metadata: file /usr/src/debug/firefox/firefox-133.0.3/dom/media/MediaDecoderStateMachineBase.cpp:168
+[Child 4696, MediaDecoderStateMachine #1] WARNING: Decoder=736922a15500 Decode error: NS_ERROR_DOM_MEDIA_DEMUXER_ERR (0x806e000c): file /usr/src/debug/firefox/firefox-133.0.3/dom/media/MediaDecoderStateMachineBase.cpp:168
+[Parent 3584, Main Thread] WARNING: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+: 'glib warning', file /usr/src/debug/firefox/firefox-133.0.3/toolkit/xre/nsSigHandlers.cpp:201
+
+** (firefox:3584): WARNING **: 13:19:16.178: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+
+[GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+[Parent 3584, Main Thread] WARNING: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+: 'glib warning', file /usr/src/debug/firefox/firefox-133.0.3/toolkit/xre/nsSigHandlers.cpp:201
+
+** (firefox:3584): WARNING **: 13:43:30.130: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+
+[Parent 3584, Main Thread] WARNING: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+: 'glib warning', file /usr/src/debug/firefox/firefox-133.0.3/toolkit/xre/nsSigHandlers.cpp:201
+
+** (firefox:3584): WARNING **: 13:47:38.275: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+
+[Parent 3584, Main Thread] WARNING: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+: 'glib warning', file /usr/src/debug/firefox/firefox-133.0.3/toolkit/xre/nsSigHandlers.cpp:201
+
+** (firefox:3584): WARNING **: 13:47:43.031: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+

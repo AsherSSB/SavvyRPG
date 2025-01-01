@@ -22,7 +22,7 @@ class BonusStatsTable():
 class GearStatTable():
     resist: float 
     maxhp: int
-    dodge: float | None
+    dodge: float 
     bonus_stats: BonusStatsTable
 
 
@@ -37,9 +37,7 @@ class HeadGear(Gear):
     critchance: float | None = field(default=None, kw_only=True)
     multicast: float | None = field(default=None, kw_only=True)
 
-    def __init__(self, name, rarity, value, stats=None):
-        if stats == None:
-            stats = self.randomize_gear_stats(0.1, 5, .05)
+    def __init__(self, name, rarity, value, stats):
         super().__init__(name, rarity, stats, value=value)
 
 
@@ -48,9 +46,7 @@ class ChestGear(Gear):
     healing: float | None = field(default=None, kw_only=True)
     attacks: int | None = field(default=None, kw_only=True)
 
-    def __init__(self, name, rarity, value, stats=None):
-        if stats == None:
-            stats = self.randomize_gear_stats(0.2, 10, 0.1)
+    def __init__(self, name, rarity, value, stats):
         super().__init__(name, rarity, stats, value=value)
 
 
@@ -59,9 +55,7 @@ class HandGear(Gear):
     critmult: float | None = field(default=None, kw_only=True)
     attacks: int | None = field(default=None, kw_only=True)
 
-    def __init__(self, name, rarity, value, stats=None):
-        if stats == None:
-            stats = self.randomize_gear_stats(0.05, 5, 0.03)
+    def __init__(self, name, rarity, value, stats):
         super().__init__(name, rarity, stats, value=value)
 
 
@@ -70,9 +64,7 @@ class LegGear(Gear):
     healing: float | None = field(default=None, kw_only=True)
     critmult: float | None = field(default=None, kw_only=True)
 
-    def __init__(self, name, rarity, value, stats=None):
-        if stats == None:
-            stats = self.randomize_gear_stats(0.1, 10, 0.05)
+    def __init__(self, name, rarity, value, stats):
         super().__init__(name, rarity, stats, value=value)
 
 
@@ -81,7 +73,5 @@ class FootGear(Gear):
     moves: int | None = field(default=None, kw_only=True)
     critchance: float | None = field(default=None, kw_only=True)
 
-    def __init__(self, name, rarity, value, stats=None):
-        if stats == None:
-            stats = self.randomize_gear_stats(0.05, 5, 0.1)
+    def __init__(self, name, rarity, value, stats):
         super().__init__(name, rarity, stats, value=value)

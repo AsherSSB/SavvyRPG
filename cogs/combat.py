@@ -106,7 +106,7 @@ class CombatInstance():
         return PlayerPracticalStats(hitchance, resistmult)
 
     def stringify_game_grid(self):
-        return '\n'.join(''.join(row) for row in self.bounds)
+        return '\n'.join(''.join(str(row)) for row in self.bounds)
 
     def initialize_game_bounds(self, rows, columns):
         return [[BASE_TILE for _ in range(columns)] for _ in range(rows)]
