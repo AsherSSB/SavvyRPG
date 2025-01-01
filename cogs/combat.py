@@ -89,8 +89,8 @@ class CombatInstance():
         dodges = []
         for value in vars(loadout).values():
             if value is not None:
-                resistances.append(value.resist)
-                dodges.append(value.dodge)
+                resistances.append(value.stats.resist)
+                dodges.append(value.stats.dodge)
             else:
                 resistances.append(0.0)
                 dodges.append(0.0)
