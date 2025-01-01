@@ -4,3 +4,4 @@ custom/__pycache__/*
 custom/combat/__pycache__/*
 output.log
 scratch.py
+*nohup.out
