@@ -88,8 +88,12 @@ class CombatInstance():
         resistances = []
         dodges = []
         for value in vars(loadout).values():
-            resistances.append(value.resist)
-            dodges.append(value.dodge)
+            if value is not None:
+                resistances.append(value.resist)
+                dodges.append(value.dodge)
+            else:
+                resistances.append(0.0)
+                dodges.append(0.0)
 
         # Calculate combined resistance
         total = 1.0
@@ -269,8 +273,10 @@ class Combat(commands.Cog):
                                               dmg=1, spd=3, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str"),
                                           "smaccd"), ":dizzy_face:")
 
+        loadout = Loadout(None, None, None, None, None)
+
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [],[[self.punchcd, self.pummelcd]], [enemy])
+        instance = CombatInstance(interaction, [self.pc], [loadout],[[self.punchcd, self.pummelcd]], [enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
