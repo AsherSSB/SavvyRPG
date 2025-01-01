@@ -267,11 +267,12 @@ class Combat(commands.Cog):
 
         enemy:Enemy = Enemy("Training Dummy",
                             NPCStatTable(120, 1.0, 1.0),
-                            Drops(1, 1, None),
+                            Drops(6, 9, None),
                             EnemyCooldown("Smack", None,
                                           WeaponStatTable(
-                                              dmg=1, spd=3, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str"),
-                                          "smaccd"), ":dizzy_face:")
+                                                dmg=1, spd=3, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str"),
+                                          "smaccd"), 
+                            ":dizzy_face:")
 
         loadout = Loadout(None, None, None, None, None)
 
