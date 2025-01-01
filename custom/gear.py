@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from custom.combat.cooldown_base_classes import Cooldown
 from custom.base_items import Item
 
+
 @dataclass
 class Weapon(Item):
     cooldown: Cooldown
@@ -20,9 +21,9 @@ class BonusStatsTable():
 
 @dataclass
 class GearStatTable():
-    resist: float 
+    resist: float
     maxhp: int
-    dodge: float 
+    dodge: float
     bonus_stats: BonusStatsTable
 
 
@@ -75,3 +76,14 @@ class FootGear(Gear):
 
     def __init__(self, name, rarity, value, stats):
         super().__init__(name, rarity, stats, value=value)
+
+
+@dataclass
+class Loadout():
+    head: HeadGear | None
+    chest: ChestGear | None
+    hands: HandGear | None
+    legs: LegGear | None
+    feet: FootGear | None
+
+
