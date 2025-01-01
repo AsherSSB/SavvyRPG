@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import asyncio
-from dataclasses import dataclass, field, fields
+from dataclasses import fields
 from custom.playable_character import PlayableCharacter
 from cogs.mainmenus import CharacterEmbed, CharacterView
 from cogs.database import Database
@@ -22,30 +22,30 @@ class LootGenerator():
         self.level = player_level
         self.origin = player_origin
         self.rarity_scaling = {
-            "Common" : 1.0,
-            "Uncommon" : 1.5,
-            "Rare" : 2, 
-            "Exotic" : 2.5,
-            "Mythical" : 3.0
+            "Common": 1.0,
+            "Uncommon": 1.5,
+            "Rare": 2,
+            "Exotic": 2.5,
+            "Mythical": 3.0
         }
 
     def generate_loot(self):
         type_names = {
-            HeadGear : "Helmet",
-            ChestGear : "Chestplate",
-            HandGear : "Gloves", 
-            LegGear : "Pants", 
-            FootGear : "Shoes"
+            HeadGear: "Helmet",
+            ChestGear: "Chestplate",
+            HandGear: "Gloves",
+            LegGear: "Pants",
+            FootGear: "Shoes"
         }
         # TODO: move attribute assigning to different function
         special_att_counts = {
-            "Common" : 0,
-            "Uncommon" : 1,
-            "Rare" : 2, 
-            "Exotic" : 3,
-            "Mythical" : 4
+            "Common": 0,
+            "Uncommon": 1,
+            "Rare": 2,
+            "Exotic": 3,
+            "Mythical": 4
         }
-        
+
         rarity = self.choose_rarity()
         gear_type = self.choose_random_gear_type()
         weight = self.choose_random_weight()
@@ -94,7 +94,7 @@ class LootGenerator():
     def scale_stats_light(self, stats: GearStatTable):
         stats.dodge = round(stats.dodge * 2, 2)
         stats.resist = round(stats.resist / 2, 2)
-        stats.maxhp = int(stats.maxhp * 3/4)
+        stats.maxhp = int(stats.maxhp * 3 / 4)
 
     def choose_random_weight(self):
         return random.choice(self.weights)
@@ -102,12 +102,12 @@ class LootGenerator():
     def scale_attribue_with_rarity(self, stat: int | float, name, rarity: str):
         multiplier = self.rarity_scaling[rarity]
         attribute_rarity_scaling = {
-            "moves" : lambda x: int(x + 1 * (multiplier - 1)),
-            "critchance" : lambda x: round(x * multiplier, 2),
-            "critmult" : lambda x: round(x + 1 * (multiplier - 1), 2),
-            "attacks" : lambda x: int(x + 1 * (multiplier - 1)),
-            "multicast" : lambda x: round(x * 1 + multiplier / 2, 2),
-            "healing" : lambda x: round(x * multiplier, 2)
+            "moves": lambda x: int(x + 1 * (multiplier - 1)),
+            "critchance": lambda x: round(x * multiplier, 2),
+            "critmult": lambda x: round(x + 1 * (multiplier - 1), 2),
+            "attacks": lambda x: int(x + 1 * (multiplier - 1)),
+            "multicast": lambda x: round(x * 1 + multiplier / 2, 2),
+            "healing": lambda x: round(x * multiplier, 2)
         }
         return attribute_rarity_scaling[name](stat)
 
@@ -115,64 +115,64 @@ class LootGenerator():
     def scale_base_stats_with_rarity(self, gear: Gear):
         multiplier = self.rarity_scaling[gear.rarity]
 
-        for field in [stat for stat in fields(type(gear.stats)) if stat.name != "bonus_stats"]:
-            value = getattr(gear.stats, field.name)
+        for attr in [stat for stat in fields(type(gear.stats)) if stat.name != "bonus_stats"]:
+            value = getattr(gear.stats, attr.name)
             if isinstance(value, int):
                 value = int(value * multiplier)
             else:
                 value = round((value * multiplier), 2)
-            setattr(gear.stats, field.name, value)
+            setattr(gear.stats, attr.name, value)
 
     def randomize_gear_stats(self, maxres, maxhp, maxdodge):
-        resist = round(random.uniform(maxres/5, maxres), 2)
-        hp = random.randint(maxhp//5, maxhp)
-        dodge: float = round(random.uniform(maxdodge/5, maxdodge), 2)
+        resist = round(random.uniform(maxres / 5, maxres), 2)
+        hp = random.randint(maxhp // 5, maxhp)
+        dodge: float = round(random.uniform(maxdodge / 5, maxdodge), 2)
         # TODO: Bonus stats moves to loot gen
         return GearStatTable(resist, hp, dodge, BonusStatsTable())
 
     def generate_random_stats(self, gear_type):
         type_stat_randomizers = {
-            HeadGear : self.randomize_gear_stats(0.1, 5, .05),
-            ChestGear : self.randomize_gear_stats(0.2, 10, 0.1),
-            HandGear : self.randomize_gear_stats(0.05, 5, 0.03), 
-            LegGear : self.randomize_gear_stats(0.1, 10, 0.05), 
-            FootGear : self.randomize_gear_stats(0.05, 5, 0.1)
+            HeadGear: self.randomize_gear_stats(0.1, 5, .05),
+            ChestGear: self.randomize_gear_stats(0.2, 10, 0.1),
+            HandGear: self.randomize_gear_stats(0.05, 5, 0.03),
+            LegGear: self.randomize_gear_stats(0.1, 10, 0.05),
+            FootGear: self.randomize_gear_stats(0.05, 5, 0.1)
         }
         return type_stat_randomizers[gear_type]
 
     def randomize_attribute_value(self, attribute: str):
         attribute_values = {
-            "moves" : random.randint(1, 2),
-            "critchance" : round(random.uniform(0.03, 0.12), 2),
-            "critmult" : round(random.uniform(0.05, 0.25), 2),
-            "attacks" : random.randint(1, 2),
-            "multicast" : round(random.uniform(0.02, 0.08), 2),
-            "healing" : round(random.uniform(0.08, 0.32), 2),
+            "moves": random.randint(1, 2),
+            "critchance": round(random.uniform(0.03, 0.12), 2),
+            "critmult": round(random.uniform(0.05, 0.25), 2),
+            "attacks": random.randint(1, 2),
+            "multicast": round(random.uniform(0.02, 0.08), 2),
+            "healing": round(random.uniform(0.08, 0.32), 2),
         }
         return attribute_values[attribute]
-    
+
     def level_scale_gear(self):
         pass
 
     def choose_rarity(self):
         return random.choices(
-            population=self.rarity_list, 
+            population=self.rarity_list,
             weights=self.rarity_chances, k=1)[0]
 
     def choose_random_gear_type(self):
         return random.choice(self.gear_list)
-    
+
     def get_random_attribute(self, gear_class):
         # Get all fields except common ones from base classes
         excluded = ['name', 'emoji', 'rarity', 'value', 'stack_size', 'quantity', 'stats']
-        gear_fields = [field.name for field in fields(gear_class) 
+        gear_fields = [field.name for field in fields(gear_class)
                        if field.name not in excluded]
-        
+
         return random.choice(gear_fields)
-    
+
     def get_field_by_name(self, gear, field):
         return getattr(gear, field, None)
-    
+
     def set_field_by_name_value(self, gear, field, value):
         setattr(gear, field, value)
 
@@ -188,16 +188,16 @@ class Loot(commands.Cog):
         generator = LootGenerator(0, Nomad())
         randgear = generator.generate_loot()
         content = []
-        
+
         for field in fields(type(randgear)):
             # Skip private fields
             if field.name.startswith('_'):
                 continue
-                
+
             value = getattr(randgear, field.name)
-                
+
             content.append(f"{field.name}: {value}")
-        
+
         formatted_content = "\n".join(content)
         await interaction.response.send_message(formatted_content)
 
@@ -212,7 +212,7 @@ class Loot(commands.Cog):
             await self.send_gear_type_selection_menu(view.interaction)
         else:
             await view.interaction.response.defer()
-        
+
     @discord.app_commands.command(name="gear")
     async def gear_test(self, interaction: discord.Interaction):
         await self.send_gear_type_selection_menu(interaction)
@@ -256,4 +256,4 @@ class Loot(commands.Cog):
 async def setup(bot):
     await bot.add_cog(Loot(bot))
 
-   
+

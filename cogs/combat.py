@@ -4,7 +4,7 @@ import asyncio
 import custom.stattable as sts
 from custom.playable_character import PlayableCharacter
 import random
-from custom.gear import Gear
+from custom.gear import Gear, Loadout
 from custom.combat.enemy import Enemy
 from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, EnemySelectView, EnemySelectMenu
 from custom.combat.entities import Entity, NPCStatTable, Drops, EntitiesInfo, PlayerPracticalStats
@@ -15,13 +15,13 @@ BASE_TILE = ":green_square:"
 
 class CombatInstance():
     def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter],
-                 gear:list[list[Gear]], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
+                 loadouts:list[Loadout], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
         self.interaction = interaction
         self.bounds = (6, 4)
         self.game_grid = self.initialize_game_bounds(self.bounds[1], self.bounds[0])
         self.enemies:list[Enemy] = enemies
         self.players: list[PlayableCharacter] = players
-        self.player_practicals: list[PlayerPracticalStats] = self.initialize_practical_stats(gear)
+        self.player_practicals: list[PlayerPracticalStats] = self.initialize_practical_stats(loadouts)
         self.entities: list[Entity] = self.initialize_entities()
         self.cooldowns: list[list[Cooldown]] = cooldowns
         self.scale_cooldown_damages(self.cooldowns, self.players)
@@ -77,15 +77,19 @@ class CombatInstance():
             for cd in cdlist:
                 cd.entities = entities
 
-    def initialize_practical_stats(self, gear: list[list[Gear]]):
+    def initialize_practical_stats(self, gear: list[Loadout]):
         practicals = []
         for loadout in gear:
             practicals.append(self.calculate_practical_stats(loadout))
         return practicals
 
-    def calculate_practical_stats(self, gear: list[Gear]):
+    def calculate_practical_stats(self, loadout: Loadout):
         # calculate total resistance given gear
-        resistances = [min(v.stats.resist / 100 if v.stats.resist > 1 else v.stats.resist, 0.95) for v in gear]
+        resistances = []
+        dodges = []
+        for value in vars(loadout).values():
+            resistances.append(value.resist)
+            dodges.append(value.dodge)
 
         # Calculate combined resistance
         total = 1.0
@@ -96,9 +100,6 @@ class CombatInstance():
         # resistmult is the MULTIPLIER applied to damage
         # smaller resistmult = higher resistance
         resistmult = round(1 - (1 - total) * 0.95, 2)
-
-        # repeat with dodge capping at 85
-        dodges = [min(v.stats.dodge / 100 if v.stats.dodge > 1 else v.stats.dodge, 0.85) for v in gear]
 
         total = 1.0
         for d in dodges:
@@ -269,7 +270,7 @@ class Combat(commands.Cog):
                                           "smaccd"), ":dizzy_face:")
 
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [[]],[[self.punchcd, self.pummelcd]], [enemy])
+        instance = CombatInstance(interaction, [self.pc], [],[[self.punchcd, self.pummelcd]], [enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
