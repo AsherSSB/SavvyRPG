@@ -86,4 +86,3 @@ class Loadout():
     legs: LegGear | None
     feet: FootGear | None
 
-

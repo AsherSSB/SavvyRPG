@@ -1,7 +1,9 @@
 .env
+*/__pycache__/*
 cogs/__pycache__/*
 custom/__pycache__/*
 custom/combat/__pycache__/*
 output.log
 scratch.py
+scratch2.py
 *nohup.out

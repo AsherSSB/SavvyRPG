@@ -6,6 +6,8 @@ from discord.ext import commands
 import custom.playable_character as pc
 import custom.stattable as origins
 import asyncio
+import json
+from custom.gear import Item, Loadout, HeadGear, ChestGear, HandGear, LegGear, FootGear, GearStatTable, BonusStatsTable
 
 # TODO: refactor db to store stats as jsonb
 class Database(commands.Cog):
@@ -19,6 +21,132 @@ class Database(commands.Cog):
                                     password=f"{password}",
                                     port="5432")
         self.cur = self.conn.cursor()
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS inventory (
+                user_id BIGINT NOT NULL,
+                slot_id INTEGER NOT NULL,
+                item_data JSONB NOT NULL,
+                PRIMARY KEY (user_id, slot_id)
+            );
+        """)
+
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS equipment (
+                user_id BIGINT NOT NULL,
+                slot_type TEXT NOT NULL, 
+                item_data JSONB NOT NULL,
+                PRIMARY KEY (user_id, slot_type)
+            );
+        """)
+        self.conn.commit()
+
+    def save_inventory(self, user_id: int, items: list[Item]):
+        # Clear existing inventory
+        self.cur.execute("DELETE FROM inventory WHERE user_id = %s;", (user_id,))
+        
+        # Insert new items
+        for slot_id, item in enumerate(items):
+            item_json = {
+                "name": item.name,
+                "emoji": item.emoji,
+                "value": item.value,
+                "stack_size": item.stack_size,
+                "quantity": item.quantity
+                # Add any other item properties
+            }
+            self.cur.execute("""
+                INSERT INTO inventory (user_id, slot_id, item_data)
+                VALUES (%s, %s, %s);
+            """, (user_id, slot_id, json.dumps(item_json)))
+        self.conn.commit()
+
+    def load_inventory(self, user_id: int) -> list[Item]:
+        self.cur.execute("""
+            SELECT item_data FROM inventory 
+            WHERE user_id = %s
+            ORDER BY slot_id;
+        """, (user_id,))
+        
+        items = []
+        for row in self.cur.fetchall():
+            data = json.loads(row[0])
+            item = Item(
+                name=data["name"],
+                emoji=data["emoji"],
+                value=data["value"],
+                stack_size=data["stack_size"],
+                quantity=data["quantity"]
+            )
+            items.append(item)
+        return items
+
+    def save_equipment(self, user_id: int, loadout: Loadout):
+        # Clear existing equipment
+        self.cur.execute("DELETE FROM equipment WHERE user_id = %s;", (user_id,))
+        
+        # Save each equipment piece
+        for slot_type, gear in vars(loadout).items():
+            if gear is not None:
+                gear_json = {
+                    "name": gear.name,
+                    "rarity": gear.rarity,
+                    "stats": {
+                        "resist": gear.stats.resist,
+                        "maxhp": gear.stats.maxhp,
+                        "dodge": gear.stats.dodge,
+                        "bonus_stats": vars(gear.stats.bonus_stats)
+                    },
+                    "value": gear.value
+                    # Add any other gear properties
+                }
+                self.cur.execute("""
+                    INSERT INTO equipment (user_id, slot_type, item_data)
+                    VALUES (%s, %s, %s);
+                """, (user_id, slot_type, json.dumps(gear_json)))
+        self.conn.commit()
+
+    def load_equipment(self, user_id: int) -> Loadout:
+        gear_pieces = {
+            "head": None,
+            "chest": None,
+            "hands": None,
+            "legs": None,
+            "feet": None
+        }
+
+        self.cur.execute("""
+            SELECT slot_type, item_data FROM equipment
+            WHERE user_id = %s;
+        """, (user_id,))
+
+        gear_classes = {
+            "head": HeadGear,
+            "chest": ChestGear,
+            "hands": HandGear,
+            "legs": LegGear,
+            "feet": FootGear
+        }
+
+        for row in self.cur.fetchall():
+            slot_type, data = row[0], json.loads(row[1])
+            gear_class = gear_classes[slot_type]
+            
+            stats = GearStatTable(
+                resist=data["stats"]["resist"],
+                maxhp=data["stats"]["maxhp"],
+                dodge=data["stats"]["dodge"],
+                bonus_stats=BonusStatsTable(**data["stats"]["bonus_stats"])
+            )
+
+            gear = gear_class(
+                name=data["name"],
+                rarity=data["rarity"],
+                stats=stats,
+                value=data["value"]
+            )
+            gear_pieces[slot_type] = gear
+
+        return Loadout(**gear_pieces)
 
     async def delete_character(self, interaction:discord.Interaction):
         self.cur.execute("DELETE FROM characters WHERE user_id = %s;", (interaction.user.id,))
