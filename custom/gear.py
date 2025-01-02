@@ -12,11 +12,11 @@ class Weapon(Item):
 
 @dataclass
 class BonusStatsTable():
-    strength: int | None = field(default=None, kw_only=True)
-    will: int | None = field(default=None, kw_only=True)
-    dexterity: int | None = field(default=None, kw_only=True)
-    intelligence: int | None = field(default=None, kw_only=True)
-    attunement: int | None = field(default=None, kw_only=True)
+    strength: int = field(default=0, kw_only=True)
+    will: int = field(default=0, kw_only=True)
+    dexterity: int = field(default=0, kw_only=True)
+    intelligence: int = field(default=0, kw_only=True)
+    attunement: int = field(default=0, kw_only=True)
 
 
 @dataclass
@@ -35,47 +35,32 @@ class Gear(Item):
 
 @dataclass
 class HeadGear(Gear):
-    critchance: float | None = field(default=None, kw_only=True)
-    multicast: float | None = field(default=None, kw_only=True)
-
-    def __init__(self, name, rarity, value, stats):
-        super().__init__(name, rarity, stats, value=value)
+    critchance: float | None = field(default=0.0, kw_only=True)
+    multicast: float | None = field(default=0.0, kw_only=True)
 
 
 @dataclass
 class ChestGear(Gear):
-    healing: float | None = field(default=None, kw_only=True)
-    attacks: int | None = field(default=None, kw_only=True)
-
-    def __init__(self, name, rarity, value, stats):
-        super().__init__(name, rarity, stats, value=value)
+    healing: float | None = field(default=0.0, kw_only=True)
+    attacks: int | None = field(default=0, kw_only=True)
 
 
 @dataclass
 class HandGear(Gear):
-    critmult: float | None = field(default=None, kw_only=True)
-    attacks: int | None = field(default=None, kw_only=True)
-
-    def __init__(self, name, rarity, value, stats):
-        super().__init__(name, rarity, stats, value=value)
+    critmult: float | None = field(default=0.0, kw_only=True)
+    attacks: int | None = field(default=0, kw_only=True)
 
 
 @dataclass
 class LegGear(Gear):
-    healing: float | None = field(default=None, kw_only=True)
-    critmult: float | None = field(default=None, kw_only=True)
-
-    def __init__(self, name, rarity, value, stats):
-        super().__init__(name, rarity, stats, value=value)
+    healing: float | None = field(default=0.0, kw_only=True)
+    critmult: float | None = field(default=0.0, kw_only=True)
 
 
 @dataclass
 class FootGear(Gear):
-    moves: int | None = field(default=None, kw_only=True)
-    critchance: float | None = field(default=None, kw_only=True)
-
-    def __init__(self, name, rarity, value, stats):
-        super().__init__(name, rarity, stats, value=value)
+    moves: int | None = field(default=0, kw_only=True)
+    critchance: float | None = field(default=0.0, kw_only=True)
 
 
 @dataclass

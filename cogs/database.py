@@ -8,6 +8,7 @@ import custom.stattable as origins
 import asyncio
 import json
 from custom.gear import Item, Loadout, HeadGear, ChestGear, HandGear, LegGear, FootGear, GearStatTable, BonusStatsTable
+import jsonpickle
 
 # TODO: refactor db to store stats as jsonb
 class Database(commands.Cog):
@@ -21,6 +22,7 @@ class Database(commands.Cog):
                                     password=f"{password}",
                                     port="5432")
         self.cur = self.conn.cursor()
+
         self.cur.execute("""
             CREATE TABLE IF NOT EXISTS inventory (
                 user_id BIGINT NOT NULL,
@@ -52,8 +54,8 @@ class Database(commands.Cog):
                 "value": item.value,
                 "stack_size": item.stack_size,
                 "quantity": item.quantity
-                # Add any other item properties
             }
+
             self.cur.execute("""
                 INSERT INTO inventory (user_id, slot_id, item_data)
                 VALUES (%s, %s, %s);
