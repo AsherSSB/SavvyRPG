@@ -6,8 +6,6 @@ from dotenv import load_dotenv
 from custom.client import Client
 import logging
 
-# commenting from arch hhd!!
-
 logging.basicConfig(
     level=logging.INFO,  # Set the logging level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL)
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Set the logging format
@@ -17,6 +15,7 @@ logging.basicConfig(
 )
 
 bot = Client()
+
 
 # TESTING PURPOSES
 @bot.command()
@@ -56,7 +55,6 @@ async def main():
 
     async with bot:
         await bot.start(str(TOKEN))
-
 
 
 asyncio.run(main())
