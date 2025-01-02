@@ -14,6 +14,11 @@ logging.basicConfig(
     ]
 )
 
+discord_logger = logging.getLogger('discord')
+discord_logger.setLevel(logging.INFO)
+discord_handler = logging.FileHandler(filename='output.log', encoding='utf-8', mode='a')
+discord_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+discord_logger.addHandler(discord_handler)
 bot = Client()
 
 
