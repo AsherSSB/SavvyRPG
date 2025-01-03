@@ -47,20 +47,14 @@ class Database(commands.Cog):
         # Clear existing inventory
         self.cur.execute("DELETE FROM inventory WHERE user_id = %s;", (user_id,))
 
-        # Insert new items
+        # PICKLE EVERYTHING
         for slot_id, item in enumerate(items):
-            item_json = {
-                "name": item.name,
-                "emoji": item.emoji,
-                "value": item.value,
-                "stack_size": item.stack_size,
-                "quantity": item.quantity
-            }
-
+            item_json = jsonpickle.encode(item)
+        # Insert new items
             self.cur.execute("""
-                INSERT INTO inventory (user_id, slot_id, item_data)
-                VALUES (%s, %s, %s);
-            """, (user_id, slot_id, json.dumps(item_json)))
+                    INSERT INTO inventory (user_id, slot_id, item_data)
+                    VALUES (%s, %s, %s);
+                """, (user_id, slot_id, json.dumps(item_json)))
         self.conn.commit()
 
     def load_inventory(self, user_id: int) -> list[Item]:
@@ -72,14 +66,7 @@ class Database(commands.Cog):
 
         items = []
         for row in self.cur.fetchall():
-            data = json.loads(row[0])
-            item = Item(
-                name=data["name"],
-                emoji=data["emoji"],
-                value=data["value"],
-                stack_size=data["stack_size"],
-                quantity=data["quantity"]
-            )
+            item = jsonpickle.decode(row[0])
             items.append(item)
         return items
 
