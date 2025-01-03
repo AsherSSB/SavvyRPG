@@ -10,6 +10,7 @@ import json
 from custom.gear import Item, Loadout, HeadGear, ChestGear, HandGear, LegGear, FootGear, GearStatTable, BonusStatsTable
 import jsonpickle
 
+
 # TODO: refactor db to store stats as jsonb
 class Database(commands.Cog):
     def __init__(self, bot):
@@ -17,10 +18,10 @@ class Database(commands.Cog):
         load_dotenv()
         password = os.getenv('DB_PASS')
         self.conn = psycopg2.connect(database="SavvyRPG",
-                                    host="localhost",
-                                    user="postgres",
-                                    password=f"{password}",
-                                    port="5432")
+                                     host="localhost",
+                                     user="postgres",
+                                     password=f"{password}",
+                                     port="5432")
         self.cur = self.conn.cursor()
 
         self.cur.execute("""
@@ -35,7 +36,7 @@ class Database(commands.Cog):
         self.cur.execute("""
             CREATE TABLE IF NOT EXISTS equipment (
                 user_id BIGINT NOT NULL,
-                slot_type TEXT NOT NULL, 
+                slot_type TEXT NOT NULL,
                 item_data JSONB NOT NULL,
                 PRIMARY KEY (user_id, slot_type)
             );
@@ -45,7 +46,7 @@ class Database(commands.Cog):
     def save_inventory(self, user_id: int, items: list[Item]):
         # Clear existing inventory
         self.cur.execute("DELETE FROM inventory WHERE user_id = %s;", (user_id,))
-        
+
         # Insert new items
         for slot_id, item in enumerate(items):
             item_json = {
@@ -64,11 +65,11 @@ class Database(commands.Cog):
 
     def load_inventory(self, user_id: int) -> list[Item]:
         self.cur.execute("""
-            SELECT item_data FROM inventory 
+            SELECT item_data FROM inventory
             WHERE user_id = %s
             ORDER BY slot_id;
         """, (user_id,))
-        
+
         items = []
         for row in self.cur.fetchall():
             data = json.loads(row[0])
@@ -85,7 +86,7 @@ class Database(commands.Cog):
     def save_equipment(self, user_id: int, loadout: Loadout):
         # Clear existing equipment
         self.cur.execute("DELETE FROM equipment WHERE user_id = %s;", (user_id,))
-        
+
         # Save each equipment piece
         for slot_type, gear in vars(loadout).items():
             if gear is not None:
@@ -132,7 +133,7 @@ class Database(commands.Cog):
         for row in self.cur.fetchall():
             slot_type, data = row[0], json.loads(row[1])
             gear_class = gear_classes[slot_type]
-            
+
             stats = GearStatTable(
                 resist=data["stats"]["resist"],
                 maxhp=data["stats"]["maxhp"],
@@ -155,7 +156,7 @@ class Database(commands.Cog):
         self.conn.commit()
         await interaction.response.send_message("Character deleted")
         await asyncio.sleep(2.0)
-        await interaction.delete_original_response() 
+        await interaction.delete_original_response()
 
     def add_character(self, uid, character):
         self.cur.execute("""
