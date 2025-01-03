@@ -9,8 +9,9 @@ from cogs.slots import Slots
 
 UNDER_CONSTRUCTION:str = "This area is still under construction. Come back later when it is finished!"
 
+
 class MainMenus(commands.Cog):
-    def __init__(self, bot): 
+    def __init__(self, bot):
         self.bot = bot
         self.user_character:PlayableCharacter
         self.db = Database(self.bot)
@@ -88,8 +89,9 @@ class MainMenus(commands.Cog):
                 await self.send_character_menu(interaction)
         except asyncio.TimeoutError:
             view = PlaceholderView()
-            followup = await interaction.followup.send("Deletion Timed Out", view=view)
+            followup = await interaction.followup.send("Deletion Timed Out", view=view, ephemeral=True)
             await view.wait()
+            await followup.delete()
             interaction = view.interaction
             await interaction.response.send_message("Loading...")
             await self.send_character_menu(interaction)
@@ -127,7 +129,7 @@ class MainMenus(commands.Cog):
         view = TavernView()
         await interaction.edit_original_response(content="Tavern", embed=embed, view=view)
         await view.wait()
-        
+
         if view.choice in activities:
             await activities[view.choice](interaction=view.interaction)
         elif view.choice == -1:
@@ -161,7 +163,7 @@ class MainMenus(commands.Cog):
         await interaction.edit_original_response(content=UNDER_CONSTRUCTION, view=view, embed=None)
         await view.wait()
         await view.interaction.response.defer()
-        
+
     async def cleanup(self):
         self.db.conn.close
         self.db.cur.close
@@ -171,7 +173,7 @@ class MainMenus(commands.Cog):
 
 
 class MainMenuEmbed(discord.Embed):
-    def __init__(self, *, title = "Savvy RPG", description = "Pre-Alpha v0.0.6: Now with 2 dimentional combat!"):
+    def __init__(self, *, title="Savvy RPG", description="Pre-Alpha v0.0.6: Now with 2 dimentional combat!"):
         super().__init__(title=title, description=description, color=discord.Color(0x00ffff))
         self.add_field(name="Adventure", value="Quest to Complete, Chests to Loot, and Monsters to Slay", inline=True)
         self.add_field(name="Character", value="View Character Stats and Inventory", inline=True)
@@ -212,12 +214,12 @@ class MainMenuButtons(discord.ui.View):
         self.choice = 3
         self.interaction = interaction
         self.event.set()
-    
+
     @discord.ui.button(label="Tavern", style=discord.ButtonStyle.primary)
     async def tavern_button(self, interaction:discord.Interaction, button):
         self.choice = 4
         self.interaction = interaction
-        self.event.set() 
+        self.event.set()
 
     async def wait(self):
         await self.event.wait()
@@ -231,7 +233,7 @@ class NavigationMenuView(discord.ui.View):
         self.interaction:discord.Interaction
 
     async def wait(self):
-            await self.event.wait()
+        await self.event.wait()
 
 
 class AdventureEmbed(discord.Embed):
@@ -258,8 +260,8 @@ class AdventureView(NavigationMenuView):
 
 class CharacterEmbed(discord.Embed):
     def __init__(self, pc:PlayableCharacter):
-        super().__init__(color=discord.Color(0x00ffff), 
-                         title=pc.name, 
+        super().__init__(color=discord.Color(0x00ffff),
+                         title=pc.name,
                          description=f"{pc.gender} {pc.race} {pc.origin}")
         self.add_field(name=f"Level {pc.level}", value=f"Xp: {pc.level_progress()} / {pc.xp_for_next_level()}\nGold: {pc.gold}g")
         self.add_field(name="Stats:", value=pc.stats)
@@ -286,7 +288,7 @@ class BackButton(discord.ui.Button):
 
 class MarketEmbed(discord.Embed):
     def __init__(self):
-        super().__init__(color=discord.Color(0x00ffff), 
+        super().__init__(color=discord.Color(0x00ffff),
                          title="Market",
                          description="Visit Merchants to Acquire and Upgrade Gear")
         self.add_field(name="Blacksmith", value="Buy, Sell, Craft, and Upgrade Armor and Weapons of War", inline=True)
@@ -323,7 +325,7 @@ class SocialView(NavigationMenuView):
 
 class TavernEmbed(discord.Embed):
     def __init__(self):
-        super().__init__(color=discord.Color(0x00ffff), 
+        super().__init__(color=discord.Color(0x00ffff),
                          title="Tavern",
                          description="View Your Quests or Stay Awhile if You're Feeling Lucky")
         self.add_field(name="Weeklies", value="View Your Weekly Quests", inline=True)
@@ -378,3 +380,5 @@ class SingleTextSubmission(discord.ui.Modal):
 
 async def setup(bot):
     await bot.add_cog(MainMenus(bot))
+
+

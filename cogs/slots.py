@@ -3,9 +3,10 @@ from discord.ext import commands
 import random
 import asyncio
 
+
 # TODO: detect timeout on spin
 class Slots(commands.Cog):
-    def __init__(self, bot, gold = 0):
+    def __init__(self, bot, gold=0):
         super().__init__()
         self.bot = bot
         self.reel = [":cherries:", ":grapes:", ":lemon:", ":bell:", ":seven:"]
@@ -34,7 +35,7 @@ class Slots(commands.Cog):
         else:
             self.gold += 100
             await self.spin(interaction)
-        
+
         return self.gold
 
     async def flicker(self, interaction:discord.Interaction):
@@ -45,11 +46,11 @@ class Slots(commands.Cog):
         if self.all_elements_same(res):
             end += "\nYou Win!"
             mults = {
-                ":cherries:" : 1, 
-                ":grapes:" : 5, 
-                ":lemon:" : 10, 
-                ":bell:" : 50, 
-                ":seven:" : 2000
+                ":cherries:": 1,
+                ":grapes:": 5,
+                ":lemon:": 10,
+                ":bell:": 50,
+                ":seven:": 2000
             }
             multiplier = mults[res[0]]
         one = self.pick_random_element()
@@ -86,7 +87,8 @@ class Slots(commands.Cog):
 
     def pick_random_element(self):
         return random.choice(self.reel)
-    
+
+
 class BetView(discord.ui.View):
     def __init__(self):
         super().__init__()
@@ -94,13 +96,13 @@ class BetView(discord.ui.View):
         self.event = asyncio.Event()
         self.choice:int
         self.add_item(BackButton())
-    
+
     @discord.ui.button(label="Spin", style=discord.ButtonStyle.green)
     async def bet_button(self, interaction:discord.Interaction, button):
         self.choice = 0
         self.interaction = interaction
         self.event.set()
-    
+
     @discord.ui.button(label="Give Money", style=discord.ButtonStyle.blurple)
     async def money_button(self, interaction:discord.Interaction, button):
         self.choice = 1
@@ -133,8 +135,7 @@ class BackView(discord.ui.View):
         await self.event.wait()
 
 
-    async def wait(self):
-        await self.event.wait()
-
 async def setup(bot):
     await bot.add_cog(Slots(bot))
+
+
