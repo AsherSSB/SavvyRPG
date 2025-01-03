@@ -77,18 +77,7 @@ class Database(commands.Cog):
         # Save each equipment piece
         for slot_type, gear in vars(loadout).items():
             if gear is not None:
-                gear_json = {
-                    "name": gear.name,
-                    "rarity": gear.rarity,
-                    "stats": {
-                        "resist": gear.stats.resist,
-                        "maxhp": gear.stats.maxhp,
-                        "dodge": gear.stats.dodge,
-                        "bonus_stats": vars(gear.stats.bonus_stats)
-                    },
-                    "value": gear.value
-                    # Add any other gear properties
-                }
+                gear_json = jsonpickle.encode(gear)
                 self.cur.execute("""
                     INSERT INTO equipment (user_id, slot_type, item_data)
                     VALUES (%s, %s, %s);
@@ -109,32 +98,10 @@ class Database(commands.Cog):
             WHERE user_id = %s;
         """, (user_id,))
 
-        gear_classes = {
-            "head": HeadGear,
-            "chest": ChestGear,
-            "hands": HandGear,
-            "legs": LegGear,
-            "feet": FootGear
-        }
-
         for row in self.cur.fetchall():
-            slot_type, data = row[0], json.loads(row[1])
-            gear_class = gear_classes[slot_type]
+            slot_type, data = row[0], jsonpickle.decode(row[1])
 
-            stats = GearStatTable(
-                resist=data["stats"]["resist"],
-                maxhp=data["stats"]["maxhp"],
-                dodge=data["stats"]["dodge"],
-                bonus_stats=BonusStatsTable(**data["stats"]["bonus_stats"])
-            )
-
-            gear = gear_class(
-                name=data["name"],
-                rarity=data["rarity"],
-                stats=stats,
-                value=data["value"]
-            )
-            gear_pieces[slot_type] = gear
+            gear_pieces[slot_type] = data
 
         return Loadout(**gear_pieces)
 

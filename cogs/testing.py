@@ -2,12 +2,41 @@ import discord
 from discord.ext import commands
 from cogs.database import Database
 from custom.gear import HandGear, HeadGear, GearStatTable, Item, BonusStatsTable
+from custom.gear import Loadout
 
 
 class Testing(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = Database(self.bot)
+
+    @discord.app_commands.command(name="insertequipment")
+    async def dbinsertequiptest(self, interaction: discord.Interaction):
+        gloves = HandGear(
+            name="Steel Gauntlets",
+            emoji="🧤",
+            value=200,
+            rarity="Common",
+            stats=GearStatTable(
+                resist=0.05,  # 5% damage resistance
+                maxhp=30,     # +30 max HP
+                dodge=0.03,   # 3% dodge chance
+                bonus_stats=BonusStatsTable(
+                    strength=2,
+                    dexterity=1
+                )
+            ),
+            critmult=0.2,    # 20% bonus crit multiplier
+            attacks=1        # +1 attacks per turn
+        )
+        load = Loadout(None, None, gloves, None, None)
+        self.db.save_equipment(interaction.user.id, load)
+        await interaction.response.send_message("saved")
+
+    @discord.app_commands.command(name="retrieveequip")
+    async def retrieveequiptest(self, interaction: discord.Interaction):
+        load = self.db.load_equipment(interaction.user.id)
+        await interaction.response.send_message(load)
 
     @discord.app_commands.command(name="insertitem")
     async def dbinserttest(self, interaction: discord.Interaction):
