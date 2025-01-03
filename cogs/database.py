@@ -7,11 +7,10 @@ import custom.playable_character as pc
 import custom.stattable as origins
 import asyncio
 import json
-from custom.gear import Item, Loadout, HeadGear, ChestGear, HandGear, LegGear, FootGear, GearStatTable, BonusStatsTable
+from custom.gear import Item, Loadout
 import jsonpickle
 
 
-# TODO: refactor db to store stats as jsonb
 class Database(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

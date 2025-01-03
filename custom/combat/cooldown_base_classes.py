@@ -4,6 +4,7 @@ from custom.playable_character import PlayableCharacter
 from custom.combat.entities import Entity, EntitiesInfo
 from dataclasses import dataclass
 
+
 @dataclass
 class WeaponStatTable():
     dmg: int
@@ -17,13 +18,13 @@ class WeaponStatTable():
 
 
 class Cooldown():
-    def __init__(self, name, emoji, stats: WeaponStatTable, active, acted, entities=None):
+    def __init__(self, name, emoji, stats: WeaponStatTable, active, acted, entities):
         self.name: str = name
         self.emoji: str = emoji
         self.stats: WeaponStatTable = stats
         self.active: Callable = active
         self.acted: str = acted
-        self.entities: EntitiesInfo | None = entities
+        self.entities: EntitiesInfo = entities
 
     def in_range(self, mypos, targetpos) -> bool:
         if abs(targetpos - mypos) <= self.stats.rng:
@@ -39,7 +40,7 @@ class Cooldown():
         if random.random() < self.stats.cc:
             return self.stats.cm
         return 1.0
-    
+
     def scale_damage(self, player:PlayableCharacter):
         playerstats = player.stats.to_dict()
         playerstats = playerstats[self.stats.stat]
@@ -47,8 +48,9 @@ class Cooldown():
             self.stats.dmg = int(self.stats.dmg * self.stats.scalar * playerstats)
 
     # needs to be defined in child classes
-    def attack(self, target):
+    def attack(self, target_indexes: set[int]):
         pass
+
 
 class EnemyCooldown(Cooldown):
     def __init__(self, name, emoji, stats, acted):
@@ -67,10 +69,11 @@ class EnemyCooldown(Cooldown):
 
 
 class SingleTargetAttack(Cooldown):
-    def __init__(self, name, emoji, stats, acted):
-        super().__init__(name, emoji, stats, self.attack, acted)
+    def __init__(self, name, emoji, stats, acted, entities):
+        super().__init__(name, emoji, stats, self.attack, acted, entities=entities)
 
-    def attack(self, enemy:Entity) -> str:
+    def attack(self, target_indexes: tuple[int]) -> str:
+        enemy = self.entities.lst[target_indexes[0]]
         if self.miss():
             return f"missed {self.name}"
         if random.random() > enemy.dodge:
@@ -80,13 +83,14 @@ class SingleTargetAttack(Cooldown):
         dmg = int(self.stats.dmg * mult)
         enemy.hp -= dmg
         return f"{hit} {enemy.name} for {dmg} damage"
-    
-    
+
+
 class AOEAttack(Cooldown):
     def __init__(self, name, emoji, stats, acted):
-        super().__init__(name, emoji, stats, self.attack, acted)  
-    
-    def attack(self, entities: list[Entity]):
+        super().__init__(name, emoji, stats, self.attack, acted)
+
+    def attack(self, target_indexes: tuple[int]):
+        entities = [self.entities.lst[index] for index in target_indexes]
         message = self.name
         for entity in entities:
             if self.miss():
@@ -102,4 +106,4 @@ class AOEAttack(Cooldown):
         # remove trailing comma
         message = message[0:-1]
         return message
-    
+

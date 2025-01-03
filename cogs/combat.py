@@ -13,6 +13,9 @@ from custom.combat.cooldown_base_classes import Cooldown, SingleTargetAttack, En
 BASE_TILE = ":green_square:"
 
 
+# TODO: should recieve a list of cooldown TYPES which are initialized after entities
+# TODO: loadouts should include weapons which are initialized as cooldowns
+# TODO: attack targets should always be given as a SET of indexes
 class CombatInstance():
     def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter],
                  loadouts:list[Loadout], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
