@@ -53,8 +53,8 @@ class Cooldown():
 
 
 class EnemyCooldown(Cooldown):
-    def __init__(self, name, emoji, stats, acted):
-        super().__init__(name, emoji, stats, self.attack, acted)
+    def __init__(self, name, stats, entities):
+        super().__init__(name=name, emoji="�", stats=stats, active=self.attack, acted="struck", entities=entities)
 
     def attack(self, playerindex: int) -> str:
         if self.miss():
@@ -86,8 +86,8 @@ class SingleTargetAttack(Cooldown):
 
 
 class AOEAttack(Cooldown):
-    def __init__(self, name, emoji, stats, acted):
-        super().__init__(name, emoji, stats, self.attack, acted)
+    def __init__(self, name, emoji, stats, acted, entities):
+        super().__init__(name, emoji, stats, self.attack, acted, entities=entities)
 
     def attack(self, target_indexes: tuple[int]):
         entities = [self.entities.lst[index] for index in target_indexes]
