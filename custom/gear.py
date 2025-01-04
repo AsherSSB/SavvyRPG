@@ -1,12 +1,11 @@
 from dataclasses import dataclass, field
-from custom.combat.cooldown_base_classes import Cooldown
+from custom.combat.cooldown_base_classes import Cooldown, SingleTargetAttack
 from custom.base_items import Item
 
 
 @dataclass
 class Weapon(Item):
-    cooldown: Cooldown
-    scale: str
+    cooldown: SingleTargetAttack
     slots: int = field(default=2, kw_only=True)
 
 
@@ -70,12 +69,6 @@ class Loadout():
     hands: HandGear | None
     legs: LegGear | None
     feet: FootGear | None
+    weapon: tuple[Weapon] | None
 
 
-# • Sword + Shield
-# • Greatsword/Great Hammer
-# • Dual Swords
-# • Bow + Arrow
-# • Spear/Lance/Halbert
-# • Katana
-# • Magic Tomes (Elemental) (Heal)
