@@ -8,7 +8,8 @@ from custom.gear import Gear, Loadout
 from custom.combat.enemy import Enemy
 from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, EnemySelectView, EnemySelectMenu
 from custom.combat.entities import Entity, NPCStatTable, Drops, EntitiesInfo, PlayerPracticalStats
-from custom.combat.cooldown_base_classes import Cooldown, SingleTargetAttack, EnemyCooldown, WeaponStatTable
+from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable
+from custom.combat.barbarian.cooldowns import Execute, Cleave
 
 BASE_TILE = ":green_square:"
 
@@ -255,17 +256,8 @@ class Combat(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.punchcd = SingleTargetAttack("Punch", "👊", WeaponStatTable(
-            dmg=10, spd=1, rng=2, cc=0.2, cm=1.5, acc=.9, scalar=.1, stat="str"
-        ), acted="punched")
-
-        self.pummelcd = SingleTargetAttack("Pummel", "✊", WeaponStatTable(
-            dmg=30, spd=2, rng=1, cc=0.2, cm=1.5, acc=0.9, scalar=0.1, stat="str"
-        ), acted="pummeled")
-
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
-
         self.pc:PlayableCharacter = PlayableCharacter(
             "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
 
@@ -275,13 +267,13 @@ class Combat(commands.Cog):
                             EnemyCooldown("Smack", None,
                                           WeaponStatTable(
                                                 dmg=1, spd=3, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str"),
-                                          "smaccd"), 
+                                          "smaccd"),
                             ":dizzy_face:")
 
         loadout = Loadout(None, None, None, None, None)
 
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [loadout],[[self.punchcd, self.pummelcd]], [enemy])
+        instance = CombatInstance(interaction, [self.pc], [loadout],[Cleave, Execute], [enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
