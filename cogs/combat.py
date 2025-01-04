@@ -143,7 +143,7 @@ class CombatInstance():
     # errors out if the user has > 5 cooldowns,
     # attacks are also being placed on row 0
     def initialize_combat_view(self, loadout: Loadout):
-        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2, self.game_grid, 0, len(self.players), 2)
+        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, self.player_practicals[0].moves, self.game_grid, 0, len(self.players), self.player_practicals[0].attacks)
         button = AttackButton(name=loadout.weapon[0].name, emoji="👊", rng=loadout.weapon[0].cooldown.stats.rng)
         view.attack_button = button
         view.add_item(button)
@@ -231,6 +231,11 @@ class PracticalStatsCalculator():
 
     def populate_special_stats(self, player: PlayableCharacter, loadout: Loadout, practical: PlayerPracticalStats):
         practical.moves = self.calculate_moves(player, loadout)
+        practical.attacks = self.calculate_attacks(loadout)
+        practical.healing = self.calculate_healing(loadout)
+        practical.multicast = self.calculate_multicast(loadout)
+        practical.critchance = self.calculate_critchance(player, loadout)
+        practical.critmult = self.calculate_critmult(player, loadout)
 
     def calculate_moves(self, player: PlayableCharacter, loadout:Loadout):
         moves = 3
@@ -238,6 +243,48 @@ class PracticalStatsCalculator():
         if loadout.feet is not None:
             moves += loadout.feet.moves
         return moves
+
+    def calculate_attacks(self, loadout: Loadout):
+        attacks = 1
+        if loadout.chest is not None:
+            attacks += loadout.chest.attacks
+        if loadout.hands is not None:
+            attacks += loadout.hands.attacks
+        return attacks
+
+    def calculate_healing(self, loadout: Loadout):
+        healing = 0.0
+        if loadout.chest is not None:
+            healing = round(healing + loadout.chest.healing, 2)
+        if loadout.legs is not None:
+            healing = round(healing + loadout.legs.healing, 2)
+        return healing
+
+    def calculate_multicast(self, loadout: Loadout):
+        multicast = 0.0
+        if loadout.head is not None:
+            multicast = round(multicast + loadout.multicast, 2)
+        return multicast
+
+    def calculate_critchance(self, player: PlayableCharacter, loadout: Loadout):
+        critchance = 0.0
+        player_crit = player.stats.dex * 0.05 - 0.5
+        critchance = round(critchance + player_crit, 2)
+        if loadout.feet is not None:
+            critchance = round(critchance + loadout.feet.critchance, 2)
+        if loadout.hea is not None:
+            critchance = round(critchance + loadout.head.critchance, 2)
+        return critchance
+
+    def calculate_critmult(self, player: PlayableCharacter, loadout: Loadout):
+        critmult = 1.0
+        player_crit = player.stats.att * 0.1 - 1.0
+        critmult = round(critmult + player_crit, 2)
+        if loadout.hands is not None:
+            critmult = round(critmult + loadout.hands.critmult, 2)
+        if loadout.legs is not None:
+            critmult = round(critmult + loadout.legs.critmult, 2)
+        return critmult
 
     def calculate_practical_stats(self, loadout: Loadout):
         # calculate total resistance given gear
