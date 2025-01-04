@@ -1,5 +1,5 @@
 .env
-*/__pycache__/*
+__pycache__/*
 cogs/__pycache__/*
 custom/__pycache__/*
 custom/combat/__pycache__/*
