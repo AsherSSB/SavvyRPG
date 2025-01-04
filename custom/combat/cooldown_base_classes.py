@@ -45,7 +45,7 @@ class Cooldown():
         playerstats = player.stats.to_dict()
         playerstats = playerstats[self.stats.stat]
         if playerstats > 10:
-            self.stats.dmg = int(self.stats.dmg * self.stats.scalar * playerstats)
+            self.stats.dmg = int(self.stats.dmg * (1 + self.stats.scalar * (playerstats - 10)))
 
     # needs to be defined in child classes
     def attack(self, target_indexes: set[int]):
@@ -53,7 +53,7 @@ class Cooldown():
 
 
 class EnemyCooldown(Cooldown):
-    def __init__(self, name, stats):
+    def __init__(self, name, stats ):
         super().__init__(name=name, emoji="�", stats=stats, active=self.attack, acted="struck", entities=None)
 
     def attack(self, playerindex: int) -> str:

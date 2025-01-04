@@ -1,5 +1,4 @@
-from custom.combat.cooldown_base_classes import SingleTargetAttack, AOEAttack, Cooldown
-from custom.gear import WeaponStatTable
+from custom.combat.cooldown_base_classes import SingleTargetAttack, AOEAttack, Cooldown, WeaponStatTable
 from custom.combat.entities import Entity, EntitiesInfo
 
 # class WeaponStatTable():
@@ -14,7 +13,7 @@ from custom.combat.entities import Entity, EntitiesInfo
 
 
 class Cleave(AOEAttack):
-    def __init__(self):
+    def __init__(self, entities):
         stats = WeaponStatTable(
             dmg=12,
             spd=3,
@@ -22,10 +21,10 @@ class Cleave(AOEAttack):
             cc=0.10,
             cm=1.5,
             acc=0.85,
-            scalar=0.8,
+            scalar=0.2,
             stat="str"
         )
-        super().__init__("Cleave", "🪓", stats, "Cleaved")
+        super().__init__(name="Cleave", emoji="🪓", stats=stats, acted="Cleaved", entities=entities)
 
 
 class Execute(Cooldown):
@@ -37,22 +36,22 @@ class Execute(Cooldown):
             cc=0.0,
             cm=1.0,
             acc=0.95,
-            scalar=1.0,
+            scalar=0.3,
             stat="str"
         )
-        super().__init__("Execute", "⚔", stats, "Executed", entities=entities)
-        self.maxhps = [entity.hp for entity in entities]
+        super().__init__(name="Execute", emoji="⚔", stats=stats, active=self.attack, acted="Executed", entities=entities)
+        self.maxhps = [entity.hp for entity in entities.lst]
 
     def attack(self, target_indexes: tuple[int]):
         target_index = target_indexes[0]
         if self.miss():
             return f"{self.name} missed"
         mult = self.calculate_crit()
-        mult = mult * self.entities[target_index] / self.maxhps[target_index]
+        mult = mult * self.maxhps[target_index] / self.entities.lst[target_index].hp
         dmg = int(self.stats.dmg * mult)
-        self.entities[target_index].hp -= dmg
-        if self.entities[target_index].hp <= 0:
-            return f"{self.acted} {self.entities[target_index].name}"
-        return f"{self.name} hit {self.entities[target_index].name} for {dmg}"
+        self.entities.lst[target_index].hp -= dmg
+        if self.entities.lst[target_index].hp <= 0:
+            return f"{self.acted} {self.entities.lst[target_index].name}"
+        return f"{self.name} hit {self.entities.lst[target_index].name} for {dmg}"
 
 

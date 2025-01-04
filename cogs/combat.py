@@ -14,7 +14,6 @@ from custom.combat.barbarian.cooldowns import Execute, Cleave
 BASE_TILE = ":green_square:"
 
 
-# TODO: should recieve a list of cooldown TYPES which are initialized after entities
 # TODO: loadouts should include weapons which are initialized as cooldowns
 # TODO: attack targets should always be given as a SET of indexes
 class CombatInstance():
@@ -28,11 +27,11 @@ class CombatInstance():
         self.player_practicals: list[PlayerPracticalStats] = self.initialize_practical_stats(loadouts)
         self.entities: list[Entity] = self.initialize_entities()
         self.cooldowns: list[list[Cooldown]] = cooldowns
-        self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
-        self.view = self.initialize_combat_view()
         self.pass_entities_to_player_cooldowns()
         self.scale_cooldown_damages(self.cooldowns, self.players)
         self.initialize_enemy_cooldowns()
+        self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
+        self.view = self.initialize_combat_view()
 
     async def combat(self):
         choice = 0
@@ -77,8 +76,8 @@ class CombatInstance():
     def pass_entities_to_player_cooldowns(self):
         for i, cdlist in enumerate(self.cooldowns):
             entities = EntitiesInfo(self.entities, i, len(self.players), len(self.enemies))
-            for cd in cdlist:
-                cd = cd(entites=entities)
+            for j, cd in enumerate(cdlist):
+                self.cooldowns[i][j] = cd(entities=entities)
 
     def initialize_practical_stats(self, gear: list[Loadout]):
         practicals = []
@@ -149,7 +148,7 @@ class CombatInstance():
     def scale_cooldown_damages(self, all_players_cooldowns: list[list[Cooldown]], players: list[PlayableCharacter]):
         for i, player in enumerate(players):
             for cooldown in all_players_cooldowns[i]:
-                cooldown.scale_damage(player)
+                cooldown.scale_damage(player=player)
 
     async def use_cooldown(self, cooldown:Cooldown, playerindex):
         view = EnemySelectView()
@@ -161,7 +160,7 @@ class CombatInstance():
         if view.choice == 0:
             return False
         else:
-            await self.embed_handler.log(self.players[playerindex].name, cooldown.attack(self.entities[-1]))
+            await self.embed_handler.log(self.players[playerindex].name, cooldown.attack([-1]))
             return True
 
     # currently initializes all cooldowns on row 1
@@ -262,18 +261,16 @@ class Combat(commands.Cog):
             "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
 
         enemy:Enemy = Enemy("Training Dummy",
-                            NPCStatTable(120, 1.0, 1.0),
+                            NPCStatTable(120, 0.0, 0.0),
                             Drops(6, 9, None),
-                            EnemyCooldown("Smack", None,
-                                          WeaponStatTable(
-                                                dmg=1, spd=3, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str"),
-                                          "smaccd"),
-                            ":dizzy_face:")
+                            EnemyCooldown(name="Smack", stats=WeaponStatTable(
+                                dmg=1, spd=3, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str"),
+                            ), emoji=":dizzy_face:")
 
         loadout = Loadout(None, None, None, None, None)
 
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [loadout],[Cleave, Execute], [enemy])
+        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
