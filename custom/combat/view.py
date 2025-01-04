@@ -106,9 +106,23 @@ class RunButton(discord.ui.Button):
         self.view.event.set()
 
 
+class AttackButton(discord.ui.Button):
+    def __init__(self, name, emoji):
+        super().__init__(style=discord.ButtonStyle.green, emoji=discord.PartialEmoji(name=emoji), label=name, row=0)
+
+    async def callback(self, interaction):
+        self.view.choice = 0
+        self.view.attacks -= 1
+        await self.view.set_attack_button_based_on_attacks_left()
+        await interaction.response.defer()
+        self.view.event.set()
+
+
 class CombatView(discord.ui.View):
-    def __init__(self, interaction:discord.Interaction, embed_handler, entities, bounds, moves, board, playerid, playercount):
+    def __init__(self, interaction:discord.Interaction, embed_handler, entities, bounds, moves, board, playerid, playercount, attacks):
         super().__init__()
+        self.base_attacks = attacks
+        self.attacks = attacks
         self.player = entities[playerid]
         self.playercount = playercount
         self.entities = entities
@@ -122,6 +136,14 @@ class CombatView(discord.ui.View):
         self.initialize_movement_buttons(bounds, board)
         self.cooldown_buttons: list[CooldownButton] = []
         self.cooldown_used: bool = False
+        self.attack_button: AttackButton = None
+
+    def set_attack_button_based_on_attacks_left(self):
+        if self.attacks <= 0:
+            self.attack_button.disabled = True
+        else:
+            self.attack_button.disabled = False
+        await self.interaction.edit_original_response(view=self)
 
     def initialize_movement_buttons(self, bounds, board):
         self.forward_button = ForwardButton(bounds, self.entities, 0, board)
@@ -147,6 +169,8 @@ class CombatView(discord.ui.View):
 
     async def reset(self):
         self.moves = self.base_moves
+        self.attack = self.base_attacks
+        await self.set_attack_button_based_on_attacks_left()
         self.forward_button.disabled = False
         self.back_button.disabled = False
         self.up_button.disabled = False

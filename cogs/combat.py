@@ -6,7 +6,7 @@ from custom.playable_character import PlayableCharacter
 import random
 from custom.gear import Gear, Loadout
 from custom.combat.enemy import Enemy
-from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, EnemySelectView, EnemySelectMenu
+from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, EnemySelectView, EnemySelectMenu, AttackButton
 from custom.combat.entities import Entity, NPCStatTable, Drops, EntitiesInfo, PlayerPracticalStats
 from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable
 from custom.combat.barbarian.cooldowns import Execute, Cleave
@@ -31,7 +31,8 @@ class CombatInstance():
         self.scale_cooldown_damages(self.cooldowns, self.players)
         self.initialize_enemy_cooldowns()
         self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
-        self.view = self.initialize_combat_view()
+        # this only works for singleplayer
+        self.view = self.initialize_combat_view(loadouts[0])
 
     async def combat(self):
         choice = 0
@@ -166,11 +167,15 @@ class CombatInstance():
             await self.embed_handler.log(self.players[playerindex].name, cooldown.attack([-1]))
             return True
 
-    # currently initializes all cooldowns on row 1
-    # errors out if the user has > 5 cooldowns
-    def initialize_combat_view(self):
+    # currently initializes all cooldowns on row 0
+    # errors out if the user has > 5 cooldowns,
+    # attacks are also being placed on row 0
+    def initialize_combat_view(self, loadout: Loadout):
         view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2, self.game_grid, 0, len(self.players))
-        for i, cd in enumerate(self.cooldowns[0]):
+        button = AttackButton(loadout.weapon.name, loadout.weapon.emoji)
+        view.attack_button = button
+        view.add_item(button)
+        for i, cd in enumerate(self.cooldowns[0], 1):
             button = CooldownButton(cd.name, i, cd.stats.rng, cd.emoji, row=0)
             view.cooldown_buttons.append(button)
             view.add_item(button)
