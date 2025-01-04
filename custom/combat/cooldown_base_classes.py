@@ -53,7 +53,7 @@ class Cooldown():
 
 
 class EnemyCooldown(Cooldown):
-    def __init__(self, name, stats ):
+    def __init__(self, name, stats):
         super().__init__(name=name, emoji="�", stats=stats, active=self.attack, acted="struck", entities=None)
 
     def attack(self, playerindex: int) -> str:

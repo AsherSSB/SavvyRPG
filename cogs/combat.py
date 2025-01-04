@@ -10,6 +10,7 @@ from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, E
 from custom.combat.entities import Entity, NPCStatTable, Drops, EntitiesInfo, PlayerPracticalStats
 from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable
 from custom.combat.barbarian.cooldowns import Execute, Cleave
+from items.weapons import Fists, Greatsword
 
 BASE_TILE = ":green_square:"
 
@@ -88,10 +89,13 @@ class CombatInstance():
         # calculate total resistance given gear
         resistances = []
         dodges = []
-        for value in vars(loadout).values():
-            if value is not None:
-                resistances.append(value.stats.resist)
-                dodges.append(value.stats.dodge)
+        gear_slots = ['head', 'chest', 'hands', 'legs', 'feet']
+
+        for slot in gear_slots:
+            gear = getattr(loadout, slot)
+            if gear is not None:
+                resistances.append(gear.stats.resist)
+                dodges.append(gear.stats.dodge)
             else:
                 resistances.append(0.0)
                 dodges.append(0.0)
@@ -266,7 +270,9 @@ class Combat(commands.Cog):
                                 dmg=1, spd=3, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str"),
                             ), emoji=":dizzy_face:")
 
-        loadout = Loadout(None, None, None, None, None)
+        testwep = Greatsword()
+
+        loadout = Loadout(None, None, None, None, None, tuple())
 
         interaction = await self.send_testing_view(interaction)
         instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy])
