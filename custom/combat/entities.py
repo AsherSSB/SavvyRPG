@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from custom.base_items import Item
 
 
@@ -11,8 +11,14 @@ class Drops():
 
 @dataclass
 class PlayerPracticalStats():
-    dodge: float
-    resistance: float
+    dodge: float = field(default=1.0, kw_only=True)
+    resistance: float = field(default=1.0, kw_only=True)
+    moves: int = field(default=3, kw_only=True)
+    attacks: int = field(default=1, kw_only=True)
+    healing: float = field(default=0.0, kw_only=True)
+    multicast: float = field(default=0.0, kw_only=True)
+    critchance: float = field(default=0.0, kw_only=True)
+    critmult: float = field(default=0.0, kw_only=True)
 
 
 @dataclass

@@ -86,8 +86,7 @@ class CombatInstance():
             entities = EntitiesInfo(self.entities, i, len(self.players), len(self.enemies))
             for j, cd in enumerate(cdlist):
                 self.cooldowns[i][j] = cd(entities=entities)
-            for loadout in self.loadouts:
-                loadout.weapon[0].cooldown.entities = entities
+            self.loadouts[i].weapon[0].cooldown.entities = entities
 
     def initialize_practical_stats(self, gear: list[Loadout]):
         practicals = []
@@ -180,7 +179,7 @@ class CombatInstance():
     # errors out if the user has > 5 cooldowns,
     # attacks are also being placed on row 0
     def initialize_combat_view(self, loadout: Loadout):
-        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 9, self.game_grid, 0, len(self.players), 2)
+        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2, self.game_grid, 0, len(self.players), 2)
         button = AttackButton(name=loadout.weapon[0].name, emoji="👊", rng=loadout.weapon[0].cooldown.stats.rng)
         view.attack_button = button
         view.add_item(button)
