@@ -15,7 +15,6 @@ BASE_TILE = ":green_square:"
 
 
 # TODO: loadouts should include weapons which are initialized as cooldowns
-# TODO: attack targets should always be given as a SET of indexes
 class CombatInstance():
     def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter],
                  loadouts:list[Loadout], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):

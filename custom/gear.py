@@ -71,3 +71,11 @@ class Loadout():
     legs: LegGear | None
     feet: FootGear | None
 
+
+# • Sword + Shield
+# • Greatsword/Great Hammer
+# • Dual Swords
+# • Bow + Arrow
+# • Spear/Lance/Halbert
+# • Katana
+# • Magic Tomes (Elemental) (Heal)
