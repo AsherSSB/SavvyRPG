@@ -225,22 +225,26 @@ class PracticalStatsCalculator():
         for loadout in loadouts:
             practicals.append(self.calculate_practical_stats(loadout))
         # initialize gear special stats
+        for i, practical in enumerate(practicals):
+            self.populate_special_stats(players[i], loadouts[i], practical)
         return practicals
 
-    def populate_special_stats(self, player_index, practical: PlayerPracticalStats):
-        pass
+    def populate_special_stats(self, player: PlayableCharacter, loadout: Loadout, practical: PlayerPracticalStats):
+        practical.moves = self.calculate_moves(player, loadout)
 
-    def calculate_moves(self, player:PlayableCharacter, loadout:Loadout):
-        base_moves = 3
-        base_moves += player.stats.att // 5 - 2
+    def calculate_moves(self, player: PlayableCharacter, loadout:Loadout):
+        moves = 3
+        moves += player.stats.att // 5 - 2
+        if loadout.feet is not None:
+            moves += loadout.feet.moves
+        return moves
 
     def calculate_practical_stats(self, loadout: Loadout):
         # calculate total resistance given gear
         resistances = []
         dodges = []
-        gear_slots = ['head', 'chest', 'hands', 'legs', 'feet']
 
-        for slot in gear_slots:
+        for slot in self.gear_slots:
             gear = getattr(loadout, slot)
             if gear is not None:
                 resistances.append(gear.stats.resist)
@@ -265,7 +269,6 @@ class PracticalStatsCalculator():
 
         hitchance = round(1 - (1 - total) * 0.85, 2)
         return PlayerPracticalStats(dodge=hitchance, resistance=resistmult)
-
 
 
 class TestingView(discord.ui.View):

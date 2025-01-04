@@ -13,7 +13,7 @@ Will: {self.wil}
 Dexterity: {self.dex}
 Intelligence: {self.int}
 Attunement: {self.att}"""
-    
+
     def __add__(self, other):
         return StatTable(
             self.str + other.str,
@@ -22,7 +22,7 @@ Attunement: {self.att}"""
             self.int + other.int,
             self.att + other.att
         )
-    
+
     def to_dict(self):
         return {
             "str": self.str,
@@ -31,7 +31,7 @@ Attunement: {self.att}"""
             "int": self.int,
             "att": self.att
         }
-    
+
 
 class Origin():
     def __init__(self):
@@ -78,7 +78,7 @@ Base Stats:\n{self.stats}"""
 
     def __str__(self):
         return "Barbarian"
- 
+
 
 class Bard(Origin):
     def __init__(self):
@@ -185,7 +185,7 @@ unsatiable thirst for knowledge, though they are prone to awkward and clumsy \
 errors.
 
 Bonus Stats:\n{self.statmods}"""
-    
+
     def __str__(self):
         return "Human"
 
@@ -205,10 +205,10 @@ Although preferring deplomacy, they are also very capable warriors, trained \
 to protect themselves and others using percise and deadly blows.
 
 Bonus Stats:\n{self.statmods}"""
-        
+
     def __str__(self):
         return "High Elf"
-    
+
 
 class DarkElf(Race):
     def __init__(self):
@@ -219,7 +219,7 @@ class DarkElf(Race):
 ...
 
 Bonus Stats:\n{self.statmods}"""
-        
+
     def __str__(self):
         return "Dark Elf"
 
@@ -233,7 +233,7 @@ class Dwarf(Race):
 ...
 
 Bonus Stats:\n{self.statmods}"""
-        
+
     def __str__(self):
         return "Dwarf"
 
@@ -247,10 +247,10 @@ class Orc(Race):
 ...
 
 Bonus Stats:\n{self.statmods}"""
-        
+
     def __str__(self):
         return "Orc"
-    
+
 
 class Fairy(Race):
     def __init__(self):
@@ -261,10 +261,10 @@ class Fairy(Race):
 ...
 
 Bonus Stats:\n{self.statmods}"""
-        
+
     def __str__(self):
         return "Fairy"
-    
+
 
 class Damned(Race):
     def __init__(self):
@@ -275,9 +275,9 @@ class Damned(Race):
 ...
 
 Bonus Stats:\n{self.statmods}"""
-        
+
     def __str__(self):
-        return "Damned"    
+        return "Damned"
 
 
 class OriginsInfo():
