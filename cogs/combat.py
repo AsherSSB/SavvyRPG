@@ -27,12 +27,11 @@ class CombatInstance():
         self.player_practicals: list[PlayerPracticalStats] = self.initialize_practical_stats(loadouts)
         self.entities: list[Entity] = self.initialize_entities()
         self.cooldowns: list[list[Cooldown]] = cooldowns
-        self.scale_cooldown_damages(self.cooldowns, self.players)
         self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
         self.view = self.initialize_combat_view()
-        # cooldowns need EntitiesInfo
+        self.pass_entities_to_player_cooldowns()
+        self.scale_cooldown_damages(self.cooldowns, self.players)
         self.initialize_enemy_cooldowns()
-        self.pass_entities_to_cooldowns()
 
     async def combat(self):
         choice = 0
@@ -74,11 +73,11 @@ class CombatInstance():
             # reset view event
             await self.view.reset()
 
-    def pass_entities_to_cooldowns(self):
+    def pass_entities_to_player_cooldowns(self):
         for i, cdlist in enumerate(self.cooldowns):
             entities = EntitiesInfo(self.entities, i, len(self.players), len(self.enemies))
             for cd in cdlist:
-                cd.entities = entities
+                cd = cd(entites=entities)
 
     def initialize_practical_stats(self, gear: list[Loadout]):
         practicals = []
@@ -123,7 +122,9 @@ class CombatInstance():
 
     def initialize_enemy_cooldowns(self):
         cds = []
-        for enemy in self.enemies:
+        for i, enemy in enumerate(self.enemies):
+            entities = EntitiesInfo(self.entities, i, len(self.players), len(self.enemies))
+            enemy.attack.entities = entities
             cds.append(enemy.attack)
         self.cooldowns.append(cds)
 
