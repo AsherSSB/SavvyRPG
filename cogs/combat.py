@@ -4,6 +4,7 @@ import asyncio
 import custom.stattable as sts
 from custom.playable_character import PlayableCharacter
 import random
+from custom.stattable import StatTable
 from custom.gear import Gear, Loadout
 from custom.combat.enemy import Enemy
 from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, EnemySelectView, EnemySelectMenu, AttackButton
@@ -25,7 +26,8 @@ class CombatInstance():
         self.enemies:list[Enemy] = enemies
         self.players: list[PlayableCharacter] = players
         self.loadouts = loadouts
-        self.player_practicals: list[PlayerPracticalStats] = self.initialize_practical_stats(loadouts)
+        calculator = PracticalStatsCalculator()
+        self.player_practicals: list[PlayerPracticalStats] = calculator.initialize_practical_stats(players, loadouts)
         self.entities: list[Entity] = self.initialize_entities()
         self.cooldowns: list[list[Cooldown]] = cooldowns
         self.pass_entities_to_player_cooldowns()
@@ -87,44 +89,6 @@ class CombatInstance():
             for j, cd in enumerate(cdlist):
                 self.cooldowns[i][j] = cd(entities=entities)
             self.loadouts[i].weapon[0].cooldown.entities = entities
-
-    def initialize_practical_stats(self, gear: list[Loadout]):
-        practicals = []
-        for loadout in gear:
-            practicals.append(self.calculate_practical_stats(loadout))
-        return practicals
-
-    def calculate_practical_stats(self, loadout: Loadout):
-        # calculate total resistance given gear
-        resistances = []
-        dodges = []
-        gear_slots = ['head', 'chest', 'hands', 'legs', 'feet']
-
-        for slot in gear_slots:
-            gear = getattr(loadout, slot)
-            if gear is not None:
-                resistances.append(gear.stats.resist)
-                dodges.append(gear.stats.dodge)
-            else:
-                resistances.append(0.0)
-                dodges.append(0.0)
-
-        # Calculate combined resistance
-        total = 1.0
-        for r in resistances:
-            total *= (1 - r)
-
-        # Apply scaling factor to approach but never reach 95%
-        # resistmult is the MULTIPLIER applied to damage
-        # smaller resistmult = higher resistance
-        resistmult = round(1 - (1 - total) * 0.95, 2)
-
-        total = 1.0
-        for d in dodges:
-            total *= (1 - d)
-
-        hitchance = round(1 - (1 - total) * 0.85, 2)
-        return PlayerPracticalStats(hitchance, resistmult)
 
     def stringify_game_grid(self):
         return '\n'.join(''.join(str(row)) for row in self.bounds)
@@ -249,6 +213,59 @@ class CombatInstance():
 
     def calculate_player_hp(self, player:PlayableCharacter):
         return int((10 + (player.level * 2)) * (player.stats.wil * .1))
+
+
+class PracticalStatsCalculator():
+    def __init__(self):
+        self.gear_slots = ['head', 'chest', 'hands', 'legs', 'feet']
+
+    def initialize_practical_stats(self, players: list[PlayableCharacter], loadouts: list[Loadout]):
+        practicals = []
+        # initialize gear base stats
+        for loadout in loadouts:
+            practicals.append(self.calculate_practical_stats(loadout))
+        # initialize gear special stats
+        return practicals
+
+    def populate_special_stats(self, player_index, practical: PlayerPracticalStats):
+        pass
+
+    def calculate_moves(self, player:PlayableCharacter, loadout:Loadout):
+        base_moves = 3
+        base_moves += player.stats.att // 5 - 2
+
+    def calculate_practical_stats(self, loadout: Loadout):
+        # calculate total resistance given gear
+        resistances = []
+        dodges = []
+        gear_slots = ['head', 'chest', 'hands', 'legs', 'feet']
+
+        for slot in gear_slots:
+            gear = getattr(loadout, slot)
+            if gear is not None:
+                resistances.append(gear.stats.resist)
+                dodges.append(gear.stats.dodge)
+            else:
+                resistances.append(0.0)
+                dodges.append(0.0)
+
+        # Calculate combined resistance
+        total = 1.0
+        for r in resistances:
+            total *= (1 - r)
+
+        # Apply scaling factor to approach but never reach 95%
+        # resistmult is the MULTIPLIER applied to damage
+        # smaller resistmult = higher resistance
+        resistmult = round(1 - (1 - total) * 0.95, 2)
+
+        total = 1.0
+        for d in dodges:
+            total *= (1 - d)
+
+        hitchance = round(1 - (1 - total) * 0.85, 2)
+        return PlayerPracticalStats(dodge=hitchance, resistance=resistmult)
+
 
 
 class TestingView(discord.ui.View):
