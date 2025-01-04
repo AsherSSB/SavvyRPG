@@ -107,8 +107,9 @@ class RunButton(discord.ui.Button):
 
 
 class AttackButton(discord.ui.Button):
-    def __init__(self, name, emoji):
+    def __init__(self, name, emoji, rng):
         super().__init__(style=discord.ButtonStyle.green, emoji=discord.PartialEmoji(name=emoji), label=name, row=0)
+        self.rng = rng
 
     async def callback(self, interaction):
         self.view.choice = 9
@@ -139,10 +140,11 @@ class CombatView(discord.ui.View):
         self.attack_button: AttackButton = None
 
     async def set_attack_button_based_on_attacks_left(self):
-        if self.attacks <= 0:
-            self.attack_button.disabled = True
-        else:
-            self.attack_button.disabled = False
+        enemies = self.entities[self.playercount:]
+        has_enemy_in_range = any(self.enemy_in_range(enemy, self.player, self.attack_button.rng) for enemy in enemies)
+
+        # Disable if out of attacks OR no enemies in range
+        self.attack_button.disabled = (self.attacks <= 0 or not has_enemy_in_range)
         await self.interaction.edit_original_response(view=self)
 
     def initialize_movement_buttons(self, bounds, board):
@@ -178,7 +180,7 @@ class CombatView(discord.ui.View):
         self.cooldown_used = False
         await self.disable_cooldowns(False)
         self.event = asyncio.Event()
-        self.enable_moves_if_in_range_disable_if_not()
+        await self.enable_moves_if_in_range_disable_if_not()
         await self.interaction.edit_original_response(view=self)
 
     async def disable_moves_if_zero(self):
@@ -190,12 +192,12 @@ class CombatView(discord.ui.View):
             await self.interaction.edit_original_response(view=self)
 
     async def adjust_buttons(self):
-        changes_made = self.enable_moves_if_in_range_disable_if_not()
+        changes_made = await self.enable_moves_if_in_range_disable_if_not()
 
         if changes_made:
             await self.interaction.edit_original_response(view=self)
 
-    def enable_moves_if_in_range_disable_if_not(self):
+    async def enable_moves_if_in_range_disable_if_not(self):
         changes_made = False
         enemies = self.entities[self.playercount:]
 
@@ -208,6 +210,12 @@ class CombatView(discord.ui.View):
             if all(not self.enemy_in_range(enemy, self.player, button.rng) for enemy in enemies):
                 button.disabled = True
                 changes_made = True
+
+        if any(self.enemy_in_range(enemy, self.player, self.attack_button.rng) for enemy in enemies):
+            await self.set_attack_button_based_on_attacks_left()
+        else:
+            self.attack_button.disabled = True
+            changes_made = True
 
         return changes_made
 
@@ -242,6 +250,8 @@ class ForwardButton(MovementButton):
             if not self.view.cooldown_used:
                 await self.view.adjust_buttons()
             await self.view.embed_handler.fix_embed_players()
+            if self.view.attacks > 0:
+                await self.view.set_attack_button_based_on_attacks_left()
         await interaction.response.defer()  # ▶ ◀
 
 
@@ -259,6 +269,8 @@ class BackButton(MovementButton):
             self.player.position[0] -= 1
             if not self.view.cooldown_used:
                 await self.view.adjust_buttons()
+            if self.view.attacks > 0:
+                await self.view.set_attack_button_based_on_attacks_left()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer()
 
@@ -277,6 +289,8 @@ class UpButton(MovementButton):
             self.player.position[1] -= 1
             if not self.view.cooldown_used:
                 await self.view.adjust_buttons()
+            if self.view.attacks > 0:
+                await self.view.set_attack_button_based_on_attacks_left()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer()
 
@@ -295,6 +309,8 @@ class DownButton(MovementButton):
             self.player.position[1] += 1
             if not self.view.cooldown_used:
                 await self.view.adjust_buttons()
+            if self.view.attacks > 0:
+                await self.view.set_attack_button_based_on_attacks_left()
             await self.view.embed_handler.fix_embed_players()
         await interaction.response.defer()
 

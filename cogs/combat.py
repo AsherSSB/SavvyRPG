@@ -37,6 +37,7 @@ class CombatInstance():
 
     async def combat(self):
         choice = 0
+        await self.view.enable_moves_if_in_range_disable_if_not()
         await self.interaction.response.send_message("Combat", view=self.view, embed=self.embed_handler.embed)
         # general combat loop
         while True:
@@ -52,7 +53,10 @@ class CombatInstance():
                     else:
                         await self.embed_handler.log(self.entities[0].name, "Failed to Run")
                 elif choice == 9:
-                    await self.use_cooldown(self.loadouts[0].weapon[0].cooldown, 0)
+                    confirmed = await self.use_cooldown(self.loadouts[0].weapon[0].cooldown, 0)
+                    if not confirmed:
+                        self.view.attacks += 1
+                        await self.view.set_attack_button_based_on_attacks_left()
                 else:
                     confirmed = await self.use_cooldown(self.cooldowns[0][choice], 0)
                     if confirmed:
@@ -176,15 +180,14 @@ class CombatInstance():
     # errors out if the user has > 5 cooldowns,
     # attacks are also being placed on row 0
     def initialize_combat_view(self, loadout: Loadout):
-        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2, self.game_grid, 0, len(self.players), 2)
-        button = AttackButton(name=loadout.weapon[0].name, emoji="👊")
+        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 9, self.game_grid, 0, len(self.players), 2)
+        button = AttackButton(name=loadout.weapon[0].name, emoji="👊", rng=loadout.weapon[0].cooldown.stats.rng)
         view.attack_button = button
         view.add_item(button)
         for i, cd in enumerate(self.cooldowns[0]):
             button = CooldownButton(cd.name, i, cd.stats.rng, cd.emoji, row=0)
             view.cooldown_buttons.append(button)
             view.add_item(button)
-        view.enable_moves_if_in_range_disable_if_not()
         return view
 
     async def enemy_attack(self, enemy_index: int):
