@@ -24,6 +24,7 @@ class CombatInstance():
         self.game_grid = self.initialize_game_bounds(self.bounds[1], self.bounds[0])
         self.enemies:list[Enemy] = enemies
         self.players: list[PlayableCharacter] = players
+        self.loadouts = loadouts
         self.player_practicals: list[PlayerPracticalStats] = self.initialize_practical_stats(loadouts)
         self.entities: list[Entity] = self.initialize_entities()
         self.cooldowns: list[list[Cooldown]] = cooldowns
@@ -50,6 +51,8 @@ class CombatInstance():
                         return 0
                     else:
                         await self.embed_handler.log(self.entities[0].name, "Failed to Run")
+                elif choice == 9:
+                    await self.use_cooldown(self.loadouts[0].weapon[0].cooldown, 0)
                 else:
                     confirmed = await self.use_cooldown(self.cooldowns[0][choice], 0)
                     if confirmed:
@@ -79,6 +82,8 @@ class CombatInstance():
             entities = EntitiesInfo(self.entities, i, len(self.players), len(self.enemies))
             for j, cd in enumerate(cdlist):
                 self.cooldowns[i][j] = cd(entities=entities)
+            for loadout in self.loadouts:
+                loadout.weapon[0].cooldown.entities = entities
 
     def initialize_practical_stats(self, gear: list[Loadout]):
         practicals = []
@@ -171,11 +176,11 @@ class CombatInstance():
     # errors out if the user has > 5 cooldowns,
     # attacks are also being placed on row 0
     def initialize_combat_view(self, loadout: Loadout):
-        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2, self.game_grid, 0, len(self.players))
-        button = AttackButton(loadout.weapon.name, loadout.weapon.emoji)
+        view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, 2, self.game_grid, 0, len(self.players), 2)
+        button = AttackButton(name=loadout.weapon[0].name, emoji="👊")
         view.attack_button = button
         view.add_item(button)
-        for i, cd in enumerate(self.cooldowns[0], 1):
+        for i, cd in enumerate(self.cooldowns[0]):
             button = CooldownButton(cd.name, i, cd.stats.rng, cd.emoji, row=0)
             view.cooldown_buttons.append(button)
             view.add_item(button)
@@ -277,7 +282,7 @@ class Combat(commands.Cog):
 
         testwep = Greatsword()
 
-        loadout = Loadout(None, None, None, None, None, tuple())
+        loadout = Loadout(None, None, None, None, None, [Fists()])
 
         interaction = await self.send_testing_view(interaction)
         instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy])

@@ -111,7 +111,7 @@ class AttackButton(discord.ui.Button):
         super().__init__(style=discord.ButtonStyle.green, emoji=discord.PartialEmoji(name=emoji), label=name, row=0)
 
     async def callback(self, interaction):
-        self.view.choice = 0
+        self.view.choice = 9
         self.view.attacks -= 1
         await self.view.set_attack_button_based_on_attacks_left()
         await interaction.response.defer()
@@ -138,7 +138,7 @@ class CombatView(discord.ui.View):
         self.cooldown_used: bool = False
         self.attack_button: AttackButton = None
 
-    def set_attack_button_based_on_attacks_left(self):
+    async def set_attack_button_based_on_attacks_left(self):
         if self.attacks <= 0:
             self.attack_button.disabled = True
         else:
@@ -169,7 +169,7 @@ class CombatView(discord.ui.View):
 
     async def reset(self):
         self.moves = self.base_moves
-        self.attack = self.base_attacks
+        self.attacks = self.base_attacks
         await self.set_attack_button_based_on_attacks_left()
         self.forward_button.disabled = False
         self.back_button.disabled = False
