@@ -21,12 +21,13 @@ class CombatEmbedHandler():
         for entity in entities:
             self.embed.add_field(name=entity.name, value=f"hp: {entity.hp}", inline=True)
 
-    # this breaks with more than 2 players because of static insert location
+    # this breaks with more than 2 entities because of static insert location
     async def log(self, name: str, message: str):
         self.embed = self.embed.insert_field_at(-3, name=name, value=message, inline=False)
         self.logcount += 1
         self.trim()
         await self.fix_embed_players()
+        await self.interaction.edit_original_response(embed=self.embed)
 
     def trim(self):
         if self.logcount > 10:
@@ -37,7 +38,6 @@ class CombatEmbedHandler():
             entity = self.entities[-i]
             self.embed.set_field_at(-i, name=entity.name, value=f"hp: {entity.hp}")
         self.embed.set_field_at(-i - 1, value=self.stringify_game_grid(), name="Game Board", inline=False)
-        await self.interaction.edit_original_response(embed=self.embed)
 
     def stringify_game_grid(self):
         return '\n'.join(''.join(row) for row in self.game_board)
@@ -142,10 +142,8 @@ class CombatView(discord.ui.View):
     async def set_attack_button_based_on_attacks_left(self):
         enemies = self.entities[self.playercount:]
         has_enemy_in_range = any(self.enemy_in_range(enemy, self.player, self.attack_button.rng) for enemy in enemies)
-
         # Disable if out of attacks OR no enemies in range
         self.attack_button.disabled = (self.attacks <= 0 or not has_enemy_in_range)
-        await self.interaction.edit_original_response(view=self)
 
     def initialize_movement_buttons(self, bounds, board):
         self.forward_button = ForwardButton(bounds, self.entities, 0, board)
@@ -189,35 +187,25 @@ class CombatView(discord.ui.View):
             self.back_button.disabled = True
             self.up_button.disabled = True
             self.down_button.disabled = True
-            await self.interaction.edit_original_response(view=self)
 
     async def adjust_buttons(self):
-        changes_made = await self.enable_moves_if_in_range_disable_if_not()
-
-        if changes_made:
-            await self.interaction.edit_original_response(view=self)
+        await self.enable_moves_if_in_range_disable_if_not()
 
     async def enable_moves_if_in_range_disable_if_not(self):
-        changes_made = False
         enemies = self.entities[self.playercount:]
 
         for button in filter(lambda x: x.disabled, self.cooldown_buttons):
             if any(self.enemy_in_range(enemy, self.player, button.rng) for enemy in enemies):
                 button.disabled = False
-                changes_made = True
 
         for button in filter(lambda x: not x.disabled, self.cooldown_buttons):
             if all(not self.enemy_in_range(enemy, self.player, button.rng) for enemy in enemies):
                 button.disabled = True
-                changes_made = True
 
         if any(self.enemy_in_range(enemy, self.player, self.attack_button.rng) for enemy in enemies):
             await self.set_attack_button_based_on_attacks_left()
         else:
             self.attack_button.disabled = True
-            changes_made = True
-
-        return changes_made
 
     def enemy_in_range(self, enemy, player, max_range):
         horizontal_distance = abs(enemy.position[0] - player.position[0])
@@ -252,6 +240,7 @@ class ForwardButton(MovementButton):
             await self.view.embed_handler.fix_embed_players()
             if self.view.attacks > 0:
                 await self.view.set_attack_button_based_on_attacks_left()
+            await self.view.interaction.edit_original_response(view=self.view, embed=self.view.embed_handler.embed)
         await interaction.response.defer()  # ▶ ◀
 
 
@@ -272,6 +261,8 @@ class BackButton(MovementButton):
             if self.view.attacks > 0:
                 await self.view.set_attack_button_based_on_attacks_left()
             await self.view.embed_handler.fix_embed_players()
+            await self.view.interaction.edit_original_response(view=self.view, embed=self.view.embed_handler.embed)
+
         await interaction.response.defer()
 
 
@@ -292,6 +283,8 @@ class UpButton(MovementButton):
             if self.view.attacks > 0:
                 await self.view.set_attack_button_based_on_attacks_left()
             await self.view.embed_handler.fix_embed_players()
+            await self.view.interaction.edit_original_response(view=self.view, embed=self.view.embed_handler.embed)
+
         await interaction.response.defer()
 
 
@@ -312,5 +305,7 @@ class DownButton(MovementButton):
             if self.view.attacks > 0:
                 await self.view.set_attack_button_based_on_attacks_left()
             await self.view.embed_handler.fix_embed_players()
+            await self.view.interaction.edit_original_response(view=self.view, embed=self.view.embed_handler.embed)
+
         await interaction.response.defer()
 

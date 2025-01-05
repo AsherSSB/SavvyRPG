@@ -160,6 +160,7 @@ class CombatInstance():
         if not self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
             self.move_toward_player(entities, enemy_index, 0)
             await self.embed_handler.fix_embed_players()
+            await self.interaction.edit_original_response(embed=self.embed_handler.embed)
 
         if self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
             message = cd.attack(0)
