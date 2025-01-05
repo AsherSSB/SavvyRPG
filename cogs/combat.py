@@ -16,7 +16,6 @@ from items.weapons import Fists, Greatsword
 BASE_TILE = ":green_square:"
 
 
-# TODO: loadouts should include weapons which are initialized as cooldowns
 class CombatInstance():
     def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter],
                  loadouts:list[Loadout], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
@@ -125,6 +124,7 @@ class CombatInstance():
         for i, player in enumerate(players):
             for cooldown in all_players_cooldowns[i]:
                 cooldown.scale_damage(player=player)
+            self.loadouts[i].weapon[0].cooldown.scale_damage(player=player)
 
     async def use_cooldown(self, cooldown:Cooldown, playerindex):
         view = EnemySelectView()
@@ -272,7 +272,7 @@ class PracticalStatsCalculator():
         critchance = round(critchance + player_crit, 2)
         if loadout.feet is not None:
             critchance = round(critchance + loadout.feet.critchance, 2)
-        if loadout.hea is not None:
+        if loadout.head is not None:
             critchance = round(critchance + loadout.head.critchance, 2)
         return critchance
 
