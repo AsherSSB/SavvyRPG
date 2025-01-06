@@ -67,8 +67,7 @@ class CombatInstance():
                     if confirmed:
                         await self.view.disable_cooldowns(True)
 
-                # TODO: MUST be changed when including multiple enemies
-                # enemy is dead
+                # all enemies are dead
                 if all(enemy.hp <= 0 for enemy in self.entities[len(self.players):]):
                     return 1
 
@@ -79,8 +78,8 @@ class CombatInstance():
             await self.interaction.edit_original_response(view=None)
             await self.embed_handler.log(self.entities[0].name, "Ended their turn")
 
-            # TODO: MUST allow all enemies to attack
-            await self.enemy_attack(-1)
+            for i in range(1, len(self.enemies) + 1):
+                await self.enemy_attack(-i)
             # player is dead
             if self.entities[0].hp <= 0:
                 return -1
