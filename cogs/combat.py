@@ -17,6 +17,7 @@ from custom.combat.enemies import TrainingDummy, Wolf, Bandit, Skeleton, DarkMag
 BASE_TILE = ":green_square:"
 
 
+# TODO: add enemy attack names to log
 class CombatInstance():
     def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter],
                  loadouts:list[Loadout], cooldowns:list[list[Cooldown]], enemies:list[Enemy]):
@@ -369,7 +370,9 @@ class Combat(commands.Cog):
         else:
             await interaction.edit_original_response(content=f"You Defeated {enemy.name}!", view=None)
 
-        await asyncio.sleep(8.0)
+        await asyncio.sleep(4.0)
+        await interaction.edit_original_response(content=f"Rewards\nGold: {enemy.drops.gold}\nXP: {enemy.drops.xp}", embed=None)
+        await asyncio.sleep(4.0)
         await interaction.delete_original_response()
 
     async def send_testing_view(self, interaction:discord.Interaction):
