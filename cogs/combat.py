@@ -179,6 +179,7 @@ class CombatInstance():
 
         moves = self.enemies[enemy_index].stats.moves
         in_range = any(self.enemy_in_range(entities[enemy_index], player, cd.stats.rng) for player in entities[:len(self.players)])
+        # INDEX of the closest player in self.entities relative to enemy attacking
         while moves > 0 and not in_range:
             closest_player = self.get_closest_target(entities[enemy_index], entities[:len(self.players)])
             self.move_toward_player(entities, enemy_index, closest_player)
@@ -186,10 +187,10 @@ class CombatInstance():
             await self.interaction.edit_original_response(embed=self.embed_handler.embed)
             moves -= 1
 
-        # TODO: magic number
-        if self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
-            # TODO: magic number
-            message = cd.attack(0)
+        in_range = any(self.enemy_in_range(entities[enemy_index], player, cd.stats.rng) for player in entities[:len(self.players)])
+        if in_range:
+            closest_player = self.get_closest_target(entities[enemy_index], entities[:len(self.players)])
+            message = cd.attack(closest_player)
             await self.embed_handler.log(entities[enemy_index].name, message)
 
     def get_closest_target(self, enemy: Entity, players: list[Entity]):
@@ -211,6 +212,7 @@ class CombatInstance():
         # Check if both distances are within the maximum range
         return horizontal_distance <= max_range and vertical_distance <= max_range
 
+    # ALWAYS moves toward the closest player in proximity
     def move_toward_player(self, entities, enemy_index, player_index):
         enemy = entities[enemy_index]
         player = entities[player_index]
