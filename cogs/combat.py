@@ -89,8 +89,8 @@ class CombatInstance():
 
     def scale_cooldown_set_with_practicals(self, cds: list[Cooldown], practicals: PlayerPracticalStats):
         for cd in cds:
-            cd.stats.critchance = round(cd.stats.critchance + practicals.critchance, 2)
-            cd.stats.critmult = round(cd.stats.critmult + practicals.critmult, 2)
+            cd.stats.cc = round(cd.stats.cc + practicals.critchance, 2)
+            cd.stats.cm = round(cd.stats.cm + practicals.critmult, 2)
 
     def pass_entities_to_player_cooldowns(self):
         for i, cdlist in enumerate(self.cooldowns):
