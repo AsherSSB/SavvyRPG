@@ -150,15 +150,13 @@ class CombatInstance():
 
         view.add_item(EnemySelectMenu([enemy.name for enemy in self.enemies]))
         await self.interaction.edit_original_response(view=view)
-        # TODO: make sure view.choice accurately returns target index
         await view.wait()
 
         await self.interaction.edit_original_response(view=self.view)
         if view.choice == 0:
             return False
         else:
-            # TODO: cooldown.attack MUST use the index of chosen enemy
-            await self.embed_handler.log(self.players[playerindex].name, cooldown.attack([-1]))
+            await self.embed_handler.log(self.players[playerindex].name, cooldown.attack([-view.choice]))
             return True
 
     # currently initializes all cooldowns on row 0
