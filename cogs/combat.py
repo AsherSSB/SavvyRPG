@@ -164,8 +164,7 @@ class CombatInstance():
     # attacks are also being placed on row 0
     def initialize_combat_view(self, loadout: Loadout):
         view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, self.player_practicals[0].moves, self.game_grid, 0, len(self.players), self.player_practicals[0].attacks)
-        # TODO: emoji should match player weapon emoji
-        button = AttackButton(name=loadout.weapon[0].name, emoji="👊", rng=loadout.weapon[0].cooldown.stats.rng)
+        button = AttackButton(name=loadout.weapon[0].name, emoji=loadout.weapon[0].emoji, rng=loadout.weapon[0].cooldown.stats.rng)
         view.attack_button = button
         view.add_item(button)
         for i, cd in enumerate(self.cooldowns[0]):
