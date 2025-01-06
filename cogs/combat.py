@@ -178,11 +178,10 @@ class CombatInstance():
         cd: EnemyCooldown = self.cooldowns[-1][enemy_index]
 
         moves = self.enemies[enemy_index].stats.moves
-        # TODO: entities indexed with magic number
         in_range = any(self.enemy_in_range(entities[enemy_index], player, cd.stats.rng) for player in entities[:len(self.players)])
         while moves > 0 and not in_range:
-            # TODO: magic number
-            self.move_toward_player(entities, enemy_index, 0)
+            closest_player = self.get_closest_target(entities[enemy_index], entities[:len(self.players)])
+            self.move_toward_player(entities, enemy_index, closest_player)
             await self.embed_handler.fix_embed_players()
             await self.interaction.edit_original_response(embed=self.embed_handler.embed)
             moves -= 1
@@ -192,6 +191,19 @@ class CombatInstance():
             # TODO: magic number
             message = cd.attack(0)
             await self.embed_handler.log(entities[enemy_index].name, message)
+
+    def get_closest_target(self, enemy: Entity, players: list[Entity]):
+        closest: int
+        distance = 1000
+        for i, player in enumerate(players):
+            horizontal_distance = abs(enemy.position[0] - player.position[0])
+            vertical_distance = abs(enemy.position[1] - player.position[1])
+            if horizontal_distance + vertical_distance < distance:
+                distance = horizontal_distance + vertical_distance
+                closest = i
+
+        # returns the INDEX of the closest player in self.entities
+        return closest
 
     def enemy_in_range(self, enemy, player, max_range):
         horizontal_distance = abs(enemy.position[0] - player.position[0])
