@@ -177,11 +177,10 @@ class CombatInstance():
         entities = self.entities
         cd: EnemyCooldown = self.cooldowns[-1][enemy_index]
 
-        # TODO: CHECK TO MAKE SURE self.enemies is initialized to index the same as self.entities
-        #       could possibly lead to enemies having each other's move count
         moves = self.enemies[enemy_index].stats.moves
         # TODO: entities indexed with magic number
-        while moves > 0 and not self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
+        in_range = any(self.enemy_in_range(entities[enemy_index], player, cd.stats.rng) for player in entities[:len(self.players)])
+        while moves > 0 and not in_range:
             # TODO: magic number
             self.move_toward_player(entities, enemy_index, 0)
             await self.embed_handler.fix_embed_players()
