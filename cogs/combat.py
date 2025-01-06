@@ -176,12 +176,16 @@ class CombatInstance():
         # TODO: magic indexing needs to be replaced with correct index for enemy attacking
         cd: EnemyCooldown = self.cooldowns[-1][-1]
 
+        # TODO: CHECK TO MAKE SURE self.enemies is initialized to index the same as self.entities
+        #       could possibly lead to enemies having each other's move counts
+        moves = self.enemies[enemy_index].stats.moves
         # TODO: entities indexed with magic number
-        if not self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
+        while moves > 0 and not self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
             # TODO: magic number
             self.move_toward_player(entities, enemy_index, 0)
             await self.embed_handler.fix_embed_players()
             await self.interaction.edit_original_response(embed=self.embed_handler.embed)
+            moves -= 1
 
         # TODO: magic number
         if self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):

@@ -36,6 +36,7 @@ class NPCStatTable():
     hp: int
     resist: float
     dodge: float
+    moves: int
 
 
 @dataclass

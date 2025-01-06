@@ -7,7 +7,7 @@ from custom.combat.enemies import TrainingDummy, Wolf, Skeleton, Bandit, DarkMag
 from custom.gear import Loadout
 from custom.combat.barbarian.cooldowns import Cleave, Execute
 import asyncio
-from custom.combat import CombatInstance
+from cogs.combat import CombatInstance
 
 
 class Dungeon(commands.Cog):
