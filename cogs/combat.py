@@ -69,7 +69,7 @@ class CombatInstance():
 
                 # TODO: MUST be changed when including multiple enemies
                 # enemy is dead
-                if self.entities[-1].hp <= 0:
+                if all(enemy.hp <= 0 for enemy in self.entities[len(self.players):]):
                     return 1
 
                 self.view.event = asyncio.Event()
@@ -177,7 +177,7 @@ class CombatInstance():
         cd: EnemyCooldown = self.cooldowns[-1][-1]
 
         # TODO: CHECK TO MAKE SURE self.enemies is initialized to index the same as self.entities
-        #       could possibly lead to enemies having each other's move counts
+        #       could possibly lead to enemies having each other's move count
         moves = self.enemies[enemy_index].stats.moves
         # TODO: entities indexed with magic number
         while moves > 0 and not self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
