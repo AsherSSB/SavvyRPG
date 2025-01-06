@@ -12,6 +12,7 @@ from custom.combat.entities import Entity, NPCStatTable, Drops, EntitiesInfo, Pl
 from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable
 from custom.combat.barbarian.cooldowns import Execute, Cleave
 from items.weapons import Fists, Greatsword
+from custom.combat.enemies import TrainingDummy, Wolf, Bandit, Skeleton, DarkMage, Golem
 
 BASE_TILE = ":green_square:"
 
@@ -353,16 +354,10 @@ class Combat(commands.Cog):
         self.pc:PlayableCharacter = PlayableCharacter(
             "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
 
-        enemy:Enemy = Enemy("Training Dummy",
-                            NPCStatTable(120, 0.0, 0.0),
-                            Drops(6, 9, None),
-                            EnemyCooldown(name="Smack", stats=WeaponStatTable(
-                                dmg=1, spd=3, rng=1, cc=0.2, cm=2.0, acc=0.9, scalar=0.1, stat="str"),
-                            ), emoji=":dizzy_face:")
-
         testwep = Greatsword()
+        enemy = Wolf()
 
-        loadout = Loadout(None, None, None, None, None, [Fists()])
+        loadout = Loadout(None, None, None, None, None, [testwep])
 
         interaction = await self.send_testing_view(interaction)
         instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy])
