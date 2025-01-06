@@ -65,7 +65,7 @@ class EnemyCooldown(Cooldown):
         hit = f"crit {self.acted}" if mult > 1.0 else self.acted
         dmg = int(self.stats.dmg * mult)
         self.entities.lst[playerindex].hp -= dmg
-        return f"{hit} {self.entities.lst[playerindex].name} for {dmg} damage"
+        return f"{hit} {self.entities.lst[playerindex].name} {self.name} for {dmg} damage"
 
 
 class SingleTargetAttack(Cooldown):
