@@ -67,6 +67,7 @@ class CombatInstance():
                     if confirmed:
                         await self.view.disable_cooldowns(True)
 
+                # TODO: MUST be changed when including multiple enemies
                 # enemy is dead
                 if self.entities[-1].hp <= 0:
                     return 1
@@ -78,6 +79,7 @@ class CombatInstance():
             await self.interaction.edit_original_response(view=None)
             await self.embed_handler.log(self.entities[0].name, "Ended their turn")
 
+            # TODO: MUST allow all enemies to attack
             await self.enemy_attack(-1)
             # player is dead
             if self.entities[0].hp <= 0:
@@ -143,12 +145,14 @@ class CombatInstance():
         view = EnemySelectView()
         view.add_item(EnemySelectMenu([enemy.name for enemy in self.enemies]))
         await self.interaction.edit_original_response(view=view)
+        # TODO: make sure view.choice accurately returns target index
         await view.wait()
 
         await self.interaction.edit_original_response(view=self.view)
         if view.choice == 0:
             return False
         else:
+            # TODO: cooldown.attack MUST use the index of chosen enemy
             await self.embed_handler.log(self.players[playerindex].name, cooldown.attack([-1]))
             return True
 
@@ -157,6 +161,7 @@ class CombatInstance():
     # attacks are also being placed on row 0
     def initialize_combat_view(self, loadout: Loadout):
         view = CombatView(self.interaction, self.embed_handler, self.entities, self.bounds, self.player_practicals[0].moves, self.game_grid, 0, len(self.players), self.player_practicals[0].attacks)
+        # TODO: emoji should match player weapon emoji
         button = AttackButton(name=loadout.weapon[0].name, emoji="👊", rng=loadout.weapon[0].cooldown.stats.rng)
         view.attack_button = button
         view.add_item(button)
@@ -168,14 +173,19 @@ class CombatInstance():
 
     async def enemy_attack(self, enemy_index: int):
         entities = self.entities
+        # TODO: magic indexing needs to be replaced with correct index for enemy attacking
         cd: EnemyCooldown = self.cooldowns[-1][-1]
 
+        # TODO: entities indexed with magic number
         if not self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
+            # TODO: magic number
             self.move_toward_player(entities, enemy_index, 0)
             await self.embed_handler.fix_embed_players()
             await self.interaction.edit_original_response(embed=self.embed_handler.embed)
 
+        # TODO: magic number
         if self.enemy_in_range(entities[enemy_index], entities[0], cd.stats.rng):
+            # TODO: magic number
             message = cd.attack(0)
             await self.embed_handler.log(entities[enemy_index].name, message)
 
@@ -220,6 +230,7 @@ class CombatInstance():
         prob = self.calculate_run_probability(self.players[0])
         return random.random() < prob
 
+    # TODO: bro...
     def calculate_run_probability(self, player: PlayableCharacter):
         # advantage = self.players[playerindex] - self.enemy.stats.speed
         # return 0.5 + 0.05 * advantage
