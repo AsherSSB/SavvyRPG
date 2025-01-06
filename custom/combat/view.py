@@ -23,7 +23,8 @@ class CombatEmbedHandler():
 
     # this breaks with more than 2 entities because of static insert location
     async def log(self, name: str, message: str):
-        self.embed = self.embed.insert_field_at(-3, name=name, value=message, inline=False)
+        # + 2 for the board and for negetive indexing being one based
+        self.embed = self.embed.insert_field_at(-(len(self.entities) + 1), name=name, value=message, inline=False)
         self.logcount += 1
         self.trim()
         await self.fix_embed_players()

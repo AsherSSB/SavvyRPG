@@ -76,6 +76,7 @@ class CombatInstance():
             await self.interaction.edit_original_response(view=None)
             await self.embed_handler.log(self.entities[0].name, "Ended their turn")
 
+            # TODO: enemies should only attack if their HP is above 0
             for i in range(1, len(self.enemies) + 1):
                 await self.enemy_attack(-i)
             # player is dead
@@ -146,7 +147,7 @@ class CombatInstance():
             if self.enemy_in_range(self.entities[-i], self.entities[playerindex], cooldown.stats.rng):
                 enemies.append(self.entities[-i])
 
-        view.add_item(EnemySelectMenu([enemy.name for enemy in self.enemies]))
+        view.add_item(EnemySelectMenu([enemy.name for enemy in enemies]))
         await self.interaction.edit_original_response(view=view)
         await view.wait()
 
@@ -385,11 +386,12 @@ class Combat(commands.Cog):
 
         testwep = Greatsword()
         enemy = Wolf()
+        enemy2 = TrainingDummy()
 
         loadout = Loadout(None, None, None, None, None, [testwep])
 
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy])
+        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy2, enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
