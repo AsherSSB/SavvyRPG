@@ -175,8 +175,7 @@ class CombatInstance():
 
     async def enemy_attack(self, enemy_index: int):
         entities = self.entities
-        # TODO: magic indexing needs to be replaced with correct index for enemy attacking
-        cd: EnemyCooldown = self.cooldowns[-1][-1]
+        cd: EnemyCooldown = self.cooldowns[-1][enemy_index]
 
         # TODO: CHECK TO MAKE SURE self.enemies is initialized to index the same as self.entities
         #       could possibly lead to enemies having each other's move count
