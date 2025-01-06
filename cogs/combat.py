@@ -17,6 +17,8 @@ from custom.combat.enemies import TrainingDummy, Wolf, Bandit, Skeleton, DarkMag
 BASE_TILE = ":green_square:"
 
 
+# TODO: allow multiple enemies in 1 combat instance
+# TODO: enemies should have speed stat which changes amount of times they can move
 # TODO: add enemy attack names to log
 class CombatInstance():
     def __init__(self, interaction:discord.Interaction, players:list[PlayableCharacter],
