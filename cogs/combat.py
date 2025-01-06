@@ -142,6 +142,12 @@ class CombatInstance():
 
     async def use_cooldown(self, cooldown:Cooldown, playerindex):
         view = EnemySelectView()
+
+        enemies = []
+        for i in range(1, len(self.enemies) + 1):
+            if self.enemy_in_range(self.entities[-i], self.entities[playerindex], cooldown.stats.rng):
+                enemies.append(self.entities[-i])
+
         view.add_item(EnemySelectMenu([enemy.name for enemy in self.enemies]))
         await self.interaction.edit_original_response(view=view)
         # TODO: make sure view.choice accurately returns target index

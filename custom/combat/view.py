@@ -70,7 +70,7 @@ class EnemySelectMenu(discord.ui.Select):
                          max_values=max_values, options=options, row=0)
 
     def initialize_options(self, enemies: list[str]):
-        return [EnemySelectOption(enemy, i) for i, enemy in enumerate(enemies, 1)]
+        return [EnemySelectOption(enemy, i) for i, enemy in enumerate(enemies[::-1], 1)]
 
     async def callback(self, interaction: discord.Interaction):
         selected_option = int(self.values[0])  # Convert the selected value back to integer
