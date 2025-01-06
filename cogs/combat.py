@@ -31,6 +31,7 @@ class CombatInstance():
         self.cooldowns: list[list[Cooldown]] = cooldowns
         self.pass_entities_to_player_cooldowns()
         self.scale_cooldown_damages(self.cooldowns, self.players)
+        self.scale_all_cooldowns_with_practicals()
         self.initialize_enemy_cooldowns()
         self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
         # this only works for singleplayer
@@ -81,6 +82,15 @@ class CombatInstance():
             # take away player view
             # reset view event
             await self.view.reset()
+
+    def scale_all_cooldowns_with_practicals(self):
+        for i, practicals in enumerate(self.player_practicals):
+            self.scale_cooldown_set_with_practicals(self.cooldowns[i], practicals)
+
+    def scale_cooldown_set_with_practicals(self, cds: list[Cooldown], practicals: PlayerPracticalStats):
+        for cd in cds:
+            cd.stats.critchance = round(cd.stats.critchance + practicals.critchance, 2)
+            cd.stats.critmult = round(cd.stats.critmult + practicals.critmult, 2)
 
     def pass_entities_to_player_cooldowns(self):
         for i, cdlist in enumerate(self.cooldowns):
