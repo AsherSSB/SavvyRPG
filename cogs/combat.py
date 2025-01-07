@@ -144,6 +144,7 @@ class CombatInstance():
                 cooldown.scale_damage(player=player)
             self.loadouts[i].weapon[0].cooldown.scale_damage(player=player)
 
+    # TODO: should check cooldown type and allow multi-target selection or no target selection
     async def use_cooldown(self, cooldown:Cooldown, playerindex, alive_enemies: list[int]):
         view = EnemySelectView()
 
@@ -259,6 +260,7 @@ class CombatInstance():
             enemy.position[0] = new_pos[0]
             self.game_grid[enemy.position[1]][enemy.position[0]] = enemy.emoji
             return
+        # TODO: this should new_pos += 1 if valid
 
     # always uses player 0 because run only works in single player
     def try_run(self):
