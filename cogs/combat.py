@@ -40,6 +40,7 @@ class CombatInstance():
 
     async def combat(self):
         choice = 0
+        enemies_alive = list(range(-1, -len(self.enemies) - 1, -1))
         await self.view.enable_moves_if_in_range_disable_if_not()
         await self.interaction.response.send_message("Combat", view=self.view, embed=self.embed_handler.embed)
         # general combat loop
@@ -56,12 +57,12 @@ class CombatInstance():
                     else:
                         await self.embed_handler.log(self.entities[0].name, "Failed to Run")
                 elif choice == 9:
-                    confirmed = await self.use_cooldown(self.loadouts[0].weapon[0].cooldown, 0)
+                    confirmed = await self.use_cooldown(self.loadouts[0].weapon[0].cooldown, 0, enemies_alive)
                     if not confirmed:
                         self.view.attacks += 1
                         await self.view.set_attack_button_based_on_attacks_left()
                 else:
-                    confirmed = await self.use_cooldown(self.cooldowns[0][choice], 0)
+                    confirmed = await self.use_cooldown(self.cooldowns[0][choice], 0, enemies_alive)
                     if confirmed:
                         await self.view.disable_cooldowns(True)
 
@@ -76,9 +77,13 @@ class CombatInstance():
             await self.interaction.edit_original_response(view=None)
             await self.embed_handler.log(self.entities[0].name, "Ended their turn")
 
+            for enemy_index in enemies_alive:
+                if self.entities[enemy_index].hp <= 0:
+                    enemies_alive.remove(enemy_index)
+
             # TODO: enemies should only attack if their HP is above 0
-            for i in range(1, len(self.enemies) + 1):
-                await self.enemy_attack(-i)
+            for i in enemies_alive:
+                await self.enemy_attack(i)
             # player is dead
             if self.entities[0].hp <= 0:
                 return -1
@@ -139,15 +144,16 @@ class CombatInstance():
                 cooldown.scale_damage(player=player)
             self.loadouts[i].weapon[0].cooldown.scale_damage(player=player)
 
-    async def use_cooldown(self, cooldown:Cooldown, playerindex):
+    async def use_cooldown(self, cooldown:Cooldown, playerindex, alive_enemies: list[int]):
         view = EnemySelectView()
 
+        # TODO: should only include enemies who are alive
         enemies = []
-        for i in range(1, len(self.enemies) + 1):
-            if self.enemy_in_range(self.entities[-i], self.entities[playerindex], cooldown.stats.rng):
-                enemies.append(self.entities[-i])
+        for i in alive_enemies:
+            if self.enemy_in_range(self.entities[i], self.entities[playerindex], cooldown.stats.rng):
+                enemies.append((i, self.entities[i].name))
 
-        view.add_item(EnemySelectMenu([enemy.name for enemy in enemies]))
+        view.add_item(EnemySelectMenu(enemies=enemies))
         await self.interaction.edit_original_response(view=view)
         await view.wait()
 
@@ -155,7 +161,7 @@ class CombatInstance():
         if view.choice == 0:
             return False
         else:
-            await self.embed_handler.log(self.players[playerindex].name, cooldown.attack([-view.choice]))
+            await self.embed_handler.log(self.players[playerindex].name, cooldown.attack([view.choice]))
             return True
 
     # currently initializes all cooldowns on row 0
@@ -172,6 +178,7 @@ class CombatInstance():
             view.add_item(button)
         return view
 
+    # TODO: for some reason enemies still move even if they are in range??
     async def enemy_attack(self, enemy_index: int):
         entities = self.entities
         cd: EnemyCooldown = self.cooldowns[-1][enemy_index]

@@ -70,8 +70,8 @@ class EnemySelectMenu(discord.ui.Select):
         super().__init__(placeholder="Select Target", min_values=min_values,
                          max_values=max_values, options=options, row=0)
 
-    def initialize_options(self, enemies: list[str]):
-        return [EnemySelectOption(enemy, i) for i, enemy in enumerate(enemies[::-1], 1)]
+    def initialize_options(self, enemies: list[tuple[int, str]]):
+        return [EnemySelectOption(enemy, i) for i, enemy in enemies]
 
     async def callback(self, interaction: discord.Interaction):
         selected_option = int(self.values[0])  # Convert the selected value back to integer
@@ -142,7 +142,7 @@ class CombatView(discord.ui.View):
 
     async def set_attack_button_based_on_attacks_left(self):
         enemies = self.entities[self.playercount:]
-        has_enemy_in_range = any(self.enemy_in_range(enemy, self.player, self.attack_button.rng) for enemy in enemies)
+        has_enemy_in_range = any(self.enemy_in_range(enemy, self.player, self.attack_button.rng) and enemy.hp > 0 for enemy in enemies)
         # Disable if out of attacks OR no enemies in range
         self.attack_button.disabled = (self.attacks <= 0 or not has_enemy_in_range)
 
@@ -196,11 +196,11 @@ class CombatView(discord.ui.View):
         enemies = self.entities[self.playercount:]
 
         for button in filter(lambda x: x.disabled, self.cooldown_buttons):
-            if any(self.enemy_in_range(enemy, self.player, button.rng) for enemy in enemies):
+            if any(self.enemy_in_range(enemy, self.player, button.rng) and enemy.hp > 0 for enemy in enemies):
                 button.disabled = False
 
         for button in filter(lambda x: not x.disabled, self.cooldown_buttons):
-            if all(not self.enemy_in_range(enemy, self.player, button.rng) for enemy in enemies):
+            if all(not self.enemy_in_range(enemy, self.player, button.rng) or enemy.hp <= 0 for enemy in enemies):
                 button.disabled = True
 
         if any(self.enemy_in_range(enemy, self.player, self.attack_button.rng) for enemy in enemies):
