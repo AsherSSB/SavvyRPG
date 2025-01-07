@@ -248,6 +248,17 @@ class CombatInstance():
             self.game_grid[enemy.position[1]][enemy.position[0]] = BASE_TILE
             enemy.position[1] = new_pos[1]
             self.game_grid[enemy.position[1]][enemy.position[0]] = enemy.emoji
+            return
+
+        new_post = enemy.position.copy()
+        new_pos[0] += -1 if diff[0] < 0 else 1
+        if (0 <= new_pos[0] < len(self.game_grid[0]) and
+            self.game_grid[enemy.position[1]][new_pos[0]] == BASE_TILE):
+            # Valid horizontal move
+            self.game_grid[enemy.position[1]][enemy.position[0]] = BASE_TILE
+            enemy.position[0] = new_pos[0]
+            self.game_grid[enemy.position[1]][enemy.position[0]] = enemy.emoji
+            return
 
     # always uses player 0 because run only works in single player
     def try_run(self):
@@ -394,11 +405,12 @@ class Combat(commands.Cog):
         testwep = Greatsword()
         enemy = Wolf()
         enemy2 = TrainingDummy()
+        enemy3 = TrainingDummy()
 
         loadout = Loadout(None, None, None, None, None, [testwep])
 
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy2, enemy])
+        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy2, enemy3, enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
