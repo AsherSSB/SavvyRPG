@@ -132,7 +132,8 @@ class CombatView(discord.ui.View):
         self.event = asyncio.Event()
         self.choice:int
         self.interaction = interaction
-        self.add_item(RunButton())
+        if self.playercount == 1:
+            self.add_item(RunButton())
         self.base_moves = moves
         self.moves = moves
         self.initialize_movement_buttons(bounds, board)
