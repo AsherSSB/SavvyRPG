@@ -181,7 +181,6 @@ class CombatInstance():
             view.add_item(button)
         return view
 
-    # TODO: for some reason enemies still move even if they are in range??
     async def enemy_attack(self, enemy_index: int):
         entities = self.entities
         cd: EnemyCooldown = self.cooldowns[-1][enemy_index]
@@ -192,6 +191,7 @@ class CombatInstance():
         while moves > 0 and not in_range:
             closest_player = self.get_closest_target(entities[enemy_index], entities[:len(self.players)])
             self.move_toward_player(entities, enemy_index, closest_player)
+            in_range = any(self.enemy_in_range(entities[enemy_index], player, cd.stats.rng) for player in entities[:len(self.players)])
             await self.embed_handler.fix_embed_players()
             await self.interaction.edit_original_response(embed=self.embed_handler.embed)
             moves -= 1
@@ -431,9 +431,9 @@ class Combat(commands.Cog):
             await interaction.edit_original_response(content="You Successfully Ran.", view=None)
         else:
             await interaction.edit_original_response(content=f"You Defeated {enemy.name}!", view=None)
+            await asyncio.sleep(4.0)
+            await interaction.edit_original_response(content=f"Rewards\nGold: {enemy.drops.gold}\nXP: {enemy.drops.xp}", embed=None)
 
-        await asyncio.sleep(4.0)
-        await interaction.edit_original_response(content=f"Rewards\nGold: {enemy.drops.gold}\nXP: {enemy.drops.xp}", embed=None)
         await asyncio.sleep(4.0)
         await interaction.delete_original_response()
 
