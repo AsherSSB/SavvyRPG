@@ -48,7 +48,7 @@ class Cooldown():
             self.stats.dmg = int(self.stats.dmg * (1 + self.stats.scalar * (playerstats - 10)))
 
     # needs to be defined in child classes
-    def attack(self, target_indexes: set[int]):
+    def attack(self, target_indexes: list[int]):
         pass
 
 
@@ -72,7 +72,7 @@ class SingleTargetAttack(Cooldown):
     def __init__(self, name, emoji, stats, acted, entities):
         super().__init__(name, emoji, stats, self.attack, acted, entities=entities)
 
-    def attack(self, target_indexes: tuple[int]) -> str:
+    def attack(self, target_indexes: list[int]) -> str:
         enemy = self.entities.lst[target_indexes[0]]
         if self.miss():
             return f"missed {self.name}"
@@ -89,7 +89,7 @@ class AOEAttack(Cooldown):
     def __init__(self, name, emoji, stats, acted, entities):
         super().__init__(name, emoji, stats, self.attack, acted, entities=entities)
 
-    def attack(self, target_indexes: tuple[int]):
+    def attack(self, target_indexes: list[int]):
         entities = [self.entities.lst[index] for index in target_indexes]
         message = self.name
         for entity in entities:

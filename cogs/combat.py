@@ -9,7 +9,7 @@ from custom.gear import Gear, Loadout
 from custom.combat.enemy import Enemy
 from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, EnemySelectView, EnemySelectMenu, AttackButton
 from custom.combat.entities import Entity, NPCStatTable, Drops, EntitiesInfo, PlayerPracticalStats
-from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable
+from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable, AOEAttack
 from custom.combat.barbarian.cooldowns import Execute, Cleave
 from items.weapons import Fists, Greatsword
 from custom.combat.enemies import TrainingDummy, Wolf, Bandit, Skeleton, DarkMage, Golem
@@ -152,7 +152,12 @@ class CombatInstance():
             if self.enemy_in_range(self.entities[i], self.entities[playerindex], cooldown.stats.rng):
                 enemies.append((i, self.entities[i].name))
 
-        view.add_item(EnemySelectMenu(enemies=enemies))
+        if isinstance(cooldown, AOEAttack):
+            maxselect = len(enemies)
+        else:
+            maxselect = 1
+
+        view.add_item(EnemySelectMenu(enemies=enemies, max_values=maxselect))
         await self.interaction.edit_original_response(view=view)
         await view.wait()
 
@@ -160,7 +165,7 @@ class CombatInstance():
         if view.choice == 0:
             return False
         else:
-            await self.embed_handler.log(self.players[playerindex].name, cooldown.attack([view.choice]))
+            await self.embed_handler.log(self.players[playerindex].name, cooldown.attack(view.choice))
             return True
 
     # currently initializes all cooldowns on row 0

@@ -74,8 +74,7 @@ class EnemySelectMenu(discord.ui.Select):
         return [EnemySelectOption(enemy, i) for i, enemy in enemies]
 
     async def callback(self, interaction: discord.Interaction):
-        selected_option = int(self.values[0])  # Convert the selected value back to integer
-        self.view.choice = selected_option
+        self.view.choice = [int(value) for value in self.values]
         await interaction.response.defer()
         self.view.event.set()
 

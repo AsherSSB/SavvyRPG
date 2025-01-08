@@ -16,7 +16,7 @@ class TrainingDummy(Enemy):
 class Wolf(Enemy):
     def __init__(self):
         self.name = "Wolf"
-        self.stats = NPCStatTable(80, 0.1, 0.2, 3)  # Less HP but high dodge
+        self.stats = NPCStatTable(80, 0.1, 0.15, 3)  # Less HP but high dodgeclass wolf
         self.drops = Drops(8, 12, None)
         self.attack = EnemyCooldown(name="Bite", stats=WeaponStatTable(
             dmg=8, spd=4, rng=1, cc=0.15, cm=1.8, acc=0.85, scalar=0.15, stat="str"))
