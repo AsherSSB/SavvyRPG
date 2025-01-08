@@ -42,7 +42,7 @@ class Execute(Cooldown):
         super().__init__(name="Execute", emoji="⚔", stats=stats, active=self.attack, acted="Executed", entities=entities)
         self.maxhps = [entity.hp for entity in entities.lst]
 
-    def attack(self, target_indexes: tuple[int]):
+    def attack(self, target_indexes: list[int]):
         target_index = target_indexes[0]
         if self.miss():
             return f"{self.name} missed"
@@ -55,3 +55,6 @@ class Execute(Cooldown):
         return f"{self.name} hit {self.entities.lst[target_index].name} for {dmg}"
 
 
+class LeapingStike(Cooldown):
+    def __init__(self, target_indexes: list[int]):
+        pass
