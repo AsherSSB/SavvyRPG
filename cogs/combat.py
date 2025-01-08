@@ -143,7 +143,6 @@ class CombatInstance():
                 cooldown.scale_damage(player=player)
             self.loadouts[i].weapon[0].cooldown.scale_damage(player=player)
 
-    # TODO: should check cooldown type and allow multi-target selection or no target selection
     async def use_cooldown(self, cooldown:Cooldown, playerindex, alive_enemies: list[int]):
         view = EnemySelectView()
 
