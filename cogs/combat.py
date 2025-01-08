@@ -274,11 +274,11 @@ class CombatInstance():
         prob = self.calculate_run_probability(self.players[0])
         return random.random() < prob
 
-    # TODO: bro...
-    def calculate_run_probability(self, player: PlayableCharacter):
-        # advantage = self.players[playerindex] - self.enemy.stats.speed
-        # return 0.5 + 0.05 * advantage
-        return 0.5
+    def calculate_run_probability(self, alive_enemies: list[Enemy]):
+        fastest = max([enemy.stats.moves for enemy in alive_enemies])
+        player_speed = self.player_practicals[0].moves
+        diff = player_speed - fastest
+        return 0.5 + diff * .15
 
     def calculate_player_hp(self, player:PlayableCharacter):
         return int((10 + (player.level * 2)) * (player.stats.wil * .1))
