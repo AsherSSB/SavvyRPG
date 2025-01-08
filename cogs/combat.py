@@ -81,7 +81,6 @@ class CombatInstance():
                 if self.entities[enemy_index].hp <= 0:
                     enemies_alive.remove(enemy_index)
 
-            # TODO: enemies should only attack if their HP is above 0
             for i in enemies_alive:
                 await self.enemy_attack(i)
             # player is dead
@@ -148,7 +147,6 @@ class CombatInstance():
     async def use_cooldown(self, cooldown:Cooldown, playerindex, alive_enemies: list[int]):
         view = EnemySelectView()
 
-        # TODO: should only include enemies who are alive
         enemies = []
         for i in alive_enemies:
             if self.enemy_in_range(self.entities[i], self.entities[playerindex], cooldown.stats.rng):
@@ -251,7 +249,7 @@ class CombatInstance():
             self.game_grid[enemy.position[1]][enemy.position[0]] = enemy.emoji
             return
 
-        new_post = enemy.position.copy()
+        new_pos = enemy.position.copy()
         new_pos[0] += -1 if diff[0] < 0 else 1
         if (0 <= new_pos[0] < len(self.game_grid[0]) and
             self.game_grid[enemy.position[1]][new_pos[0]] == BASE_TILE):
@@ -260,7 +258,16 @@ class CombatInstance():
             enemy.position[0] = new_pos[0]
             self.game_grid[enemy.position[1]][enemy.position[0]] = enemy.emoji
             return
-        # TODO: this should new_pos += 1 if valid
+
+        new_pos = enemy.position.copy()
+        new_pos[1] += 1
+        if (0 <= new_pos[1] < len(self.game_grid) and
+            self.game_grid[new_pos[1]][enemy.position[0]] == BASE_TILE):
+            # Valid vertical move
+            self.game_grid[enemy.position[1]][enemy.position[0]] = BASE_TILE
+            enemy.position[1] = new_pos[1]
+            self.game_grid[enemy.position[1]][enemy.position[0]] = enemy.emoji
+            return
 
     # always uses player 0 because run only works in single player
     def try_run(self):
