@@ -76,7 +76,16 @@ class CombatInstance():
                 else:
                     confirmed = await self.use_cooldown(self.cooldowns[0][choice], 0, enemies_alive)
                     if confirmed:
+                        await self.view.set_attack_button_based_on_attacks_left()
                         await self.view.disable_cooldowns(True)
+
+                to_remove = []
+                for index in enemies_alive:
+                    if self.entities[index].hp <= 0:
+                        to_remove.append(index)
+
+                for index in to_remove:
+                    enemies_alive.remove(index)
 
                 # all enemies are dead
                 if all(enemy.hp <= 0 for enemy in self.entities[len(self.players):]):
@@ -210,6 +219,7 @@ class CombatInstance():
     async def use_cooldown(self, cooldown:Cooldown, playerindex, alive_enemies: list[int]):
         if isinstance(cooldown, SelfBuff):
             await self.embed_handler.log(self.players[playerindex].name, cooldown.attack())
+            # including this here is horrible and needs to be refactored somewhere else
             await self.view.disable_moves_if_zero()
             return True
 

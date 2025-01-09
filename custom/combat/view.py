@@ -207,6 +207,7 @@ class CombatView(discord.ui.View):
             if all(not self.enemy_in_range(enemy, self.player, button.rng) or enemy.hp <= 0 for enemy in enemies):
                 button.disabled = True
 
+        # This needs to be here for first turn else basic attack always starts enabled
         if any(self.enemy_in_range(enemy, self.player, self.attack_button.rng) for enemy in enemies):
             await self.set_attack_button_based_on_attacks_left()
         else:
