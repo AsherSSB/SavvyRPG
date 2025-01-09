@@ -40,7 +40,8 @@ class CombatInstance():
         # this only works for singleplayer
         self.view = self.initialize_combat_view(loadouts[0])
 
-    # TODO: 1 attack, move, another basic attack????????????
+    # TODO: dead enemies should not be targetable on the same turn they die
+    # TODO: status effects should be listed somewhere with player fields in embed
     async def combat(self):
         choice = 0
         enemies_alive = list(range(-1, -len(self.enemies) - 1, -1))
