@@ -239,8 +239,7 @@ class ForwardButton(MovementButton):
             if not self.view.cooldown_used:
                 await self.view.adjust_buttons()
             await self.view.embed_handler.fix_embed_players()
-            if self.view.attacks > 0:
-                await self.view.set_attack_button_based_on_attacks_left()
+            await self.view.set_attack_button_based_on_attacks_left()
             await self.view.interaction.edit_original_response(view=self.view, embed=self.view.embed_handler.embed)
         await interaction.response.defer()  # ▶ ◀
 
@@ -259,8 +258,7 @@ class BackButton(MovementButton):
             self.player.position[0] -= 1
             if not self.view.cooldown_used:
                 await self.view.adjust_buttons()
-            if self.view.attacks > 0:
-                await self.view.set_attack_button_based_on_attacks_left()
+            await self.view.set_attack_button_based_on_attacks_left()
             await self.view.embed_handler.fix_embed_players()
             await self.view.interaction.edit_original_response(view=self.view, embed=self.view.embed_handler.embed)
 
@@ -281,8 +279,7 @@ class UpButton(MovementButton):
             self.player.position[1] -= 1
             if not self.view.cooldown_used:
                 await self.view.adjust_buttons()
-            if self.view.attacks > 0:
-                await self.view.set_attack_button_based_on_attacks_left()
+            await self.view.set_attack_button_based_on_attacks_left()
             await self.view.embed_handler.fix_embed_players()
             await self.view.interaction.edit_original_response(view=self.view, embed=self.view.embed_handler.embed)
 
@@ -303,8 +300,7 @@ class DownButton(MovementButton):
             self.player.position[1] += 1
             if not self.view.cooldown_used:
                 await self.view.adjust_buttons()
-            if self.view.attacks > 0:
-                await self.view.set_attack_button_based_on_attacks_left()
+            await self.view.set_attack_button_based_on_attacks_left()
             await self.view.embed_handler.fix_embed_players()
             await self.view.interaction.edit_original_response(view=self.view, embed=self.view.embed_handler.embed)
 

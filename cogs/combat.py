@@ -40,6 +40,7 @@ class CombatInstance():
         # this only works for singleplayer
         self.view = self.initialize_combat_view(loadouts[0])
 
+    # TODO: 1 attack, move, another basic attack????????????
     async def combat(self):
         choice = 0
         enemies_alive = list(range(-1, -len(self.enemies) - 1, -1))
@@ -64,7 +65,8 @@ class CombatInstance():
                     confirmed = await self.use_cooldown(self.loadouts[0].weapon[0].cooldown, 0, enemies_alive)
                     if not confirmed:
                         self.view.attacks += 1
-                        await self.view.set_attack_button_based_on_attacks_left()
+                    await self.view.set_attack_button_based_on_attacks_left()
+                    await self.interaction.edit_original_response(view=self.view)
                 else:
                     confirmed = await self.use_cooldown(self.cooldowns[0][choice], 0, enemies_alive)
                     if confirmed:
@@ -96,7 +98,7 @@ class CombatInstance():
 
     def calculate_status_effects(self, entity_index: int):
         entity = self.entities[entity_index]
-        practicals = self.saved_practicals[entity_index]
+        practicals = copy.deepcopy(self.saved_practicals[entity_index])
         expired_effects = []
         for effect, duration in entity.status.items():
             if duration <= 0:
