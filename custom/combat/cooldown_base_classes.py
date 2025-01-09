@@ -65,7 +65,7 @@ class EnemyCooldown(Cooldown):
             return f"{self.entities.lst[playerindex].name} dodged {self.name}"
         mult = self.calculate_crit()
         hit = f"crit {self.acted}" if mult > 1.0 else self.acted
-        dmg = int(self.stats.dmg * mult)
+        dmg = int(self.stats.dmg * mult * self.entities.lst[playerindex].res)
         self.entities.lst[playerindex].hp -= dmg
         return f"{hit} {self.entities.lst[playerindex].name} {self.name} for {dmg} damage"
 
@@ -82,7 +82,7 @@ class SingleTargetAttack(Cooldown):
             return f"{enemy.name} dodged {self.name}"
         mult = self.calculate_crit()
         hit = f"crit {self.acted}" if mult > 1.0 else self.acted
-        dmg = int(self.stats.dmg * mult)
+        dmg = int(self.stats.dmg * mult * enemy.res)
         enemy.hp -= dmg
         return f"{hit} {enemy.name} for {dmg} damage"
 
@@ -102,7 +102,7 @@ class AOEAttack(Cooldown):
                 message += f" was dodged by {entity.name},"
                 continue
             mult = self.calculate_crit()
-            dmg = int(self.stats.dmg * mult)
+            dmg = int(self.stats.dmg * mult * entity.res)
             entity.hp -= dmg
             message += f" hit {entity.name} for {dmg},"
         # remove trailing comma
@@ -171,5 +171,10 @@ class MovingSingleTargetAttack(SingleTargetAttack):
             player.position[1] = new_pos[1]
             self.game_grid[player.position[1]][player.position[0]] = player.emoji
             return
+
+
+class SingleTargetStatus(Cooldown):
+    def __init__(self, name, emoji, stats, acted, entities):
+        super().__init__(name, emoji, stats, self.attack, acted, entities=entities)
 
 

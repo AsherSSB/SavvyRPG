@@ -1,4 +1,4 @@
-from custom.combat.cooldown_base_classes import SingleTargetAttack, AOEAttack, Cooldown, WeaponStatTable, MovingSingleTargetAttack
+from custom.combat.cooldown_base_classes import SingleTargetAttack, AOEAttack, Cooldown, WeaponStatTable, MovingSingleTargetAttack, SingleTargetStatus
 from custom.combat.entities import Entity, EntitiesInfo
 
 # class WeaponStatTable():
@@ -67,5 +67,19 @@ class LeapingStike(MovingSingleTargetAttack):
             self.move_toward_enemy(target_indexes[0])
         # this actually deals damage to the enemy
         return super().attack(target_indexes)
+
+
+class SavageShout(SingleTargetStatus):
+    def __init__(self, entities):
+        stats=WeaponStatTable(dmg=0, spd=5, rng=99, cc=0.0, cm=0.0, acc=1.0, scalar=0.4, stat="att")
+        super().__init__(name="SavageShout", emoji="🗣️", stats=stats, acted="Shouted", entities=entities)
+
+    def attack(self):
+        user_stats = self.entities.lst[self.entities.user_index].status
+        if "enraged" not in user_stats:
+            user_stats["enraged"] = 3
+        else:
+            user_stats["enraged"] += 3
+        return f"{self.entities.lst[self.entities.user_index].name} used {self.name}"
 
 

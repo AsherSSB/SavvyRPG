@@ -9,10 +9,11 @@ from custom.gear import Gear, Loadout
 from custom.combat.enemy import Enemy
 from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, EnemySelectView, EnemySelectMenu, AttackButton
 from custom.combat.entities import Entity, NPCStatTable, Drops, EntitiesInfo, PlayerPracticalStats
-from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable, AOEAttack, MovingSingleTargetAttack
-from custom.combat.barbarian.cooldowns import Execute, Cleave, LeapingStike
+from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable, AOEAttack, MovingSingleTargetAttack, SingleTargetStatus
+from custom.combat.barbarian.cooldowns import Execute, Cleave, LeapingStike, SavageShout
 from items.weapons import Fists, Greatsword
 from custom.combat.enemies import TrainingDummy, Wolf, Bandit, Skeleton, DarkMage, Golem
+import copy
 
 BASE_TILE = ":green_square:"
 
@@ -28,6 +29,7 @@ class CombatInstance():
         self.loadouts = loadouts
         calculator = PracticalStatsCalculator()
         self.player_practicals: list[PlayerPracticalStats] = calculator.initialize_practical_stats(players, loadouts)
+        self.saved_practicals = copy.deepcopy(self.player_practicals)
         self.entities: list[Entity] = self.initialize_entities()
         self.cooldowns: list[list[Cooldown]] = cooldowns
         self.pass_entities_to_player_cooldowns()
@@ -45,7 +47,9 @@ class CombatInstance():
         await self.interaction.response.send_message("Combat", view=self.view, embed=self.embed_handler.embed)
         # general combat loop
         while True:
-
+            # this doesnt work for multiplayer
+            self.calculate_status_effects(0)
+            self.view.attacks = self.player_practicals[0].attacks
             # player turn loop
             await self.view.wait()
             choice = self.view.choice
@@ -89,6 +93,50 @@ class CombatInstance():
             # take away player view
             # reset view event
             await self.view.reset()
+
+    def calculate_status_effects(self, entity_index: int):
+        entity = self.entities[entity_index]
+        practicals = self.saved_practicals[entity_index]
+        expired_effects = []
+        for effect, duration in entity.status.items():
+            if duration <= 0:
+                expired_effects.append(effect)
+            else:
+                self.apply_status_effect(practicals, effect)
+
+        self.remove_expired_effects(entity_index, expired_effects)
+        self.player_practicals[entity_index] = practicals
+        self.entities[entity_index].res = practicals.resistance
+        self.entities[entity_index].dodge = practicals.dodge
+        self.tick_status_effects(entity)
+
+    def apply_status_effect(self, practicals: PlayerPracticalStats, effect:str):
+        match effect:
+            case "enraged":
+                self.apply_enrage(practicals)
+
+    def apply_enrage(self, practicals: PlayerPracticalStats):
+        practicals.attacks += 1
+        practicals.resistance *= .8
+
+    def remove_expired_effects(self, entity_index: int, expired_effects: list[str]):
+        entity = self.entities[entity_index]
+        for effect in expired_effects:
+            self.remove_expired_effect_stats(effect, entity_index)
+            del entity.status[effect]
+
+    def remove_expired_effect_stats(self, effect: str, entity_index: int):
+        practicals = self.player_practicals[entity_index]
+        match effect:
+            case "enraged":
+                practicals.resistance /= .8
+                practicals.attacks -= 1
+
+    def tick_status_effects(self, entity: Entity):
+        # Iterate over a copy of the status dictionary items
+        for effect, duration in entity.status.items():
+            # Reduce duration
+            entity.status[effect] = duration - 1
 
     def scale_all_cooldowns_with_practicals(self):
         for i, practicals in enumerate(self.player_practicals):
@@ -146,6 +194,10 @@ class CombatInstance():
             self.loadouts[i].weapon[0].cooldown.scale_damage(player=player)
 
     async def use_cooldown(self, cooldown:Cooldown, playerindex, alive_enemies: list[int]):
+        if isinstance(cooldown, SingleTargetStatus):
+            await self.embed_handler.log(self.players[playerindex].name, cooldown.attack())
+            return True
+
         view = EnemySelectView()
 
         enemies = []
@@ -425,7 +477,7 @@ class Combat(commands.Cog):
         loadout = Loadout(None, None, None, None, None, [testwep])
 
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute, LeapingStike]], [enemy2, enemy3, enemy])
+        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute, LeapingStike, SavageShout]], [enemy2, enemy3, enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
