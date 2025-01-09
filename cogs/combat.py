@@ -11,6 +11,7 @@ from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, E
 from custom.combat.entities import Entity, NPCStatTable, Drops, EntitiesInfo, PlayerPracticalStats
 from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable, AOEAttack, MovingSingleTargetAttack, SingleTargetStatus, SelfBuff
 from custom.combat.barbarian.cooldowns import Execute, Cleave, LeapingStike, SavageShout
+from custom.combat.rogue.cooldowns import ThrowingKnife, PocketSand, Sprint, Disembowel
 from items.weapons import Fists, Greatsword
 from custom.combat.enemies import TrainingDummy, Wolf, Bandit, Skeleton, DarkMage, Golem
 import copy
@@ -181,7 +182,8 @@ class CombatInstance():
     def initialize_entities(self) -> list[Entity]:
         entities: list[Entity] = []
         origin_emojis = {
-            "Barbarian": ":axe:"
+            "Barbarian": ":axe:",
+            "Rogue": ":dagger:"
         }
         for i, player in enumerate(self.players):
             emoji = origin_emojis[str(player.origin)]
@@ -357,8 +359,9 @@ class CombatInstance():
             return
 
     # always uses player 0 because run only works in single player
-    def try_run(self):
-        prob = self.calculate_run_probability(self.players[0])
+    def try_run(self, alive_enemies_indexes: list[int]):
+        alive_enemies = [self.enemies[i] for i in alive_enemies_indexes]
+        prob = self.calculate_run_probability(alive_enemies)
         return random.random() < prob
 
     def calculate_run_probability(self, alive_enemies: list[Enemy]):
@@ -496,7 +499,7 @@ class Combat(commands.Cog):
     @discord.app_commands.command(name="combat")
     async def test_combat(self, interaction:discord.Interaction):
         self.pc:PlayableCharacter = PlayableCharacter(
-            "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
+            "Player", "test", sts.Human(), sts.Rogue(), xp=0, gold=0)
 
         testwep = Greatsword()
         enemy = Wolf()
@@ -506,7 +509,7 @@ class Combat(commands.Cog):
         loadout = Loadout(None, None, None, None, None, [testwep])
 
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute, LeapingStike, SavageShout]], [enemy2, enemy3, enemy])
+        instance = CombatInstance(interaction, [self.pc], [loadout],[[ThrowingKnife, PocketSand, Sprint, Disembowel]], [enemy2, enemy3, enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
