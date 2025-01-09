@@ -114,7 +114,6 @@ class AttackButton(discord.ui.Button):
     async def callback(self, interaction):
         self.view.choice = 9
         self.view.attacks -= 1
-        await self.view.set_attack_button_based_on_attacks_left()
         await interaction.response.defer()
         self.view.event.set()
 
