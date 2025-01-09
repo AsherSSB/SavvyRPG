@@ -187,6 +187,11 @@ class CombatView(discord.ui.View):
             self.back_button.disabled = True
             self.up_button.disabled = True
             self.down_button.disabled = True
+        else:
+            self.forward_button.disabled = False
+            self.back_button.disabled = False
+            self.up_button.disabled = False
+            self.down_button.disabled = False
 
     async def adjust_buttons(self):
         await self.enable_moves_if_in_range_disable_if_not()

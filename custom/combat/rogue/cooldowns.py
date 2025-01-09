@@ -31,9 +31,10 @@ class Sprint(SelfBuff):
     def attack(self):
         user_stats = self.entities.lst[self.entities.user_index].status
         if "fast" not in user_stats:
-            user_stats["fast"] = 3
+            user_stats["fast"] = 2
+            self.view.moves += 2
         else:
-            user_stats["fast"] += 3
+            user_stats["fast"] += 2
         return f"{self.entities.lst[self.entities.user_index].name} used {self.name}"
 
 

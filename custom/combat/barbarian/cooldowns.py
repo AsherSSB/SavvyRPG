@@ -78,6 +78,7 @@ class SavageShout(SelfBuff):
         user_stats = self.entities.lst[self.entities.user_index].status
         if "enraged" not in user_stats:
             user_stats["enraged"] = 3
+            self.view.attacks += 1
         else:
             user_stats["enraged"] += 3
         return f"{self.entities.lst[self.entities.user_index].name} used {self.name}"

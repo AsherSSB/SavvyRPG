@@ -33,14 +33,15 @@ class CombatInstance():
         self.player_practicals: list[PlayerPracticalStats] = calculator.initialize_practical_stats(players, loadouts)
         self.saved_practicals = copy.deepcopy(self.player_practicals)
         self.entities: list[Entity] = self.initialize_entities()
+        self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
+        self.view = self.initialize_combat_view(self.loadouts[0])
         self.cooldowns: list[list[Cooldown]] = cooldowns
         self.pass_entities_to_player_cooldowns()
         self.scale_cooldown_damages(self.cooldowns, self.players)
         self.scale_all_cooldowns_with_practicals()
         self.initialize_enemy_cooldowns()
-        self.embed_handler = CombatEmbedHandler(self.entities, self.interaction, self.game_grid)
         # this only works for singleplayer
-        self.view = self.initialize_combat_view(loadouts[0])
+        self.add_cooldown_buttons()
 
     # TODO: dead enemies should not be targetable on the same turn they die
     # TODO: status effects should be listed somewhere with player fields in embed
@@ -53,12 +54,14 @@ class CombatInstance():
         while True:
             # this doesnt work for multiplayer
             self.calculate_status_effects(0)
+            self.tick_status_effects(self.entities[0])
+
             self.view.attacks = self.player_practicals[0].attacks
+            self.view.moves = self.player_practicals[0].moves
             # player turn loop
             await self.view.wait()
             choice = self.view.choice
             while choice != -2:
-
                 if choice == -1:
                     if self.try_run(enemies_alive):
                         return 0
@@ -113,7 +116,6 @@ class CombatInstance():
         self.player_practicals[entity_index] = practicals
         self.entities[entity_index].res = practicals.resistance
         self.entities[entity_index].dodge = practicals.dodge
-        self.tick_status_effects(entity)
 
     def apply_status_effect(self, practicals: PlayerPracticalStats, effect:str):
         match effect:
@@ -163,6 +165,8 @@ class CombatInstance():
                 self.cooldowns[i][j] = cd(entities=entities)
                 if isinstance(self.cooldowns[i][j], MovingSingleTargetAttack):
                     self.cooldowns[i][j].game_grid = self.game_grid
+                if isinstance(self.cooldowns[i][j], SelfBuff):
+                    self.cooldowns[i][j].view = self.view
             self.loadouts[i].weapon[0].cooldown.entities = entities
 
     def stringify_game_grid(self):
@@ -206,6 +210,7 @@ class CombatInstance():
     async def use_cooldown(self, cooldown:Cooldown, playerindex, alive_enemies: list[int]):
         if isinstance(cooldown, SelfBuff):
             await self.embed_handler.log(self.players[playerindex].name, cooldown.attack())
+            await self.view.disable_moves_if_zero()
             return True
 
         view = EnemySelectView()
@@ -231,6 +236,11 @@ class CombatInstance():
             await self.embed_handler.log(self.players[playerindex].name, cooldown.attack(view.choice))
             return True
 
+    def apply_new_status_effects(player_index: int, statuses: list[str]):
+        match cd:
+            case isinstance(cd, Sprint):
+                self.view.moves += 2
+
     # currently initializes all cooldowns on row 0
     # errors out if the user has > 5 cooldowns,
     # attacks are also being placed on row 0
@@ -239,11 +249,13 @@ class CombatInstance():
         button = AttackButton(name=loadout.weapon[0].name, emoji=loadout.weapon[0].emoji, rng=loadout.weapon[0].cooldown.stats.rng)
         view.attack_button = button
         view.add_item(button)
+        return view
+
+    def add_cooldown_buttons(self):
         for i, cd in enumerate(self.cooldowns[0]):
             button = CooldownButton(cd.name, i, cd.stats.rng, cd.emoji, row=0)
-            view.cooldown_buttons.append(button)
-            view.add_item(button)
-        return view
+            self.view.cooldown_buttons.append(button)
+            self.view.add_item(button)
 
     async def enemy_attack(self, enemy_index: int):
         entities = self.entities

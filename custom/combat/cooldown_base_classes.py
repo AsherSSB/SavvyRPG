@@ -2,6 +2,7 @@ from typing import Callable
 import random
 from custom.playable_character import PlayableCharacter
 from custom.combat.entities import Entity, EntitiesInfo
+from custom.combat.view import CombatView
 from dataclasses import dataclass
 
 BASE_TILE = ":green_square:"
@@ -179,7 +180,8 @@ class SingleTargetStatus(Cooldown):
 
 
 class SelfBuff(Cooldown):
-    def __init__(self, name, emoji, stats, acted, entities):
+    def __init__(self, name, emoji, stats, acted, entities, view: CombatView = None):
+        view = view
         super().__init__(name, emoji, stats, self.attack, acted, entities=entities)
 
 
