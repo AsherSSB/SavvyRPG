@@ -9,7 +9,7 @@ from custom.gear import Gear, Loadout
 from custom.combat.enemy import Enemy
 from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, EnemySelectView, EnemySelectMenu, AttackButton
 from custom.combat.entities import Entity, NPCStatTable, Drops, EntitiesInfo, PlayerPracticalStats
-from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable, AOEAttack, MovingSingleTargetAttack, SingleTargetStatus
+from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable, AOEAttack, MovingSingleTargetAttack, SingleTargetStatus, SelfBuff
 from custom.combat.barbarian.cooldowns import Execute, Cleave, LeapingStike, SavageShout
 from items.weapons import Fists, Greatsword
 from custom.combat.enemies import TrainingDummy, Wolf, Bandit, Skeleton, DarkMage, Golem
@@ -197,7 +197,7 @@ class CombatInstance():
             self.loadouts[i].weapon[0].cooldown.scale_damage(player=player)
 
     async def use_cooldown(self, cooldown:Cooldown, playerindex, alive_enemies: list[int]):
-        if isinstance(cooldown, SingleTargetStatus):
+        if isinstance(cooldown, SelfBuff):
             await self.embed_handler.log(self.players[playerindex].name, cooldown.attack())
             return True
 

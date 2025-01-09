@@ -1,4 +1,4 @@
-from custom.combat.cooldown_base_classes import SingleTargetAttack, AOEAttack, Cooldown, WeaponStatTable, MovingSingleTargetAttack, SingleTargetStatus
+from custom.combat.cooldown_base_classes import SingleTargetAttack, AOEAttack, Cooldown, WeaponStatTable, MovingSingleTargetAttack, SingleTargetStatus, SelfBuff
 from custom.combat.entities import Entity, EntitiesInfo
 
 # class WeaponStatTable():
@@ -69,7 +69,7 @@ class LeapingStike(MovingSingleTargetAttack):
         return super().attack(target_indexes)
 
 
-class SavageShout(SingleTargetStatus):
+class SavageShout(SelfBuff):
     def __init__(self, entities):
         stats=WeaponStatTable(dmg=0, spd=5, rng=99, cc=0.0, cm=0.0, acc=1.0, scalar=0.4, stat="att")
         super().__init__(name="SavageShout", emoji="🗣️", stats=stats, acted="Shouted", entities=entities)

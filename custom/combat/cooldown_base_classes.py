@@ -178,3 +178,8 @@ class SingleTargetStatus(Cooldown):
         super().__init__(name, emoji, stats, self.attack, acted, entities=entities)
 
 
+class SelfBuff(Cooldown):
+    def __init__(self, name, emoji, stats, acted, entities):
+        super().__init__(name, emoji, stats, self.attack, acted, entities=entities)
+
+
