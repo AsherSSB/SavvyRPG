@@ -65,5 +65,7 @@ class LeapingStike(MovingSingleTargetAttack):
     def attack(self, target_indexes):
         while not self.in_range(self.entities.lst[self.entities.user_index], self.entities.lst[target_indexes[0]], 1):
             self.move_toward_enemy(target_indexes[0])
+        # this actually deals damage to the enemy
         return super().attack(target_indexes)
+
 

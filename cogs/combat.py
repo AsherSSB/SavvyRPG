@@ -129,10 +129,10 @@ class CombatInstance():
         }
         for i, player in enumerate(self.players):
             emoji = origin_emojis[str(player.origin)]
-            entities.append(Entity(player.name, self.calculate_player_hp(player), self.player_practicals[i].resistance, self.player_practicals[i].dodge, [0, i], emoji))
+            entities.append(Entity(player.name, self.calculate_player_hp(player), self.player_practicals[i].resistance, self.player_practicals[i].dodge, [0, i], emoji, dict()))
             self.game_grid[i][0] = emoji
         for i, enemy in enumerate(self.enemies):
-            entities.append(Entity(enemy.name, enemy.stats.hp, enemy.stats.resist, enemy.stats.dodge,[self.bounds[0] - 1, i], enemy.emoji))
+            entities.append(Entity(enemy.name, enemy.stats.hp, enemy.stats.resist, enemy.stats.dodge,[self.bounds[0] - 1, i], enemy.emoji, dict()))
             self.game_grid[i][self.bounds[0] - 1] = enemy.emoji
         return entities
 
@@ -445,10 +445,15 @@ class Combat(commands.Cog):
 This test is for demonstration purposes only and is not representative of any finished product.
 
 **Rules**:
-You may move twice and attack once each turn
+You may move twice each turn
 You are allowed to try and run once before the option to run is disabled
-You must be in range to attack the enemy, Punch has a range of 2, Pummel has a range of 1
-The enemy will move to get in range, and then will attack if in range before ending their turn
+You must be in range to attack the enemy
+Your basic attack (Greatsword) may be used once per turn and has a range of 2
+All other abilities share a cooldown and may only be used once
+Cleave can hit multiple targets and has a range of 1
+Execute has a range of 1 and does damage based on the % hp missing of the target
+Leaping Strike will move you closer to the target and hit them without spending any movement
+Each enemy will move to get in range, and then will attack if in range before ending their turn
 """, view=view)
 
         await view.wait()

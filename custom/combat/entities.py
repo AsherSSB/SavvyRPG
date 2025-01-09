@@ -29,6 +29,7 @@ class Entity():
     dodge: float
     position: list[int]
     emoji: str
+    status: dict
 
 
 @dataclass
