@@ -60,7 +60,7 @@ class CombatInstance():
             while choice != -2:
 
                 if choice == -1:
-                    if self.try_run():
+                    if self.try_run(enemies_alive):
                         return 0
                     else:
                         await self.embed_handler.log(self.entities[0].name, "Failed to Run")
