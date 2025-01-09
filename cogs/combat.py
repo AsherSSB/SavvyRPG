@@ -43,7 +43,6 @@ class CombatInstance():
         # this only works for singleplayer
         self.add_cooldown_buttons()
 
-    # TODO: dead enemies should not be targetable on the same turn they die
     # TODO: status effects should be listed somewhere with player fields in embed
     async def combat(self):
         choice = 0
@@ -79,11 +78,11 @@ class CombatInstance():
                         await self.view.set_attack_button_based_on_attacks_left()
                         await self.view.disable_cooldowns(True)
 
+                # not sure this is necessary ...
                 to_remove = []
                 for index in enemies_alive:
                     if self.entities[index].hp <= 0:
                         to_remove.append(index)
-
                 for index in to_remove:
                     enemies_alive.remove(index)
 
