@@ -25,6 +25,7 @@ class CombatInstance():
         self.bounds = (6, 4)
         self.game_grid = self.initialize_game_bounds(self.bounds[1], self.bounds[0])
         self.enemies:list[Enemy] = enemies
+        self.saved_enemy_stats = [copy.deepcopy(enemy.stats) for enemy in self.enemies]
         self.players: list[PlayableCharacter] = players
         self.loadouts = loadouts
         calculator = PracticalStatsCalculator()
@@ -117,23 +118,27 @@ class CombatInstance():
         match effect:
             case "enraged":
                 self.apply_enrage(practicals)
+            case "fast":
+                self.apply_fast(practicals)
+            case "blinded":
+                self.apply_blinded(practicals)
 
     def apply_enrage(self, practicals: PlayerPracticalStats):
         practicals.attacks += 1
         practicals.resistance *= .8
 
+    def apply_fast(self, practicals: PlayerPracticalStats):
+        practicals.moves += 2
+        practicals.dodge -= 0.3
+
+    def apply_blinded(self, practicals: PlayerPracticalStats):
+        practicals.moves -= 1
+        practicals.resistance *= 1.2
+
     def remove_expired_effects(self, entity_index: int, expired_effects: list[str]):
         entity = self.entities[entity_index]
         for effect in expired_effects:
-            self.remove_expired_effect_stats(effect, entity_index)
             del entity.status[effect]
-
-    def remove_expired_effect_stats(self, effect: str, entity_index: int):
-        practicals = self.player_practicals[entity_index]
-        match effect:
-            case "enraged":
-                practicals.resistance /= .8
-                practicals.attacks -= 1
 
     def tick_status_effects(self, entity: Entity):
         # Iterate over a copy of the status dictionary items
@@ -240,7 +245,9 @@ class CombatInstance():
 
     async def enemy_attack(self, enemy_index: int):
         entities = self.entities
-        cd: EnemyCooldown = self.cooldowns[-1][enemy_index]
+        cd: EnemyCooldown = copy.deepcopy(self.cooldowns[-1][enemy_index])
+
+        self.apply_enemy_status_effects(enemy_index, cd)
 
         moves = self.enemies[enemy_index].stats.moves
         in_range = any(self.enemy_in_range(entities[enemy_index], player, cd.stats.rng) for player in entities[:len(self.players)])
@@ -258,6 +265,25 @@ class CombatInstance():
             closest_player = self.get_closest_target(entities[enemy_index], entities[:len(self.players)])
             message = cd.attack(closest_player)
             await self.embed_handler.log(entities[enemy_index].name, message)
+
+    def apply_enemy_status_effects(self, enemy_index: int, cd: EnemyCooldown):
+        self.tick_status_effects(self.entities[enemy_index])
+        stats = copy.deepcopy(self.saved_enemy_stats[enemy_index])
+        expired_effects = []
+        for effect, duration in self.entities[enemy_index].status.items():
+            if duration <= 0:
+                expired_effects.append(effect)
+            else:
+                self.apply_enemy_status_effects_stats(stats, effect)
+
+        self.remove_expired_effects(enemy_index, expired_effects)
+        self.enemies[enemy_index].stats = stats
+
+    def apply_enemy_status_effects_stats(self, stats: NPCStatTable, effect: str):
+        match effect:
+            case "blinded":
+                stats.moves -= 1
+                stats.resist *= 0.8
 
     def get_closest_target(self, enemy: Entity, players: list[Entity]):
         closest: int
