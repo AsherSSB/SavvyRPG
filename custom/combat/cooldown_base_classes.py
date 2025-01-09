@@ -107,3 +107,10 @@ class AOEAttack(Cooldown):
         message = message[0:-1]
         return message
 
+
+class MovingSingleTargetAttack(SingleTargetAttack):
+    def __init__(self, name, emoji, stats, acted, entities, game_grid=None):
+        self.game_grid = game_grid
+        super().__init__(name=name, emoji=emoji, stats=stats, acted=acted, entities=entities)
+
+

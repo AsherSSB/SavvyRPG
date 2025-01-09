@@ -14,7 +14,7 @@ class Greatsword(Weapon):
     def __init__(self):
         self.name = "Greatsword"
         self.emoji = "⚔"
-        stats = WeaponStatTable(dmg=13, spd=1, rng=2, cc=0.2, cm=2.0, acc=0.8, scalar=0.2, stat="str")
+        stats = WeaponStatTable(dmg=13, spd=1, rng=2, cc=0.2, cm=2.0, acc=0.9, scalar=0.2, stat="str")
         self.cooldown = SingleTargetAttack(name="Slash", emoji="⚔", stats=stats, acted="slashed", entities=None)
 
 # • Sword + Shield

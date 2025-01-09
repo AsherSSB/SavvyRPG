@@ -9,8 +9,8 @@ from custom.gear import Gear, Loadout
 from custom.combat.enemy import Enemy
 from custom.combat.view import CombatView, CombatEmbedHandler, CooldownButton, EnemySelectView, EnemySelectMenu, AttackButton
 from custom.combat.entities import Entity, NPCStatTable, Drops, EntitiesInfo, PlayerPracticalStats
-from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable, AOEAttack
-from custom.combat.barbarian.cooldowns import Execute, Cleave
+from custom.combat.cooldown_base_classes import Cooldown, EnemyCooldown, WeaponStatTable, AOEAttack, MovingSingleTargetAttack
+from custom.combat.barbarian.cooldowns import Execute, Cleave, LeapingStike
 from items.weapons import Fists, Greatsword
 from custom.combat.enemies import TrainingDummy, Wolf, Bandit, Skeleton, DarkMage, Golem
 
@@ -104,6 +104,8 @@ class CombatInstance():
             entities = EntitiesInfo(self.entities, i, len(self.players), len(self.enemies))
             for j, cd in enumerate(cdlist):
                 self.cooldowns[i][j] = cd(entities=entities)
+                if isinstance(self.cooldowns[i][j], MovingSingleTargetAttack):
+                    self.cooldowns[i][j].game_grid = self.game_grid
             self.loadouts[i].weapon[0].cooldown.entities = entities
 
     def stringify_game_grid(self):
@@ -423,7 +425,7 @@ class Combat(commands.Cog):
         loadout = Loadout(None, None, None, None, None, [testwep])
 
         interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy2, enemy3, enemy])
+        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute, LeapingStike]], [enemy2, enemy3, enemy])
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
