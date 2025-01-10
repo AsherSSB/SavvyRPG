@@ -14,7 +14,16 @@ class Dungeon(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def test_combat(self, interaction:discord.Interaction):
+    @discord.app_commands.command(name="dungeonmenu")
+    async def send_test_dungeon_menu(self, interaction: discord.Interaction):
+        view = DungeonView()
+        await interaction.response.send_message("hello", view=view)
+        await view.wait()
+        await interaction.edit_original_response(content=view.choice)
+        await asyncio.sleep(3.0)
+        await interaction.delete_original_response()
+
+    async def start_combat(self, interaction:discord.Interaction):
         self.pc:PlayableCharacter = PlayableCharacter(
             "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
 
@@ -37,6 +46,22 @@ class Dungeon(commands.Cog):
         await interaction.edit_original_response(content=f"Rewards\nGold: {enemy.drops.gold}\nXP: {enemy.drops.xp}", embed=None)
         await asyncio.sleep(4.0)
         await interaction.delete_original_response()
+
+
+class DungeonView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.choice = 0
+        self.event = asyncio.Event()
+
+    @discord.ui.button(label="Proceed", style=discord.ButtonStyle.green)
+    async def proceed_button(self, interaction: discord.Interaction, button):
+        self.choice = 1
+        self.event.set()
+        await interaction.response.defer()
+
+    async def wait(self):
+        await self.event.wait()
 
 
 async def setup(bot):

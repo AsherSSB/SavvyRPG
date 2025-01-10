@@ -4,6 +4,7 @@ import random
 import asyncio
 from cogs.database import Database
 
+
 class Card:
     def __init__(self, suit, rank, value):
         self.suit:str = suit
@@ -36,9 +37,9 @@ class Player:
     def add_card(self, card:Card) -> None:
         self.hand.cards.append(card)
         self.hand.value += card.value
-        if card.rank == "Ace": 
+        if card.rank == "Ace":
             self.ace_count += 1
-        
+
     def can_burn_ace(self) -> bool:
         return self.ace_count > 0
 
@@ -49,6 +50,7 @@ class Player:
     def check_split(self) -> None:
         if len(self.hand.cards) == 2 and self.hand.cards[0].rank == self.hand.cards[1].rank:
             self.can_split = True
+
 
 # TODO: detect when timout and subtract player gold from db
 class Blackjack(commands.Cog):
@@ -84,7 +86,7 @@ class Blackjack(commands.Cog):
                     raise ValueError
                 player_won = await self.start_blackjack_game(interaction=interaction)
                 if player_won:
-                    self.gold = int(self.gold + bet_amount * (3/2))
+                    self.gold = int(self.gold + bet_amount * (3 / 2))
                 else:
                     self.gold -= bet_amount
                 view = BackView()
@@ -103,7 +105,7 @@ class Blackjack(commands.Cog):
             self.db.add_gold(interaction.user.id, 100)
             self.gold += 100
             await self.play_blackjack(interaction)
-        
+
         return self.gold
 
     async def start_blackjack_game(self, interaction:discord.Interaction):
@@ -183,16 +185,16 @@ class Blackjack(commands.Cog):
         if hand2.hand.cards[0].value == 11:
             hand1.ace_count -= 1
         firstvalue = await self.play_split_hand(interaction, hand1, dealer, "First")
-        if firstvalue == 21: 
+        if firstvalue == 21:
             return hand1
-        secondvalue = await self.play_split_hand(interaction, hand2, dealer, "Second") 
-        if secondvalue == 21: 
+        secondvalue = await self.play_split_hand(interaction, hand2, dealer, "Second")
+        if secondvalue == 21:
             return hand2
-        if firstvalue >= secondvalue: 
+        if firstvalue >= secondvalue:
             return hand1
-        else: 
+        else:
             return hand2
-        
+
     async def play_split_hand(self, interaction:discord.Interaction, hand:Player, dealer:Player, handcnt):
         content = f"Playing {handcnt} Hand \n{hand.hand}\nDealer Card: {dealer.hand.cards[0]}"
         view = GameView(False)
@@ -230,7 +232,7 @@ class Blackjack(commands.Cog):
             await interaction.edit_original_response(content=content)
             if dealer.hand.value > 21:
                 await self.try_burn_ace(interaction, dealer)
-            
+
     def stringify_draw(self, card:Card) -> str:
         article = "a"
         if card.rank in ["Ace", "Eight"]:
@@ -253,7 +255,7 @@ class Blackjack(commands.Cog):
         rank = self.get_random_rank()
         value = self.get_rank_value(rank)
         return Card(suit, rank, value)
-    
+
     def get_random_suit(self) -> str:
         return random.choice(self.suits)
 
@@ -276,11 +278,10 @@ class GameView(discord.ui.View):
         super().__init__()
         self.event = asyncio.Event()
         self.choice:int
-        if can_split: 
+        if can_split:
             split_button = SplitButton()
             self.add_item(split_button)
         self.interaction:discord.Interaction
-        
 
     @discord.ui.button(label="Hit")
     async def hit_button(self, interaction:discord.Interaction, button:discord.ui.Button):
@@ -314,7 +315,7 @@ class ContinueView(discord.ui.View):
         self.event = asyncio.Event()
         self.choice:bool
         self.interaction:discord.Interaction
-    
+
     @discord.ui.button(label="Continue")
     async def continue_button(self, interaction, button):
         self.choice = True
@@ -338,13 +339,13 @@ class BetView(discord.ui.View):
         self.event = asyncio.Event()
         self.choice:int
         self.add_item(BackButton())
-    
+
     @discord.ui.button(label="Bet", style=discord.ButtonStyle.green)
     async def bet_button(self, interaction:discord.Interaction, button):
         self.choice = 0
         self.interaction = interaction
         self.event.set()
-    
+
     @discord.ui.button(label="Give Money", style=discord.ButtonStyle.blurple)
     async def money_button(self, interaction:discord.Interaction, button):
         self.choice = 1
