@@ -48,3 +48,8 @@ class EntitiesInfo():
     enemy_count: int
 
 
+@dataclass
+class ManaEntity(Entity):
+    mana: int = field(default=10, kw_only=True)
+
+
