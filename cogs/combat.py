@@ -270,6 +270,7 @@ class CombatInstance():
     async def enemy_attack(self, enemy_index: int):
         entities = self.entities
         cd: EnemyCooldown = copy.deepcopy(self.cooldowns[-1][enemy_index])
+        cd.entities = EntitiesInfo(entities, enemy_index, len(self.players), len(self.enemies))
 
         self.apply_enemy_status_effects(enemy_index, cd)
 
