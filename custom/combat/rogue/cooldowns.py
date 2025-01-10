@@ -40,7 +40,7 @@ class Sprint(SelfBuff):
 
 class Disembowel(SingleTargetAttack):
     def __init__(self, entities):
-        stats = WeaponStatTable(dmg=13, spd=5, rng=1, cc=1.0, cm=3.0, acc=0.9, scalar=0.3, stat="dex")
+        stats = WeaponStatTable(dmg=13, spd=5, rng=1, cc=1.0, cm=2.5, acc=0.9, scalar=0.2, stat="dex")
         super().__init__(name="Disembowel", emoji="🫀", stats=stats, acted="disemboweled", entities=entities)
         self.maxhps = [entity.hp for entity in entities.lst]
 

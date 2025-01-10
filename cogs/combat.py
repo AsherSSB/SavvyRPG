@@ -44,6 +44,7 @@ class CombatInstance():
         self.add_cooldown_buttons()
 
     # TODO: status effects should be listed somewhere with player fields in embed
+    # TODO: split up this function
     async def combat(self):
         choice = 0
         enemies_alive = list(range(-1, -len(self.enemies) - 1, -1))

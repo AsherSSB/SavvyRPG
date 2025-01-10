@@ -37,7 +37,10 @@ class CombatEmbedHandler():
     async def fix_embed_players(self):
         for i in range(1, len(self.entities) + 1):
             entity = self.entities[-i]
-            self.embed.set_field_at(-i, name=entity.name, value=f"hp: {entity.hp}")
+            content = f"hp: {entity.hp}"
+            for key, value in entity.status.items():
+                content += f"\n{key}: {value} turn(s)"
+            self.embed.set_field_at(-i, name=entity.name, value=content)
         self.embed.set_field_at(-i - 1, value=self.stringify_game_grid(), name="Game Board", inline=False)
 
     def stringify_game_grid(self):
