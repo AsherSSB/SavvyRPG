@@ -29,6 +29,7 @@ class CombatInstance():
         self.saved_enemy_stats = [copy.deepcopy(enemy.stats) for enemy in self.enemies]
         self.players: list[PlayableCharacter] = players
         self.loadouts = loadouts
+        self.validate_weapons()
         calculator = PracticalStatsCalculator()
         self.player_practicals: list[PlayerPracticalStats] = calculator.initialize_practical_stats(players, loadouts)
         self.saved_practicals = copy.deepcopy(self.player_practicals)
@@ -113,8 +114,8 @@ class CombatInstance():
 
     def validate_weapons(self):
         for loadout in self.loadouts:
-            if loadout.weapon is None:
-                loadout.weapon == Fists
+            if loadout.weapon[0] is None:
+                loadout.weapon[0] = Fists()
 
     def calculate_status_effects(self, entity_index: int):
         entity = self.entities[entity_index]

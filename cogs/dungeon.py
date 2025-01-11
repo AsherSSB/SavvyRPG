@@ -35,15 +35,19 @@ class Dungeon(commands.Cog):
         enemies = self.get_enemy_list(choice)
         player = self.db.get_character(interaction.user.id)
         loadout = self.db.load_equipment(interaction.user.id)
+        # Smelly stinky no good hack
+        loadout.weapon = [loadout.weapon]
         cooldown_indexes = self.db.get_cooldowns(interaction.user.id)
-        cooldowns = self.get_cooldowns(player.origin, cooldown_indexes)
+        cooldowns = self.get_cooldowns(str(player.origin), cooldown_indexes)
         instance = CombatInstance(interaction, [player], [loadout],[cooldowns], enemies)
-        result = instance.combat()
+        # TODO: Doesnt actually play combat???????
+        result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
         elif result == 0:
             await interaction.edit_original_response(content="You Successfully Ran.", view=None)
         else:
+            # TODO: needs continue view
             await interaction.edit_original_response(content=f"You Defeated {encounter_names[choice]}!", view=None)
             gold, xp = self.get_drop_results(enemies)
             self.db.add_gold(interaction.user.id, gold)
@@ -67,17 +71,17 @@ class Dungeon(commands.Cog):
 
     def get_enemy_list(self, choice: int):
         choices = {
-            0: [TrainingDummy, TrainingDummy, TrainingDummy, TrainingDummy],
-            1: [Wolf, Wolf],
-            2: [Bandit, Bandit, Bandit],
+            0: [TrainingDummy(), TrainingDummy(), TrainingDummy(), TrainingDummy()],
+            1: [Wolf(), Wolf()],
+            2: [Bandit(), Bandit(), Bandit()],
         }
         return choices[choice]
 
     def get_cooldowns(self, playerclass: Origin, indexes: list[int]):
         origin_tables = {
-            Barbarian: BarbarianCooldownInfo.cooldowns,
-            Rogue: RogueCooldownInfo.cooldowns,
-            Wizard: -1,
+            "Barbarian": BarbarianCooldownInfo().cooldowns,
+            "Rogue": RogueCooldownInfo().cooldowns,
+            "Wizard": -1,
         }
         table = origin_tables[playerclass]
         cooldowns = []

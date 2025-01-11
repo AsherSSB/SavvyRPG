@@ -74,7 +74,7 @@ class Database(commands.Cog):
         self.cur.execute("""
             SELECT slot1, slot2, slot3, slot4
             FROM cooldowns
-            WHERE user_id = ?
+            WHERE user_id = %s
         """, (user_id,))
 
         result = self.cur.fetchone()
@@ -82,7 +82,7 @@ class Database(commands.Cog):
             # Insert default row if none exists
             self.cur.execute("""
                 INSERT INTO cooldowns (user_id)
-                VALUES (?)
+                VALUES (%s)
             """, (user_id,))
             self.conn.commit()
             return [-1, -1, -1, -1]
@@ -93,7 +93,7 @@ class Database(commands.Cog):
         self.cur.execute("""
             INSERT OR REPLACE INTO cooldowns
             (user_id, slot1, slot2, slot3, slot4)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s)
         """, (user_id, *cooldowns))
         self.conn.commit()
 
@@ -144,7 +144,8 @@ class Database(commands.Cog):
             "chest": None,
             "hands": None,
             "legs": None,
-            "feet": None
+            "feet": None,
+            "weapon": None
         }
 
         self.cur.execute("""
