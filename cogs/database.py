@@ -57,6 +57,7 @@ class Database(commands.Cog):
                 PRIMARY KEY (user_id, slot_type)
             );
         """)
+
         self.conn.commit()
 
     def save_inventory(self, user_id: int, items: list[Item]):

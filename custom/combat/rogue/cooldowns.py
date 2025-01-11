@@ -2,7 +2,16 @@ from custom.combat.cooldown_base_classes import SingleTargetAttack, AOEAttack, C
 from custom.combat.entities import Entity, EntitiesInfo
 
 
-# name emoji stats acted entities
+class RogueCooldownInfo():
+    def __init__(self):
+        self.cooldowns = {
+            0: ThrowingKnife,
+            1: PocketSand,
+            2: Sprint,
+            3: Disembowel,
+        }
+
+
 class ThrowingKnife(SingleTargetAttack):
     def __init__(self, entities):
         stats = WeaponStatTable(dmg=11, spd=2, rng=3, cc=0.25, cm=1.75, acc=0.8, scalar=0.2, stat="dex")

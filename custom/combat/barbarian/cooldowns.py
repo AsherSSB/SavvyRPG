@@ -12,6 +12,16 @@ from custom.combat.entities import Entity, EntitiesInfo
 #     stat: str
 
 
+class BarbarianCooldownInfo():
+    def __init__(self):
+        self.cooldowns = {
+            0: Cleave,
+            1: Execute,
+            2: LeapingStike,
+            3: SavageShout,
+        }
+
+
 class Cleave(AOEAttack):
     def __init__(self, entities):
         stats = WeaponStatTable(
