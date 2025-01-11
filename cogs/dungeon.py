@@ -8,11 +8,13 @@ from custom.gear import Loadout
 from custom.combat.barbarian.cooldowns import Cleave, Execute
 import asyncio
 from cogs.combat import CombatInstance
+from cogs.database import Database
 
 
 class Dungeon(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.db = Database(self.bot)
 
     @discord.app_commands.command(name="dungeonmenu")
     async def send_test_dungeon_menu(self, interaction: discord.Interaction):
@@ -25,6 +27,7 @@ class Dungeon(commands.Cog):
         await interaction.delete_original_response()
         if choice == -2:
             return
+        player = self.db.get_character()
 
     async def start_combat(self, interaction:discord.Interaction):
         self.pc:PlayableCharacter = PlayableCharacter(

@@ -24,6 +24,23 @@ class Database(commands.Cog):
         self.cur = self.conn.cursor()
 
         self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS characters (
+                user_id BIGINT PRIMARY KEY,
+                name TEXT NOT NULL,
+                gender TEXT NOT NULL,
+                race TEXT NOT NULL,
+                origin TEXT NOT NULL,
+                strength INTEGER NOT NULL,
+                will INTEGER NOT NULL,
+                dexterity INTEGER NOT NULL,
+                intelligence INTEGER NOT NULL,
+                attunement INTEGER NOT NULL,
+                xp INTEGER NOT NULL,
+                gold INTEGER NOT NULL
+            );
+        """)
+
+        self.cur.execute("""
             CREATE TABLE IF NOT EXISTS inventory (
                 user_id BIGINT NOT NULL,
                 slot_id INTEGER NOT NULL,
