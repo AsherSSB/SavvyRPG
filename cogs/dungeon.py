@@ -24,9 +24,6 @@ class Dungeon(commands.Cog):
         await interaction.response.send_message("Dungeons\n\nSelect a Dungeon:", view=view)
         await view.wait()
         choice = view.choice
-        await interaction.edit_original_response(content=choice)
-        await asyncio.sleep(3.0)
-        await interaction.delete_original_response()
         if choice == -2:
             return
         enemies = self.get_enemy_list(choice)
@@ -34,8 +31,19 @@ class Dungeon(commands.Cog):
         loadout = self.db.load_equipment(interaction.user.id)
         cooldown_indexes = self.db.get_cooldowns(interaction.user.id)
         cooldowns = self.get_cooldowns(player.origin, cooldown_indexes)
-        instance = CombatInstance(interaction, [player], [loadout],[cooldowns], [enemies])
+        instance = CombatInstance(interaction, [player], [loadout],[cooldowns], enemies)
         result = instance.combat()
+        if result == -1:
+            await interaction.edit_original_response(content="You Died.", view=None)
+        elif result == 0:
+            await interaction.edit_original_response(content="You Successfully Ran.", view=None)
+        else:
+            await interaction.edit_original_response(content=f"You Defeated {enemy.name}!", view=None)
+
+        await asyncio.sleep(4.0)
+        await interaction.edit_original_response(content=f"Rewards\nGold: {enemy.drops.gold}\nXP: {enemy.drops.xp}", embed=None)
+        await asyncio.sleep(4.0)
+        await interaction.delete_original_response()
 
     def get_enemy_list(self, choice: int):
         choices = {
@@ -57,25 +65,6 @@ class Dungeon(commands.Cog):
             if i != -1:
                 cooldowns.append(table[i])
         return cooldowns
-
-    async def start_combat(self, interaction:discord.Interaction):
-        self.pc:PlayableCharacter = PlayableCharacter(
-            "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
-
-        interaction = await self.send_testing_view(interaction)
-        instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy])
-        result = await instance.combat()
-        if result == -1:
-            await interaction.edit_original_response(content="You Died.", view=None)
-        elif result == 0:
-            await interaction.edit_original_response(content="You Successfully Ran.", view=None)
-        else:
-            await interaction.edit_original_response(content=f"You Defeated {enemy.name}!", view=None)
-
-        await asyncio.sleep(4.0)
-        await interaction.edit_original_response(content=f"Rewards\nGold: {enemy.drops.gold}\nXP: {enemy.drops.xp}", embed=None)
-        await asyncio.sleep(4.0)
-        await interaction.delete_original_response()
 
     async def cleanup(self):
         self.db.conn.close
