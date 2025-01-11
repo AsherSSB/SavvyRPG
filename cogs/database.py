@@ -159,6 +159,14 @@ class Database(commands.Cog):
         """, (amount, user_id))
         self.conn.commit()
 
+    def add_xp(self, user_id, amount):
+        self.cur.execute("""
+            UPDATE characters
+            SET xp = xp + %s
+            WHERE user_id = %s;
+        """, (amount, user_id))
+        self.conn.commit()
+
     def set_gold(self, user_id, amount):
         if amount is not None:
             self.cur.execute("""
