@@ -58,7 +58,44 @@ class Database(commands.Cog):
             );
         """)
 
+        self.cur.execute("""
+        CREATE TABLE IF NOT EXISTS cooldowns (
+            user_id BIGINT PRIMARY KEY,
+            slot1 SMALLINT DEFAULT -1,
+            slot2 SMALLINT DEFAULT -1,
+            slot3 SMALLINT DEFAULT -1,
+            slot4 SMALLINT DEFAULT -1
+        )
+        """)
+
         self.conn.commit()
+
+        def get_cooldowns(self, user_id: int) -> list[int]:
+            self.cur.execute("""
+                SELECT slot1, slot2, slot3, slot4
+                FROM cooldowns
+                WHERE user_id = ?
+            """, (user_id,))
+
+            result = self.cur.fetchone()
+            if not result:
+                # Insert default row if none exists
+                self.cur.execute("""
+                    INSERT INTO cooldowns (user_id)
+                    VALUES (?)
+                """, (user_id,))
+                self.conn.commit()
+                return [-1, -1, -1, -1]
+
+            return list(result)
+
+        def set_cooldowns(self, user_id: int, cooldowns: list[int]):
+            self.cur.execute("""
+                INSERT OR REPLACE INTO cooldowns
+                (user_id, slot1, slot2, slot3, slot4)
+                VALUES (?, ?, ?, ?, ?)
+            """, (user_id, *cooldowns))
+            self.conn.commit()
 
     def save_inventory(self, user_id: int, items: list[Item]):
         # Clear existing inventory
