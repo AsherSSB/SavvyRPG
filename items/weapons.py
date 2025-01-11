@@ -5,9 +5,9 @@ from custom.combat.cooldown_base_classes import SingleTargetAttack, WeaponStatTa
 class Fists(Weapon):
     def __init__(self):
         self.name = "Fists"
-        self.emoji = "�"
+        self.emoji = "👊"
         stats = WeaponStatTable(dmg=8, spd=1, rng=1, cc=0.1, cm=1.5, acc=0.9, scalar=0.3, stat="str")
-        self.cooldown = SingleTargetAttack(name="Punch", emoji="�", stats=stats, acted="punched", entities=None)
+        self.cooldown = SingleTargetAttack(name="Punch", emoji="👊", stats=stats, acted="punched", entities=None)
 
 
 class Greatsword(Weapon):

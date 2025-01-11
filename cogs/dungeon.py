@@ -31,12 +31,15 @@ class Dungeon(commands.Cog):
         await view.wait()
         choice = view.choice
         if choice == -2:
+            await view.interaction.response.defer()
             return
+
+        interaction = view.interaction
         enemies = self.get_enemy_list(choice)
         player = self.db.get_character(interaction.user.id)
         loadout = self.db.load_equipment(interaction.user.id)
         # Smelly stinky no good hack
-        loadout.weapon = [loadout.weapon]
+        loadout.weapon = [Fists()]
         cooldown_indexes = self.db.get_cooldowns(interaction.user.id)
         cooldowns = self.get_cooldowns(str(player.origin), cooldown_indexes)
         instance = CombatInstance(interaction, [player], [loadout],[cooldowns], enemies)
@@ -165,13 +168,13 @@ class DungeonView(discord.ui.View):
     @discord.ui.button(label="Proceed", style=discord.ButtonStyle.green, row=4, disabled=True, custom_id="proceed_button")
     async def proceed_button(self, interaction: discord.Interaction, button):
         self.event.set()
-        await interaction.response.defer()
+        self.interaction = interaction
 
     @discord.ui.button(label="Back", style=discord.ButtonStyle.red, row=4)
     async def back_button(self, interaction: discord.Interaction, button):
         self.choice = -2
         self.event.set()
-        await interaction.response.defer()
+        self.interaction = interaction
 
     async def wait(self):
         await self.event.wait()
