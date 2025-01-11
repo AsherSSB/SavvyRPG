@@ -180,7 +180,7 @@ class MainMenus(commands.Cog):
 
 
 class MainMenuEmbed(discord.Embed):
-    def __init__(self, *, title="Savvy RPG", description="Pre-Alpha v0.0.6: Now with 2 dimentional combat!"):
+    def __init__(self, *, title="Savvy RPG", description="Pre-Alpha v0.0.7: Now with dungeons!"):
         super().__init__(title=title, description=description, color=discord.Color(0x00ffff))
         self.add_field(name="Adventure", value="Quest to Complete, Chests to Loot, and Monsters to Slay", inline=True)
         self.add_field(name="Character", value="View Character Stats and Inventory", inline=True)
