@@ -51,6 +51,16 @@ class Dungeon(commands.Cog):
         await asyncio.sleep(4.0)
         await interaction.delete_original_response()
 
+    def get_drop_results(self, enemies: list[Enemy]):
+        gold = 0
+        xp = 0
+
+        for enemy in enemies:
+            gold += enemy.drops.gold
+            xp += enemy.drops.xp
+
+        return (gold, xp)
+
     def get_enemy_list(self, choice: int):
         choices = {
             0: [TrainingDummy, TrainingDummy, TrainingDummy, TrainingDummy],
