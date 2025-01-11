@@ -43,7 +43,6 @@ class Dungeon(commands.Cog):
         cooldown_indexes = self.db.get_cooldowns(interaction.user.id)
         cooldowns = self.get_cooldowns(str(player.origin), cooldown_indexes)
         instance = CombatInstance(interaction, [player], [loadout],[cooldowns], enemies)
-        # TODO: Doesnt actually play combat???????
         result = await instance.combat()
         if result == -1:
             await interaction.edit_original_response(content="You Died.", view=None)
