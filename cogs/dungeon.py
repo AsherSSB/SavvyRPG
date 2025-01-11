@@ -20,6 +20,11 @@ class Dungeon(commands.Cog):
 
     @discord.app_commands.command(name="dungeonmenu")
     async def send_test_dungeon_menu(self, interaction: discord.Interaction):
+        encounter_names = {
+            0: "TrainingRoom",
+            1: "Wolf Den",
+            2: "Bandit Camp",
+        }
         view = DungeonView(interaction=interaction)
         await interaction.response.send_message("Dungeons\n\nSelect a Dungeon:", view=view)
         await view.wait()
@@ -38,10 +43,11 @@ class Dungeon(commands.Cog):
         elif result == 0:
             await interaction.edit_original_response(content="You Successfully Ran.", view=None)
         else:
-            await interaction.edit_original_response(content=f"You Defeated {enemy.name}!", view=None)
+            await interaction.edit_original_response(content=f"You Defeated {encounter_names[choice]}!", view=None)
+            # TODO: get gold and xp amount and add to user and user's db entry
+            await asyncio.sleep(4.0)
+            await interaction.edit_original_response(content=f"Rewards\nGold: {enemy.drops.gold}\nXP: {enemy.drops.xp}", embed=None)
 
-        await asyncio.sleep(4.0)
-        await interaction.edit_original_response(content=f"Rewards\nGold: {enemy.drops.gold}\nXP: {enemy.drops.xp}", embed=None)
         await asyncio.sleep(4.0)
         await interaction.delete_original_response()
 
