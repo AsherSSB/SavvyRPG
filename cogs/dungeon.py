@@ -3,6 +3,7 @@ from discord.ext import commands
 from custom.playable_character import PlayableCharacter
 import custom.stattable as sts
 from items.weapons import Greatsword, Fists
+from custom.combat.enemy import Enemy
 from custom.combat.enemies import TrainingDummy, Wolf, Skeleton, Bandit, DarkMage, Golem
 from custom.gear import Loadout
 from custom.combat.barbarian.cooldowns import BarbarianCooldownInfo
@@ -44,10 +45,13 @@ class Dungeon(commands.Cog):
             await interaction.edit_original_response(content="You Successfully Ran.", view=None)
         else:
             await interaction.edit_original_response(content=f"You Defeated {encounter_names[choice]}!", view=None)
-            # TODO: get gold and xp amount and add to user and user's db entry
+            gold, xp = self.get_drop_results(enemies)
+            self.db.add_gold(interaction.user.id, gold)
+            self.db.add_xp(interaction.user.id, xp)
+            player.gold += gold
+            player.xp += xp
             await asyncio.sleep(4.0)
-            await interaction.edit_original_response(content=f"Rewards\nGold: {enemy.drops.gold}\nXP: {enemy.drops.xp}", embed=None)
-
+            await interaction.edit_original_response(content=f"Rewards\nGold: {gold}\nXP: {xp}", embed=None)
         await asyncio.sleep(4.0)
         await interaction.delete_original_response()
 
@@ -59,7 +63,7 @@ class Dungeon(commands.Cog):
             gold += enemy.drops.gold
             xp += enemy.drops.xp
 
-        return (gold, xp)
+        return gold, xp
 
     def get_enemy_list(self, choice: int):
         choices = {
@@ -88,6 +92,21 @@ class Dungeon(commands.Cog):
 
     async def cog_unload(self):
         await self.cleanup()
+
+
+class ContinueView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.event = asyncio.Event()
+        self.interaction: discord.Interaction
+
+    @discord.ui.button(label="Continue", style=discord.ButtonStyle.green)
+    async def continue_button(self, interaction: discord.Interaction, button):
+        self.event.set()
+        self.interaction = interaction
+
+    async def wait(self):
+        await self.event.wait()
 
 
 class DungeonSelect(discord.ui.Select):
