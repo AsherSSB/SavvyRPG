@@ -5,7 +5,9 @@ import custom.stattable as sts
 from items.weapons import Greatsword, Fists
 from custom.combat.enemies import TrainingDummy, Wolf, Skeleton, Bandit, DarkMage, Golem
 from custom.gear import Loadout
-from custom.combat.barbarian.cooldowns import Cleave, Execute
+from custom.combat.barbarian.cooldowns import BarbarianCooldownInfo
+from custom.combat.rogue.cooldowns import RogueCooldownInfo
+from custom.stattable import Origin, Barbarian, Rogue, Wizard
 import asyncio
 from cogs.combat import CombatInstance
 from cogs.database import Database
@@ -31,18 +33,26 @@ class Dungeon(commands.Cog):
         player = self.db.get_character(interaction.user.id)
         loadout = self.db.load_equipment(interaction.user.id)
         cooldown_indexes = self.db.get_cooldowns(interaction.user.id)
-        # TODO: replace indexes with classes
-        cooldowns = []
+        cooldowns = self.get_cooldowns(player.origin, cooldown_indexes)
         instance = CombatInstance(interaction, [player], [loadout],[cooldowns], [enemy])
+        result = instance.combat()
+
+    def get_cooldowns(self, playerclass: Origin, indexes: list[int]):
+        origin_tables = {
+            Barbarian: BarbarianCooldownInfo.cooldowns,
+            Rogue: RogueCooldownInfo.cooldowns,
+            Wizard: -1,
+        }
+        table = origin_tables[playerclass]
+        cooldowns = []
+        for i in indexes:
+            if i != -1:
+                cooldowns.append(table[i])
+        return cooldowns
 
     async def start_combat(self, interaction:discord.Interaction):
         self.pc:PlayableCharacter = PlayableCharacter(
             "Player", "test", sts.Human(), sts.Barbarian(), xp=0, gold=0)
-
-        testwep = Greatsword()
-        enemy = Wolf()
-
-        loadout = Loadout(None, None, None, None, None, [testwep])
 
         interaction = await self.send_testing_view(interaction)
         instance = CombatInstance(interaction, [self.pc], [loadout],[[Cleave, Execute]], [enemy])
