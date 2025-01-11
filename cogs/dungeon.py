@@ -16,8 +16,8 @@ class Dungeon(commands.Cog):
 
     @discord.app_commands.command(name="dungeonmenu")
     async def send_test_dungeon_menu(self, interaction: discord.Interaction):
-        view = DungeonView()
-        await interaction.response.send_message("hello", view=view)
+        view = DungeonView(interaction=interaction)
+        await interaction.response.send_message("Dungeons\n\nSelect a Dungeon:", view=view)
         await view.wait()
         await interaction.edit_original_response(content=view.choice)
         await asyncio.sleep(3.0)
@@ -48,15 +48,63 @@ class Dungeon(commands.Cog):
         await interaction.delete_original_response()
 
 
-class DungeonView(discord.ui.View):
+class DungeonSelect(discord.ui.Select):
     def __init__(self):
-        super().__init__()
-        self.choice = 0
-        self.event = asyncio.Event()
+        options = [
+            discord.SelectOption(
+                label="Training Room",
+                description="Practice combat basics",
+                value="0"
+            ),
+            discord.SelectOption(
+                label="Wolf Den",
+                description="Face wild wolves",
+                value="1"
+            ),
+            discord.SelectOption(
+                label="Bandit Camp",
+                description="Fight dangerous bandits",
+                value="2"
+            )
+        ]
+        self.names = {
+            0: "TrainingRoom",
+            1: "Wolf Den",
+            2: "Bandit Camp",
+        }
+        super().__init__(
+            placeholder="Choose your dungeon...",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
 
-    @discord.ui.button(label="Proceed", style=discord.ButtonStyle.green)
+    async def callback(self, interaction: discord.Interaction):
+        self.view.children[0].disabled = False
+        selected = int(self.values[0])
+
+        self.view.choice = selected
+        self.placeholder = self.names[selected]
+        await self.view.interaction.edit_original_response(view=self.view)
+        await interaction.response.defer()
+
+
+class DungeonView(discord.ui.View):
+    def __init__(self, interaction):
+        super().__init__()
+        self.interaction = interaction
+        self.choice = -9
+        self.event = asyncio.Event()
+        self.add_item(DungeonSelect())
+
+    @discord.ui.button(label="Proceed", style=discord.ButtonStyle.green, row=4, disabled=True, custom_id="proceed_button")
     async def proceed_button(self, interaction: discord.Interaction, button):
-        self.choice = 1
+        self.event.set()
+        await interaction.response.defer()
+
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.red, row=4)
+    async def back_button(self, interaction: discord.Interaction, button):
+        self.choice = -2
         self.event.set()
         await interaction.response.defer()
 
