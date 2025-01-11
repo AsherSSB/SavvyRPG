@@ -29,13 +29,21 @@ class Dungeon(commands.Cog):
         await interaction.delete_original_response()
         if choice == -2:
             return
-        # TODO: get enemy list based on choice
+        enemies = self.get_enemy_list(choice)
         player = self.db.get_character(interaction.user.id)
         loadout = self.db.load_equipment(interaction.user.id)
         cooldown_indexes = self.db.get_cooldowns(interaction.user.id)
         cooldowns = self.get_cooldowns(player.origin, cooldown_indexes)
-        instance = CombatInstance(interaction, [player], [loadout],[cooldowns], [enemy])
+        instance = CombatInstance(interaction, [player], [loadout],[cooldowns], [enemies])
         result = instance.combat()
+
+    def get_enemy_list(self, choice: int):
+        choices = {
+            0: [TrainingDummy, TrainingDummy, TrainingDummy, TrainingDummy],
+            1: [Wolf, Wolf],
+            2: [Bandit, Bandit, Bandit],
+        }
+        return choices[choice]
 
     def get_cooldowns(self, playerclass: Origin, indexes: list[int]):
         origin_tables = {
