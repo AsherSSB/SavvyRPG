@@ -20,6 +20,9 @@ class Dungeon(commands.Cog):
         self.db = Database(self.bot)
 
     @discord.app_commands.command(name="dungeonmenu")
+    async def dungeon_test_command(self, interaction: discord.Interaction):
+        await self.send_test_dungeon_menu(interaction)
+
     async def send_test_dungeon_menu(self, interaction: discord.Interaction):
         encounter_names = {
             0: "TrainingRoom",
@@ -44,12 +47,12 @@ class Dungeon(commands.Cog):
         cooldowns = self.get_cooldowns(str(player.origin), cooldown_indexes)
         instance = CombatInstance(interaction, [player], [loadout],[cooldowns], enemies)
         result = await instance.combat()
+        view = ContinueView()
         if result == -1:
-            await interaction.edit_original_response(content="You Died.", view=None)
+            await interaction.edit_original_response(content="You Died.", view=view)
         elif result == 0:
-            await interaction.edit_original_response(content="You Successfully Ran.", view=None)
+            await interaction.edit_original_response(content="You Successfully Ran.", view=view)
         else:
-            # TODO: needs continue view
             await interaction.edit_original_response(content=f"You Defeated {encounter_names[choice]}!", view=None)
             gold, xp = self.get_drop_results(enemies)
             self.db.add_gold(interaction.user.id, gold)
@@ -57,9 +60,14 @@ class Dungeon(commands.Cog):
             player.gold += gold
             player.xp += xp
             await asyncio.sleep(4.0)
-            await interaction.edit_original_response(content=f"Rewards\nGold: {gold}\nXP: {xp}", embed=None)
-        await asyncio.sleep(4.0)
-        await interaction.delete_original_response()
+            await interaction.edit_original_response(content=f"Rewards\nGold: {gold}\nXP: {xp}", view=view, embed=None)
+        await view.wait()
+        if view.choice == -1:
+            return view.interaction
+        else:
+            self.send_test_dungeon_menu(view.interaction)
+
+
 
     def get_drop_results(self, enemies: list[Enemy]):
         gold = 0
