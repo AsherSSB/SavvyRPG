@@ -21,9 +21,9 @@ class Dungeon(commands.Cog):
 
     @discord.app_commands.command(name="dungeonmenu")
     async def dungeon_test_command(self, interaction: discord.Interaction):
-        await self.send_test_dungeon_menu(interaction)
+        await self.send_dungeon_menu(interaction)
 
-    async def send_test_dungeon_menu(self, interaction: discord.Interaction):
+    async def send_dungeon_menu(self, interaction: discord.Interaction):
         encounter_names = {
             0: "TrainingRoom",
             1: "Wolf Den",
@@ -34,8 +34,7 @@ class Dungeon(commands.Cog):
         await view.wait()
         choice = view.choice
         if choice == -2:
-            await view.interaction.response.defer()
-            return
+            return view.interaction
 
         interaction = view.interaction
         enemies = self.get_enemy_list(choice)
@@ -65,9 +64,7 @@ class Dungeon(commands.Cog):
         if view.choice == -1:
             return view.interaction
         else:
-            self.send_test_dungeon_menu(view.interaction)
-
-
+            await self.send_dungeon_menu(view.interaction)
 
     def get_drop_results(self, enemies: list[Enemy]):
         gold = 0

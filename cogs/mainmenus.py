@@ -6,6 +6,7 @@ from cogs.creation import Creator
 from cogs.blackjack import Blackjack
 from cogs.database import Database
 from cogs.slots import Slots
+from cogs.dungeon import Dungeon
 
 UNDER_CONSTRUCTION:str = "This area is still under construction. Come back later when it is finished!"
 
@@ -49,10 +50,16 @@ class MainMenus(commands.Cog):
         view = AdventureView()
         await interaction.edit_original_response(content="Adventure", embed=embed, view=view)
         await view.wait()
-        await view.interaction.response.defer()
         if view.choice == -1:
+            await view.interaction.response.defer()
             await self.send_main_menu(interaction)
+        elif view.choice == 1:
+            dun = Dungeon(self.bot)
+            interaction = await dun.send_dungeon_menu(view.interaction)
+            await interaction.response.send_message("Loading...", view=None, embed=None)
+            await self.send_adventure_menu(interaction)
         else:
+            await view.interaction.response.defer()
             await self.send_under_construction(interaction)
             await self.send_adventure_menu(interaction)
 
