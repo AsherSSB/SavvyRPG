@@ -129,7 +129,7 @@ class InventoryView(discord.ui.View):
         self.add_item(self.select)
         self.choice = None
 
-    @discord.app_commands.command(label="Back", style=discord.ButtonStyle.red, row=4)
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.red, row=4)
     async def back_button(self, interaction: discord.Interaction, button):
         self.choice = -1
         self.interaction = interaction

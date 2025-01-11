@@ -39,7 +39,7 @@ class Dungeon(commands.Cog):
         player = self.db.get_character(interaction.user.id)
         loadout = self.db.load_equipment(interaction.user.id)
         # Smelly stinky no good hack
-        loadout.weapon = [Fists()]
+        loadout.weapon = [loadout.weapon]
         cooldown_indexes = self.db.get_cooldowns(interaction.user.id)
         cooldowns = self.get_cooldowns(str(player.origin), cooldown_indexes)
         instance = CombatInstance(interaction, [player], [loadout],[cooldowns], enemies)
@@ -105,11 +105,19 @@ class ContinueView(discord.ui.View):
         super().__init__()
         self.event = asyncio.Event()
         self.interaction: discord.Interaction
+        self.choice: int
 
-    @discord.ui.button(label="Continue", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="Back to Dungeons", style=discord.ButtonStyle.green)
     async def continue_button(self, interaction: discord.Interaction, button):
         self.event.set()
         self.interaction = interaction
+        self.choice = 1
+
+    @discord.ui.button(label="Back to Main Menu", style=discord.ButtonStyle.red)
+    async def back_button(self, interaction: discord.Interaction, button):
+        self.event.set()
+        self.interaction = interaction
+        self.choice = -1
 
     async def wait(self):
         await self.event.wait()
