@@ -27,7 +27,13 @@ class Dungeon(commands.Cog):
         await interaction.delete_original_response()
         if choice == -2:
             return
-        player = self.db.get_character()
+        # TODO: get enemy list based on choice
+        player = self.db.get_character(interaction.user.id)
+        loadout = self.db.load_equipment(interaction.user.id)
+        cooldown_indexes = self.db.get_cooldowns(interaction.user.id)
+        # TODO: replace indexes with classes
+        cooldowns = []
+        instance = CombatInstance(interaction, [player], [loadout],[cooldowns], [enemy])
 
     async def start_combat(self, interaction:discord.Interaction):
         self.pc:PlayableCharacter = PlayableCharacter(
