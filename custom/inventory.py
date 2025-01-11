@@ -115,7 +115,6 @@ class NextButton(discord.ui.Button):
         await self.view.correct_inventory_response()
 
 
-# TODO: this needs a back button
 class InventoryView(discord.ui.View):
     def __init__(self, interaction, inventory: list[Item], embed):
         super().__init__()
@@ -129,6 +128,12 @@ class InventoryView(discord.ui.View):
         self.add_item(self.next_button)
         self.add_item(self.select)
         self.choice = None
+
+    @discord.app_commands.command(label="Back", style=discord.ButtonStyle.red, row=4)
+    async def back_button(self, interaction: discord.Interaction, button):
+        self.choice = -1
+        self.interaction = interaction
+        self.event.set()
 
     async def correct_inventory_response(self):
         self.correct_buttons()
