@@ -111,6 +111,11 @@ class CombatInstance():
             # reset view event
             await self.view.reset()
 
+    def validate_weapons(self):
+        for loadout in self.loadouts:
+            if loadout.weapon is None:
+                loadout.weapon == Fists
+
     def calculate_status_effects(self, entity_index: int):
         entity = self.entities[entity_index]
         practicals = copy.deepcopy(self.saved_practicals[entity_index])
