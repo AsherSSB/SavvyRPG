@@ -56,7 +56,7 @@ class MainMenus(commands.Cog):
         elif view.choice == 1:
             dun = Dungeon(self.bot)
             interaction = await dun.send_dungeon_menu(view.interaction)
-            await interaction.response.send_message("Loading...", view=None, embed=None)
+            await interaction.response.send_message("Loading...", view=discord.utils.MISSING, embed=None)
             await self.send_adventure_menu(interaction)
         else:
             await view.interaction.response.defer()

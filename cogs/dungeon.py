@@ -78,7 +78,7 @@ class Dungeon(commands.Cog):
 
     def get_enemy_list(self, choice: int):
         choices = {
-            0: [TrainingDummy(), TrainingDummy(), TrainingDummy(), TrainingDummy()],
+            0: [TrainingDummy(), TrainingDummy()],
             1: [Wolf(), Wolf()],
             2: [Bandit(), Bandit(), Bandit()],
         }
