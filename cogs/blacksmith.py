@@ -1,12 +1,17 @@
 import discord
 from discord.ext import commands
 import asyncio
+from dataclasses import fields
+from cogs.loot_randomizer import Loot
+from cogs.database import Database
 
 
 class Blacksmith(commands.Cog):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
+        self.loot = Loot(self.bot)
+        self.db = Database(self.bot)
 
     @discord.app_commands.command(name="sendblacksmith")
     async def sendmenutest(self, interaction: discord.Interaction):
@@ -27,12 +32,29 @@ class Blacksmith(commands.Cog):
 
     async def send_buy_menu(self, interaction: discord.Interaction):
         view = BuyView()
-        await interaction.edit_original_response(content="Buy Menu", view=view)
+        await interaction.edit_original_response(content="Buy Menu\nBasic Chest: 80g", view=view)
         await view.wait()
         if view.choice == -1:
             await self.send_blacksmith_menu(view.interaction)
         elif view.choice == 0:
             # TODO: open a chest (randomize loot)
+            # TODO: check if player has enough gold
+            player = self.db.get_character(view.interaction.user.id)
+            if player.gold >= 80:
+                player.gold -= 80
+                self.db.add_gold(view.interaction.user.id, -80)
+                gear = await self.loot.generate_random_gear(player)
+
+                content = []
+                for field in fields(type(gear)):
+                    # Skip private fields
+                    if field.name.startswith('_'):
+                        continue
+
+                    value = getattr(gear, field.name)
+                    content.append(f"{field.name}: {value}")
+                formatted_content = "\n".join(content)
+
             # TODO: show gained item and give continue button to recurse
             pass
 

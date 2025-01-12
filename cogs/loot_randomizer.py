@@ -181,25 +181,11 @@ class Loot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = Database(self.bot)
-        self.usercharacter: PlayableCharacter
 
-    @discord.app_commands.command(name="randomloot")
-    async def generate_random_gear(self, interaction: discord.Interaction):
-        generator = LootGenerator(0, Nomad())
+    async def generate_random_gear(self, player: PlayableCharacter):
+        generator = LootGenerator(player.level, player.origin)
         randgear = generator.generate_loot()
-        content = []
-
-        for field in fields(type(randgear)):
-            # Skip private fields
-            if field.name.startswith('_'):
-                continue
-
-            value = getattr(randgear, field.name)
-
-            content.append(f"{field.name}: {value}")
-
-        formatted_content = "\n".join(content)
-        await interaction.response.send_message(formatted_content)
+        return randgear
 
     @discord.app_commands.command(name="charactermenutesting")
     async def send_character_menu(self, interaction:discord.Interaction):
@@ -227,30 +213,6 @@ class Loot(commands.Cog):
             await interaction.edit_original_response(content=f"You selected: {view.labels[view.choice]}")
             await asyncio.sleep(6.0)
             await interaction.delete_original_response()
-
-    @discord.app_commands.command(name="invtest")
-    async def inventory_menu_test(self, interaction: discord.Interaction):
-        dummy_inventory = [
-            Item("Health Potion", "❤️", value=50, stack_size=99, quantity=15),
-            Item("Mana Potion", "💙", value=75, stack_size=99, quantity=10),
-            Item("Phoenix Down", "🪶", value=500, stack_size=10, quantity=3),
-            Item("Iron Sword", "⚔️", value=100, stack_size=1, quantity=1),
-            Item("Wooden Shield", "🛡️", value=50, stack_size=1, quantity=1),
-            Item("Magic Scroll", "📜", value=200, stack_size=5, quantity=2),
-            Item("Gold Ring", "💍", value=1000, stack_size=1, quantity=1),
-            Item("Dragon Scale", "🐉", value=2000, stack_size=10, quantity=5),
-            Item("Ancient Coin", "🪙", value=100, stack_size=999, quantity=50),
-            Item("Healing Herb", "🌿", value=25, stack_size=99, quantity=30),
-            Item("Magic Crystal", "💎", value=150, stack_size=50, quantity=12),
-            Item("Steel Arrows", "🏹", value=5, stack_size=999, quantity=200)
-        ]
-        embed = InventoryEmbed(dummy_inventory)
-        view = InventoryView(interaction, dummy_inventory, embed)
-        await interaction.response.send_message(content="inventory", view=view, embed=embed)
-        await view.wait()
-        await interaction.edit_original_response(
-            content=f"You chose {dummy_inventory[view.choice].name}",
-            view=None, embed=None)
 
 
 async def setup(bot):
