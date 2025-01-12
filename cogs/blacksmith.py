@@ -37,15 +37,14 @@ class Blacksmith(commands.Cog):
         if view.choice == -1:
             await self.send_blacksmith_menu(view.interaction)
         elif view.choice == 0:
-            # TODO: open a chest (randomize loot)
-            # TODO: check if player has enough gold
             player = self.db.get_character(view.interaction.user.id)
             inventory = self.db.load_inventory(self.inventory.user.id)
             if player.gold >= 80 and len(inventory <= 25):
                 player.gold -= 80
                 self.db.add_gold(view.interaction.user.id, -80)
                 gear = await self.loot.generate_random_gear(player)
-
+                inventory.append(gear)
+                self.db.save_inventory(view.interaction.user.id, inventory)
                 content = []
                 for field in fields(type(gear)):
                     # Skip private fields
@@ -55,7 +54,10 @@ class Blacksmith(commands.Cog):
                     value = getattr(gear, field.name)
                     content.append(f"{field.name}: {value}")
                 formatted_content = "\n".join(content)
-            # TODO: show gained item and give continue button to recurse
+            view = ContinueView()
+            await interaction.response.send_message(f"Got Item!\n{formatted_content}", view=view)
+            await view.wait()
+            await self.send_buy_menu(view.interaction)
 
     async def cleanup(self):
         self.db.conn.close
@@ -111,6 +113,21 @@ class BlacksmithView(discord.ui.View):
     async def sell_button(self, interaction: discord.Interaction, button):
         self.interaction = interaction
         self.choice = 1
+        self.event.set()
+
+    async def wait(self):
+        await self.event.wait()
+
+
+class ContinueView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.event = asyncio.Event()
+        self.interaction: discord.Interaction
+
+    @discord.ui.button(label="Continue", style=discord.ButtonStyle.green)
+    async def continue_button(self, interaction: discord.Interaction, button):
+        self.interaction = interaction
         self.event.set()
 
     async def wait(self):
