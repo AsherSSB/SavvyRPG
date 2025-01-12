@@ -122,7 +122,7 @@ class MainMenus(commands.Cog):
         elif view.choice == 0:
             bsmith = Blacksmith(self.bot)
             interaction = await bsmith.send_blacksmith_menu(view.interaction)
-            interaction.response.send_message("Loading...")
+            await interaction.response.send_message("Loading...")
             await self.send_market_menu(interaction)
         else:
             await view.interaction.response.defer()
