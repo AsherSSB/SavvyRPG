@@ -38,8 +38,8 @@ class Blacksmith(commands.Cog):
             await self.send_blacksmith_menu(view.interaction)
         elif view.choice == 0:
             player = self.db.get_character(view.interaction.user.id)
-            inventory = self.db.load_inventory(self.inventory.user.id)
-            if player.gold >= 80 and len(inventory <= 25):
+            inventory = self.db.load_inventory(view.interaction.user.id)
+            if player.gold >= 80 and len(inventory) <= 25:
                 player.gold -= 80
                 self.db.add_gold(view.interaction.user.id, -80)
                 gear = await self.loot.generate_random_gear(player)
@@ -54,10 +54,19 @@ class Blacksmith(commands.Cog):
                     value = getattr(gear, field.name)
                     content.append(f"{field.name}: {value}")
                 formatted_content = "\n".join(content)
-            view = ContinueView()
-            await interaction.response.send_message(f"Got Item!\n{formatted_content}", view=view)
-            await view.wait()
-            await self.send_buy_menu(view.interaction)
+                interaction = view.interaction
+                view = ContinueView()
+                await interaction.response.send_message(f"Got Item!\n{formatted_content}", view=view)
+                await view.wait()
+                await view.interaction.response.send_message("Loading...")
+                await self.send_buy_menu(view.interaction)
+            else:
+                interaction = view.interaction
+                view = ContinueView()
+                await interaction.response.send_message("You do not have enough gold for that", view=view)
+                await view.wait()
+                await view.interaction.response.send_message("Loading...")
+                await self.send_buy_menu(view.interaction)
 
     async def cleanup(self):
         self.db.conn.close

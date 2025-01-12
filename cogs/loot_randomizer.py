@@ -3,7 +3,6 @@ from discord.ext import commands
 import asyncio
 from dataclasses import fields
 from custom.playable_character import PlayableCharacter
-from cogs.mainmenus import CharacterEmbed, CharacterView
 from cogs.database import Database
 from custom.gear import Item
 import random
@@ -186,18 +185,6 @@ class Loot(commands.Cog):
         generator = LootGenerator(player.level, player.origin)
         randgear = generator.generate_loot()
         return randgear
-
-    @discord.app_commands.command(name="charactermenutesting")
-    async def send_character_menu(self, interaction:discord.Interaction):
-        self.usercharacter = self.db.get_character(interaction.user.id)
-        embed = CharacterEmbed(self.usercharacter)
-        view = CharacterView()
-        await interaction.response.send_message(content="Character", embed=embed, view=view)
-        await view.wait()
-        if view.choice == 0:
-            await self.send_gear_type_selection_menu(view.interaction)
-        else:
-            await view.interaction.response.defer()
 
     @discord.app_commands.command(name="gear")
     async def gear_test(self, interaction: discord.Interaction):
