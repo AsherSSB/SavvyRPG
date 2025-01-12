@@ -1,19 +1,20 @@
 import custom.stattable as sts
 
+
 class PlayableCharacter():
-    def __init__(self, name, gender, race, origin, stats:sts.StatTable = None, xp = 0, gold = 0):
+    def __init__(self, name, gender, race, origin, stats:sts.StatTable = None, xp=0, gold=0):
         self.name:str = name
         self.gender:str = gender
         self.race:sts.Race = race
         self.origin:sts.Origin = origin
-        self.stats:sts.StatTable = stats if stats != None else self.origin.stats + self.race.statmods
+        self.stats:sts.StatTable = stats if stats is not None else self.origin.stats + self.race.statmods
         self.xp:int = xp
         self.gold:int = gold
         self.level:int = self.calculate_level()
 
     def calculate_level(self):
-        return int((self.xp // 100) ** (9/21))
-    
+        return int((self.xp // 100) ** (9 / 21))
+
     def add_xp(self, amount):
         self.xp += amount
         new_level = self.calculate_level()
@@ -25,12 +26,12 @@ class PlayableCharacter():
 
     def xp_for_next_level(self):
         next_level = self.level + 1
-        current_level_xp = int((self.level ** (21/9)) * 100)
-        next_level_xp = int((next_level ** (21/9)) * 100)
+        current_level_xp = int((self.level ** (21 / 9)) * 100)
+        next_level_xp = int((next_level ** (21 / 9)) * 100)
         return next_level_xp - current_level_xp
-    
+
     def level_progress(self):
-        current_level_xp = int((self.level ** (21/9)) * 100)
+        current_level_xp = int((self.level ** (21 / 9)) * 100)
         return int(self.xp - current_level_xp)
 
     def __str__(self):
