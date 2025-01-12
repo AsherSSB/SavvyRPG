@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from custom.inventory import InventoryView, InventoryEmbed
 
 
 class Inventory(commands.Cog):
@@ -9,7 +10,15 @@ class Inventory(commands.Cog):
 
     @discord.app_commands.command(name="sendinv")
     async def send_inventory_menu(self, interaction: discord.Interaction):
-        pass
+        view = InventoryView
+        embed = InventoryEmbed
+
+    async def cleanup(self):
+        self.db.conn.close
+        self.db.cur.close
+
+    async def cog_unload(self):
+        await self.cleanup()
 
 
 async def setup(bot):
