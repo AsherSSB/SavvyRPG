@@ -40,7 +40,8 @@ class Blacksmith(commands.Cog):
             # TODO: open a chest (randomize loot)
             # TODO: check if player has enough gold
             player = self.db.get_character(view.interaction.user.id)
-            if player.gold >= 80:
+            inventory = self.db.load_inventory(self.inventory.user.id)
+            if player.gold >= 80 and len(inventory <= 25):
                 player.gold -= 80
                 self.db.add_gold(view.interaction.user.id, -80)
                 gear = await self.loot.generate_random_gear(player)
@@ -54,9 +55,14 @@ class Blacksmith(commands.Cog):
                     value = getattr(gear, field.name)
                     content.append(f"{field.name}: {value}")
                 formatted_content = "\n".join(content)
-
             # TODO: show gained item and give continue button to recurse
-            pass
+
+    async def cleanup(self):
+        self.db.conn.close
+        self.db.cur.close
+
+    async def cog_unload(self):
+        await self.cleanup()
 
 
 class BuyView(discord.ui.View):
