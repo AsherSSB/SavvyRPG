@@ -63,6 +63,8 @@ class MainMenus(commands.Cog):
             await self.send_under_construction(interaction)
             await self.send_adventure_menu(interaction)
 
+    # choice 0 is gear
+    # choice 1 is inventory
     async def send_character_menu(self, interaction:discord.Interaction):
         embed = CharacterEmbed(self.user_character)
         view = CharacterView()
@@ -71,7 +73,11 @@ class MainMenus(commands.Cog):
         if view.choice == -1:
             await view.interaction.response.defer()
             await self.send_main_menu(interaction)
-        if view.choice == 2:
+        elif view.choice == 0:
+            pass
+        elif view.choice == 1:
+            pass
+        elif view.choice == 2:
             await interaction.delete_original_response()
             interaction = view.interaction
             await self.confirm_character_deletion(interaction)
