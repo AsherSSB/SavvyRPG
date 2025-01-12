@@ -117,6 +117,9 @@ class MainMenus(commands.Cog):
         await view.interaction.response.defer()
         if view.choice == -1:
             await self.send_main_menu(interaction)
+        # blacksmith menu
+        elif view.choice == 0:
+            pass
         else:
             await self.send_under_construction(interaction)
             await self.send_market_menu(interaction)
