@@ -31,8 +31,9 @@ class Blacksmith(commands.Cog):
         await view.wait()
         if view.choice == -1:
             await self.send_blacksmith_menu(view.interaction)
-        # TODO: open a chest (randomize loot)
         elif view.choice == 0:
+            # TODO: open a chest (randomize loot)
+            # TODO: show gained item and give continue button to recurse
             pass
 
 
