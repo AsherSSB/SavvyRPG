@@ -26,6 +26,28 @@ class Blacksmith(commands.Cog):
             pass
 
 
+class BuyView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.choice: int
+        self.interaction: discord.Interaction
+        self.event = asyncio.Event()
+
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.red)
+    async def back_button(self, interaction: discord.Interaction, button):
+        self.interaction = interaction
+        self.choice = -1
+        self.event.set()
+
+    @discord.ui.button(label="Basic Chest", interaction: discord.Interaction, button):
+        self.interaction = interaction
+        self.choice = 0
+        self.event.set()
+
+    async def wait(self):
+        await self.event.wait()
+
+
 class BlacksmithView(discord.ui.View):
     def __init__(self):
         super().__init__()
