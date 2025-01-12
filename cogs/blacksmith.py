@@ -60,10 +60,17 @@ class Blacksmith(commands.Cog):
                 await view.wait()
                 await view.interaction.response.send_message("Loading...")
                 await self.send_buy_menu(view.interaction)
-            else:
+            elif player.gold < 80:
                 interaction = view.interaction
                 view = ContinueView()
                 await interaction.response.send_message("You do not have enough gold for that", view=view)
+                await view.wait()
+                await view.interaction.response.send_message("Loading...")
+                await self.send_buy_menu(view.interaction)
+            else:
+                interaction = view.interaction
+                view = ContinueView()
+                await interaction.response.send_message("Your inventory is full!", view=view)
                 await view.wait()
                 await view.interaction.response.send_message("Loading...")
                 await self.send_buy_menu(view.interaction)
