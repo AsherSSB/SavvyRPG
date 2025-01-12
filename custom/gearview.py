@@ -1,6 +1,7 @@
 import discord
 import asyncio
 
+
 class GearSelect(discord.ui.Select):
     def __init__(self):
         super().__init__(max_values=1)
@@ -29,13 +30,13 @@ class ButtonGearView(discord.ui.View):
         self.select: discord.SelectMenu = GearSelect()
 
         button_dict = [
-            {"label": "Head", "style": discord.ButtonStyle.gray, "emoji": "🧢"}, 
+            {"label": "Head", "style": discord.ButtonStyle.gray, "emoji": "🧢"},
             {"label": "Chest", "style": discord.ButtonStyle.gray, "emoji": "👕"},
             {"label": "Hands", "style": discord.ButtonStyle.gray, "emoji": "🧤"},
-            {"label": "Legs", "style": discord.ButtonStyle.gray, "emoji": "👖"}, 
+            {"label": "Legs", "style": discord.ButtonStyle.gray, "emoji": "👖"},
             {"label": "Feet", "style": discord.ButtonStyle.gray, "emoji": "👢"}
         ]
-        
+
         # Create and add buttons
         for i, btn in enumerate(button_dict):
             button = discord.ui.Button(
@@ -46,7 +47,7 @@ class ButtonGearView(discord.ui.View):
             )
             button.callback = self.create_callback(i)
             self.buttons.append(button)
-        
+
         for button in self.buttons:
             self.add_item(button)
 
@@ -56,11 +57,11 @@ class ButtonGearView(discord.ui.View):
             await interaction.response.defer()
             self.event.set()
         return callback
-    
+
     @discord.ui.button(label="Back", style=discord.ButtonStyle.red, row=2)
     async def back_button(self, interaction: discord.Interaction, button):
         self.choice = -1
-        await interaction.response.defer()
+        self.interaction = interaction
         self.event.set()
 
     @discord.ui.button(label="Swap Select Method", style=discord.ButtonStyle.green, row=2)
@@ -93,7 +94,7 @@ class ButtonGearView(discord.ui.View):
     async def add_button_text(self):
         for i, button in enumerate(self.buttons):
             button.label = self.labels[i]
-    
+
     async def remove_button_text(self):
         for button in self.buttons:
             button.label = ""
