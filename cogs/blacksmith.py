@@ -9,8 +9,10 @@ class Blacksmith(commands.Cog):
 
     @discord.app_commands.command(name="sendblacksmith")
     async def send_blacksmith_menu(self, interaction: discord.Interaction):
-        pass
-
+        view = BlacksmithView()
+        await interaction.response.send_message("Blacksmith\n\nBuy and sell equipment and armor", view=view)
+        await view.wait()
+        await interaction.edit_original_response(content=view.choice, view=discord.utils.MISSING)
 
 class BlacksmithView(discord.ui.View):
     def __init__(self):
