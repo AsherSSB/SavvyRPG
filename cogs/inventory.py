@@ -17,7 +17,7 @@ class Inventory(commands.Cog):
         view = InventoryView(interaction=interaction, inventory=inventory, embed=embed)
         await interaction.response.send_message(content="Inventory", view=view, embed=embed)
         await view.wait()
-        await interaction.edit_original_response(content=view.choice, view=discord.utils.MISSING, embed=discord.utils.MISSING)
+        await interaction.edit_original_response(content=view.choice, view=None, embed=None)
 
     async def cleanup(self):
         self.db.conn.close

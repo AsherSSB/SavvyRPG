@@ -32,7 +32,7 @@ class InventoryEmbed(discord.Embed):
             item = working_inv[i]
             self.set_field_at(field_index,
                               name=f"{item.emoji} {item.name}",
-                              value=f"placeholder short description.\nQuantity:{item.quantity}\nWorth: {item.value}g each",
+                              value=f"Quantity:{item.quantity}\nWorth: {item.value}g each",
                               inline=True)
             field_index += 1
 
@@ -41,7 +41,7 @@ class InventoryEmbed(discord.Embed):
                 item = working_inv[i + 1]
                 self.set_field_at(field_index,
                                   name=f"{item.emoji} {item.name}",
-                                  value=f"placeholder short description.\nQuantity:{item.quantity}\nWorth: {item.value}g each",
+                                  value=f"Quantity:{item.quantity}\nWorth: {item.value}g each",
                                   inline=True)
                 field_index += 1
             else:
