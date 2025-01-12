@@ -10,9 +10,10 @@ class Blacksmith(commands.Cog):
     @discord.app_commands.command(name="sendblacksmith")
     async def send_blacksmith_menu(self, interaction: discord.Interaction):
         view = BlacksmithView()
-        await interaction.response.send_message("Blacksmith\n\nBuy and sell equipment and armor", view=view)
+        await interaction.response.send_message("Blacksmith\nBuy and sell equipment and armor", view=view)
         await view.wait()
         await interaction.edit_original_response(content=view.choice, view=discord.utils.MISSING)
+
 
 class BlacksmithView(discord.ui.View):
     def __init__(self):
@@ -33,7 +34,7 @@ class BlacksmithView(discord.ui.View):
         self.choice = 0
         self.event.set()
 
-    @discord.ui.button(lable="Sell", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="Sell", style=discord.ButtonStyle.green)
     async def sell_button(self, interaction: discord.Interaction, button):
         self.interaction = interaction
         self.choice = 1
