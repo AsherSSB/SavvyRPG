@@ -18,11 +18,21 @@ class Blacksmith(commands.Cog):
         await view.wait()
         if view.choice == -1:
             return view.interaction
-        # TODO: buy menu
         elif view.choice == 0:
-            pass
+            await view.interaction.response.defer()
+            await self.send_buy_menu(interaction)
         # TODO: sell menu
         else:
+            pass
+
+    async def send_buy_menu(self, interaction: discord.Interaction):
+        view = BuyView()
+        await interaction.edit_original_response(content="Buy Menu", view=view)
+        await view.wait()
+        if view.choice == -1:
+            await self.send_blacksmith_menu(view.interaction)
+        # TODO: open a chest (randomize loot)
+        elif view.choice == 0:
             pass
 
 
@@ -39,7 +49,8 @@ class BuyView(discord.ui.View):
         self.choice = -1
         self.event.set()
 
-    @discord.ui.button(label="Basic Chest", interaction: discord.Interaction, button):
+    @discord.ui.button(label="Basic Chest", style=discord.ButtonStyle.green)
+    async def buy_basic_button(self, interaction: discord.Interaction, button):
         self.interaction = interaction
         self.choice = 0
         self.event.set()
