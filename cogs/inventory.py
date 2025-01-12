@@ -10,13 +10,14 @@ class Inventory(commands.Cog):
         self.bot = bot
         self.db = Database(bot=self.bot)
 
-    @discord.app_commands.command(name="sendinv")
     async def send_inventory_menu(self, interaction: discord.Interaction):
         inventory = self.db.load_inventory(interaction.user.id)
         embed = InventoryEmbed(inventory=inventory)
         view = InventoryView(interaction=interaction, inventory=inventory, embed=embed)
         await interaction.response.send_message(content="Inventory", view=view, embed=embed)
         await view.wait()
+        if view.choice == -1:
+            return view.interaction
         await interaction.edit_original_response(content=view.choice, view=None, embed=None)
 
     async def cleanup(self):

@@ -8,6 +8,7 @@ from cogs.database import Database
 from cogs.slots import Slots
 from cogs.dungeon import Dungeon
 from cogs.blacksmith import Blacksmith
+from cogs.inventory import Inventory
 
 UNDER_CONSTRUCTION:str = "This area is still under construction. Come back later when it is finished!"
 
@@ -77,7 +78,10 @@ class MainMenus(commands.Cog):
         elif view.choice == 0:
             pass
         elif view.choice == 1:
-            pass
+            inv = Inventory(self.bot)
+            interaction = await inv.send_inventory_menu(view.interaction)
+            await interaction.response.send_message("Loading...")
+            await self.send_character_menu(interaction)
         elif view.choice == 2:
             await interaction.delete_original_response()
             interaction = view.interaction
