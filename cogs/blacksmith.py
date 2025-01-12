@@ -2,17 +2,28 @@ import discord
 from discord.ext import commands
 import asyncio
 
+
 class Blacksmith(commands.Cog):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
 
     @discord.app_commands.command(name="sendblacksmith")
+    async def sendmenutest(self, interaction: discord.Interaction):
+        await self.send_blacksmith_menu(interaction)
+
     async def send_blacksmith_menu(self, interaction: discord.Interaction):
         view = BlacksmithView()
         await interaction.response.send_message("Blacksmith\nBuy and sell equipment and armor", view=view)
         await view.wait()
-        await interaction.edit_original_response(content=view.choice, view=discord.utils.MISSING)
+        if view.choice == -1:
+            return view.interaction
+        # TODO: buy menu
+        elif view.choice == 0:
+            pass
+        # TODO: sell menu
+        else:
+            pass
 
 
 class BlacksmithView(discord.ui.View):

@@ -7,6 +7,7 @@ from cogs.blackjack import Blackjack
 from cogs.database import Database
 from cogs.slots import Slots
 from cogs.dungeon import Dungeon
+from cogs.blacksmith import Blacksmith
 
 UNDER_CONSTRUCTION:str = "This area is still under construction. Come back later when it is finished!"
 
@@ -114,13 +115,17 @@ class MainMenus(commands.Cog):
         view = MarketView()
         await interaction.edit_original_response(content="Market", embed=embed, view=view)
         await view.wait()
-        await view.interaction.response.defer()
         if view.choice == -1:
+            await view.interaction.response.defer()
             await self.send_main_menu(interaction)
         # blacksmith menu
         elif view.choice == 0:
-            pass
+            bsmith = Blacksmith(self.bot)
+            interaction = await bsmith.send_blacksmith_menu(view.interaction)
+            interaction.response.send_message("Loading...")
+            await self.send_market_menu(interaction)
         else:
+            await view.interaction.response.defer()
             await self.send_under_construction(interaction)
             await self.send_market_menu(interaction)
 
