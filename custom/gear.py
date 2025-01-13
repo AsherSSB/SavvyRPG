@@ -69,6 +69,6 @@ class Loadout():
     hands: HandGear | None
     legs: LegGear | None
     feet: FootGear | None
-    weapon: tuple[Weapon] | None
+    weapon: Weapon | None
 
 
