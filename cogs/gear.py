@@ -15,6 +15,7 @@ class GearMenu(commands.Cog):
         await view.wait()
         if view.choice == -1:
             return view.interaction
+        # TODO: replace this with equip menu for selected equipment slot
         else:
             await interaction.edit_original_response(content=view.choice, view=None)
             await asyncio.sleep(3.0)
