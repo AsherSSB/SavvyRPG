@@ -41,7 +41,7 @@ class GearMenu(commands.Cog):
         # returns interaction back to main menus
         return await self.send_equip_menu(interaction.user.id, equippables)
 
-    async def send_equip_menu(self, interaction, inventory: list[Item]):
+    async def send_equip_menu(self, interaction, loadout: Loadout, inventory: list[Item]):
         inventory = self.inventory
         embed = InventoryEmbed(inventory=inventory)
         view = InventoryView(interaction=interaction, inventory=inventory, embed=embed)
