@@ -21,7 +21,7 @@ class Inventory(commands.Cog):
             return view.interaction
         await interaction.edit_original_response(content=view.choice, view=None, embed=None)
 
-    def send_entire_inventory(self, userid):
+    def set_entire_inventory(self, userid):
         self.inventory = self.db.load_inventory(userid)
 
     async def cleanup(self):
