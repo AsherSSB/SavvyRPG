@@ -20,12 +20,11 @@ class GearMenu(commands.Cog):
         await view.wait()
         if view.choice == -1:
             return view.interaction
-        # TODO: replace this with equip menu for selected equipment slot
         else:
             interaction = view.interaction
             loadout = self.db.load_equipment(interaction.user.id)
             inventory = self.db.load_inventory(interaction.user.id)
-            # TODO: send equip menu
+            await self.equip_item(interaction, loadout, inventory, view.choice)
 
     async def equip_item(self, interaction: discord.Interaction, loadout: Loadout, inventory: list[Item], slot_index: int):
         slots = {
