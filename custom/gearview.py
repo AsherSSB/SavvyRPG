@@ -51,6 +51,8 @@ class ButtonGearView(discord.ui.View):
         for button in self.buttons:
             self.add_item(button)
 
+    # TODO: callback should send to an equip menu
+    #       or at least the view should send to an equip menu using choice
     def create_callback(self, choice: int):
         async def callback(interaction: discord.Interaction):
             self.choice = choice

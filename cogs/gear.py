@@ -1,9 +1,10 @@
 import discord
 from discord.ext import commands
 from custom.gearview import ButtonGearView
+import asyncio
 
 
-class GearMenu(commands.cog):
+class GearMenu(commands.Cog):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
@@ -12,7 +13,13 @@ class GearMenu(commands.cog):
         view = ButtonGearView(interaction)
         await interaction.response.send_message("Gear", view=view)
         await view.wait()
+        if view.choice == -1:
+            return view.interaction
+        else:
+            await interaction.edit_original_response(content=view.choice, view=None)
+            await asyncio.sleep(3.0)
+            await interaction.delete_original_response()
 
 
 async def setup(bot):
-    bot.add_cog(GearMenu(bot))
+    await bot.add_cog(GearMenu(bot))
