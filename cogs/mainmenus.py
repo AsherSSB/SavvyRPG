@@ -83,6 +83,7 @@ class MainMenus(commands.Cog):
             await self.send_character_menu(interaction)
         elif view.choice == 1:
             inv = Inventory(self.bot)
+            inv.send_entire_inventory(view.interaction.user.id)
             interaction = await inv.send_inventory_menu(view.interaction)
             await interaction.response.send_message("Loading...")
             await self.send_character_menu(interaction)

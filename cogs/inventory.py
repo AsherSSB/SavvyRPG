@@ -9,9 +9,10 @@ class Inventory(commands.Cog):
         super().__init__()
         self.bot = bot
         self.db = Database(bot=self.bot)
+        self.inventory: list
 
     async def send_inventory_menu(self, interaction: discord.Interaction):
-        inventory = self.db.load_inventory(interaction.user.id)
+        inventory = self.inventory
         embed = InventoryEmbed(inventory=inventory)
         view = InventoryView(interaction=interaction, inventory=inventory, embed=embed)
         await interaction.response.send_message(content="Inventory", view=view, embed=embed)
@@ -19,6 +20,9 @@ class Inventory(commands.Cog):
         if view.choice == -1:
             return view.interaction
         await interaction.edit_original_response(content=view.choice, view=None, embed=None)
+
+    def send_entire_inventory(self, userid):
+        self.inventory = self.db.load_inventory(userid)
 
     async def cleanup(self):
         self.db.conn.close
