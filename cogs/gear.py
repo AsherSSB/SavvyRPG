@@ -38,7 +38,8 @@ class GearMenu(commands.Cog):
         attr = slots[slot_index]
         gear = getattr(loadout, attr, None)
         equippables = [item for item in inventory if isinstance(item, type(gear))]
-        await self.send_equip_menu(interaction.user.id, equippables)
+        # returns interaction back to main menus
+        return await self.send_equip_menu(interaction.user.id, equippables)
 
     async def send_equip_menu(self, interaction, inventory: list[Item]):
         inventory = self.inventory
