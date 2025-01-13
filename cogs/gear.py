@@ -9,6 +9,7 @@ class GearMenu(commands.Cog):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
+        self.db = Database()
 
     async def send_gear_menu(self, interaction: discord.Interaction):
         view = ButtonGearView(interaction)
@@ -18,7 +19,12 @@ class GearMenu(commands.Cog):
             return view.interaction
         # TODO: replace this with equip menu for selected equipment slot
         else:
-            pass
+            interaction = view.interaction
+            loadout = self.db.load_equipment(interaction.user.id)
+            inventory = self.db.load_inventory(interaction.user.id)
+
+    async def send_equip_item_menu(self, interaction: discord.Interaction):
+        pass
 
     async def cleanup(self):
         self.db.conn.close
@@ -30,3 +36,5 @@ class GearMenu(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(GearMenu(bot))
+
+
