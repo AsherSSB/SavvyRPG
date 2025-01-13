@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from custom.gearview import ButtonGearView
 import asyncio
+from cogs.database import Database
 
 
 class GearMenu(commands.Cog):
@@ -17,9 +18,14 @@ class GearMenu(commands.Cog):
             return view.interaction
         # TODO: replace this with equip menu for selected equipment slot
         else:
-            await interaction.edit_original_response(content=view.choice, view=None)
-            await asyncio.sleep(3.0)
-            await interaction.delete_original_response()
+            pass
+
+    async def cleanup(self):
+        self.db.conn.close
+        self.db.cur.close
+
+    async def cog_unload(self):
+        await self.cleanup()
 
 
 async def setup(bot):
