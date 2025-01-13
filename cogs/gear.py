@@ -12,7 +12,7 @@ class GearMenu(commands.Cog):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
-        self.db = Database()
+        self.db = Database(self.bot)
 
     async def send_equip_slots_menu(self, interaction: discord.Interaction):
         view = ButtonGearView(interaction)
