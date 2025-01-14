@@ -78,7 +78,7 @@ class MainMenus(commands.Cog):
             await self.send_main_menu(interaction)
         elif view.choice == 0:
             gearmenu = GearMenu(self.bot)
-            interaction = await gearmenu.send_gear_menu(view.interaction)
+            interaction = await gearmenu.send_equip_slots_menu(view.interaction)
             await interaction.response.send_message("Loading...")
             await self.send_character_menu(interaction)
         elif view.choice == 1:
