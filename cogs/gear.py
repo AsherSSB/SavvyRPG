@@ -57,11 +57,12 @@ class GearMenu(commands.Cog):
         await view.wait()
         if view.choice == -1:
             return view.interaction
+        choice = view.choice
         interaction = view.interaction
-        view = ContinueView()
-        setattr(loadout, slot, inventory[view.choice])
+        setattr(loadout, slot, inventory[choice])
         self.db.save_equipment(interaction.user.id, loadout)
-        await interaction.response.send_message(f"Successfully equipped {inventory[view.choice].name}!", view=view)
+        view = ContinueView()
+        await interaction.response.send_message(f"Successfully equipped {inventory[choice].name}!", view=view)
         await view.wait()
         return view.interaction
 

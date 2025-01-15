@@ -89,7 +89,7 @@ class InventorySelect(discord.ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         self.view.choice = int(self.values[0])
-        await interaction.response.defer()
+        self.view.interaction = interaction
         self.view.event.set()
 
 
