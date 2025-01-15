@@ -14,6 +14,7 @@ class GearMenu(commands.Cog):
         self.bot = bot
         self.db = Database(self.bot)
 
+    @discord.app_commands.command(name="gearmenu")
     async def send_equip_slots_menu(self, interaction: discord.Interaction):
         view = ButtonGearView(interaction)
         await interaction.response.send_message("Gear", view=view)
@@ -21,10 +22,9 @@ class GearMenu(commands.Cog):
         if view.choice == -1:
             return view.interaction
         else:
-            interaction = view.interaction
             loadout = self.db.load_equipment(interaction.user.id)
             inventory = self.db.load_inventory(interaction.user.id)
-            await self.equip_item(interaction, loadout, inventory, view.choice)
+            await self.equip_item(view.interaction, loadout, inventory, view.choice)
 
     async def equip_item(self, interaction: discord.Interaction, loadout: Loadout, inventory: list[Item], slot_index: int):
         slots = {
@@ -39,12 +39,12 @@ class GearMenu(commands.Cog):
         gear = getattr(loadout, attr, None)
         equippables = [item for item in inventory if isinstance(item, type(gear))]
         # returns interaction back to main menus
-        return await self.send_equip_menu(interaction.user.id, equippables)
+        return await self.send_equip_menu(interaction, loadout, equippables)
 
     async def send_equip_menu(self, interaction, loadout: Loadout, inventory: list[Item]):
-        inventory = self.inventory
         embed = InventoryEmbed(inventory=inventory)
         view = InventoryView(interaction=interaction, inventory=inventory, embed=embed)
+        # currently throws error for options not being populated when equippables is len 0
         await interaction.response.send_message(content="Equippables", view=view, embed=embed)
         await view.wait()
         if view.choice == -1:

@@ -13,7 +13,7 @@ class GearSelect(discord.ui.Select):
 
     async def callback(self, interaction):
         self.view.choice = int(self.values[0])
-        await interaction.response.defer()
+        self.view.interaction = interaction
         self.view.event.set()
 
 
@@ -56,7 +56,7 @@ class ButtonGearView(discord.ui.View):
     def create_callback(self, choice: int):
         async def callback(interaction: discord.Interaction):
             self.choice = choice
-            await interaction.response.defer()
+            self.interaction = interaction
             self.event.set()
         return callback
 
