@@ -27,7 +27,8 @@ class GearMenu(commands.Cog):
         else:
             loadout = self.db.load_equipment(interaction.user.id)
             inventory = self.db.load_inventory(interaction.user.id)
-            await self.equip_item(view.interaction, loadout, inventory, view.choice)
+            interaction = await self.equip_item(view.interaction, loadout, inventory, view.choice)
+            return await self.send_equip_slots_menu(interaction)
 
     async def equip_item(self, interaction: discord.Interaction, loadout: Loadout, inventory: list[Item], slot_index: int):
         slots = {
@@ -47,17 +48,22 @@ class GearMenu(commands.Cog):
             await view.wait()
             return await self.send_equip_slots_menu(view.interaction)
         # returns interaction back to main menus
-        return await self.send_equip_menu(interaction, loadout, equippables)
+        return await self.send_equip_menu(interaction, loadout, equippables, attr)
 
-    async def send_equip_menu(self, interaction, loadout: Loadout, inventory: list[Item]):
+    async def send_equip_menu(self, interaction, loadout: Loadout, inventory: list[Item], slot: str):
         embed = InventoryEmbed(inventory=inventory)
         view = InventoryView(interaction=interaction, inventory=inventory, embed=embed)
         await interaction.response.send_message(content="Equippables", view=view, embed=embed)
         await view.wait()
         if view.choice == -1:
             return view.interaction
-        # TODO: should instead equip the item and save to database with a success message
-        await interaction.edit_original_response(content=view.choice, view=None, embed=None)
+        interaction = view.interaction
+        view = ContinueView()
+        setattr(loadout, slot, inventory[view.choice])
+        self.db.save_equipment(interaction.user.id, loadout)
+        await interaction.response.send_message(f"Successfully equipped {inventory[view.choice].name}!", view=view)
+        await view.wait()
+        return view.interaction
 
     async def cleanup(self):
         self.db.conn.close
