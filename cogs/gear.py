@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from custom.gearview import ButtonGearView
-from custom.gear import Loadout
+from custom.gear import Loadout, HeadGear, ChestGear, HandGear, LegGear, FootGear, Weapon
 import asyncio
 from cogs.database import Database
 from custom.base_items import Item
@@ -72,6 +72,21 @@ class GearMenu(commands.Cog):
 
     async def cog_unload(self):
         await self.cleanup()
+
+    def unequip_sold(self, userid, item):
+        types = {
+            HeadGear: "head",
+            ChestGear: "chest",
+            HandGear: "hands",
+            LegGear: "legs",
+            FootGear: "feet",
+            Weapon: "weapon"
+        }
+        attr = types[type(item)]
+        loadout = self.db.load_equipment(userid)
+        equipped = getattr(loadout, attr, None)
+        if item == equipped:
+            setattr(loadout, attr, None)
 
 
 class ContinueView(discord.ui.View):
