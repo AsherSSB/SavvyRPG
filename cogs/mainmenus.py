@@ -9,7 +9,7 @@ from cogs.slots import Slots
 from cogs.dungeon import Dungeon
 from cogs.blacksmith import Blacksmith
 from cogs.inventory import Inventory
-from cogs.gear import GearMenu
+from cogs.gear import GearMenu, Loadout
 
 UNDER_CONSTRUCTION:str = "This area is still under construction. Come back later when it is finished!"
 
@@ -69,7 +69,7 @@ class MainMenus(commands.Cog):
     # choice 0 is gear
     # choice 1 is inventory
     async def send_character_menu(self, interaction:discord.Interaction):
-        embed = CharacterEmbed(self.user_character)
+        embed = CharacterEmbed(self.user_character, self.db.load_equipment(interaction.user.id))
         view = CharacterView()
         await interaction.edit_original_response(content="Character", embed=embed, view=view)
         await view.wait()
@@ -289,11 +289,15 @@ class AdventureView(NavigationMenuView):
 
 
 class CharacterEmbed(discord.Embed):
-    def __init__(self, pc:PlayableCharacter):
+    def __init__(self, pc:PlayableCharacter, loadout: Loadout):
         super().__init__(color=discord.Color(0x00ffff),
                          title=pc.name,
                          description=f"{pc.gender} {pc.race} {pc.origin}")
         self.add_field(name=f"Level {pc.level}", value=f"Xp: {pc.level_progress()} / {pc.xp_for_next_level()}\nGold: {pc.gold}g")
+        value = ""
+        for keys, values in loadout.__dict__.items():
+            value += f"\n{keys}: {values}"
+        self.add_field(name="Gear:", value=value)
         self.add_field(name="Stats:", value=pc.stats)
 
 
